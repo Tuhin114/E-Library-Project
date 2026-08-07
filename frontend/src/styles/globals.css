@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* E-Library uses a dark-first design language, inspired by
+       Vercel / Linear / Clerk. Values are HSL components (no hsl()
+       wrapper) so Tailwind's hsl(var(--x)) pattern works directly. */
+    --background: 222 47% 5%;
+    --foreground: 210 20% 98%;
+
+    --card: 222 44% 8%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 222 44% 8%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 222 30% 14%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 222 30% 14%;
+    --muted-foreground: 217 10% 64%;
+
+    --accent: 222 30% 16%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 222 30% 16%;
+    --input: 222 30% 16%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
