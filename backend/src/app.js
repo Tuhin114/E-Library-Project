@@ -1,13 +1,13 @@
-import express from 'express';
-import helmet from 'helmet';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
+import rateLimit from "express-rate-limit";
 
-import { env } from './config/env.js';
-import { corsOptions } from './config/corsOptions.js';
-import authRoutes from './routes/authRoutes.js';
+import { env } from "./config/env.js";
+import { corsOptions } from "./config/corsOptions.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
@@ -24,7 +24,7 @@ app.use(cookieParser(env.cookieSecret));
 
 // Request logging (development only)
 if (env.isDevelopment) {
-  app.use(morgan('dev'));
+  app.use(morgan("dev"));
 }
 
 // Global rate limiter — protects the whole API from abuse.
@@ -35,21 +35,26 @@ const globalLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many requests, please try again later.' },
+  message: {
+    success: false,
+    message: "Too many requests, please try again later.",
+  },
 });
 app.use(globalLimiter);
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'E-Library API is running' });
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ success: true, message: "E-Library API is running" });
 });
 
 // Feature routes
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+  res
+    .status(404)
+    .json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
 // Temporary global error handler.
@@ -61,7 +66,7 @@ app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     success: false,
-    message: err.message || 'Internal server error',
+    message: err.message || "Internal server error",
     ...(err.details && { details: err.details }),
     ...(env.isDevelopment && { stack: err.stack }),
   });
