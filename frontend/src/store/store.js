@@ -1,11 +1,13 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
 
 /**
  * Central Redux store.
- * Feature slices (e.g. authSlice) are registered in the `reducer` map
- * as they are built — starting with authSlice in M4.
+ * Feature slices are registered in the `reducer` map as they are built.
  */
 export const store = configureStore({
-  reducer: {},
-  devTools: import.meta.env.MODE !== 'production',
+  reducer: {
+    auth: authReducer,
+  },
+  devTools: import.meta.env.MODE !== "production",
 });

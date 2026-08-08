@@ -1,0 +1,23 @@
+import { ApiError } from "../utils/ApiError.js";
+
+/**
+ * RBAC middleware factory. Must run after `authenticate` (relies on
+ * req.user being set) — restricts a route to one or more roles.
+ *
+ * Usage: router.get('/reports', authenticate, authorize(ROLES.LIBRARIAN), handler)
+ */
+export const authorize =
+  (...allowedRoles) =>
+  (req, res, next) => {
+    if (!req.user) {
+      return next(new ApiError(401, "Authentication required"));
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return next(
+        new ApiError(403, "You do not have permission to perform this action"),
+      );
+    }
+
+    next();
+  };
