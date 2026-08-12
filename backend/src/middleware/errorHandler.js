@@ -49,6 +49,14 @@ export const errorHandler = (err, req, res, next) => {
     );
   }
 
+  if (error.name === "MulterError") {
+    statusCode = 400;
+    message =
+      error.code === "LIMIT_FILE_SIZE"
+        ? "File is too large."
+        : "File upload error.";
+  }
+
   if (env.isDevelopment) {
     console.error(err);
   }

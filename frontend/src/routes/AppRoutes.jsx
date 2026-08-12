@@ -5,6 +5,28 @@ import Login from "@/pages/auth/Login";
 import ChangePassword from "@/pages/auth/ChangePassword";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import ResetPassword from "@/pages/auth/ResetPassword";
+import MainLayout from "../components/layout/MainLayout";
+
+import Categories from "../pages/categories/Categories";
+import CategoryDetails from "../pages/categories/CategoryDetails";
+import Authors from "../pages/authors/Authors";
+import AuthorProfile from "../pages/authors/AuthorProfile";
+import Publishers from "../pages/publishers/Publishers";
+import PublisherDetails from "../pages/publishers/PublisherDetails";
+
+import ManageCategories from "../pages/manage/ManageCategories";
+import ManageAuthors from "../pages/manage/ManageAuthors";
+import ManagePublishers from "../pages/manage/ManagePublishers";
+
+import Books from "../pages/books/Books";
+import BookDetails from "../pages/books/BookDetails";
+import ManageBooks from "../pages/manage/ManageBooks";
+import CreateBook from "../pages/manage/CreateBook";
+import EditBook from "../pages/manage/EditBook";
+
+import Favorites from "../pages/favorites/Favorites";
+import RecentlyViewed from "../pages/library/RecentlyViewed";
+
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
 import { ROLES } from "@/constants/roles";
@@ -75,13 +97,6 @@ function LibrarianAreaPlaceholder() {
   );
 }
 
-/**
- * Central route table. Auth state driving PrivateRoute/RoleRoute is
- * rehydrated on app load (see App.jsx -> initializeSession) and kept
- * fresh mid-session by the axios response interceptor's silent-refresh
- * flow (see api/axiosInstance.js) — so these guards are reliable across
- * both page reloads and long-lived sessions where the access token expires.
- */
 export default function AppRoutes() {
   return (
     <Routes>
@@ -92,11 +107,38 @@ export default function AppRoutes() {
       <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       <Route element={<PrivateRoute />}>
-        <Route path="/dashboard" element={<DashboardPlaceholder />} />
-        <Route path="/change-password" element={<ChangePassword />} />
+        <Route element={<MainLayout />}>
+          {/* Dashboard */}
+          <Route path="/dashboard" element={<DashboardPlaceholder />} />
 
-        <Route element={<RoleRoute allowedRoles={[ROLES.LIBRARIAN]} />}>
-          <Route path="/librarian" element={<LibrarianAreaPlaceholder />} />
+          {/* Browse */}
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/categories/:slug" element={<CategoryDetails />} />
+
+          <Route path="/authors" element={<Authors />} />
+          <Route path="/authors/:slug" element={<AuthorProfile />} />
+
+          <Route path="/publishers" element={<Publishers />} />
+          <Route path="/publishers/:slug" element={<PublisherDetails />} />
+
+          <Route path="/books" element={<Books />} />
+          <Route path="/books/:id" element={<BookDetails />} />
+
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/recently-viewed" element={<RecentlyViewed />} />
+
+          {/* Change password */}
+          <Route path="/change-password" element={<ChangePassword />} />
+
+          {/* Librarian only */}
+          <Route element={<RoleRoute allowedRoles={[ROLES.LIBRARIAN]} />}>
+            <Route path="/manage/categories" element={<ManageCategories />} />
+            <Route path="/manage/authors" element={<ManageAuthors />} />
+            <Route path="/manage/publishers" element={<ManagePublishers />} />
+            <Route path="/manage/books" element={<ManageBooks />} />
+            <Route path="/manage/books/new" element={<CreateBook />} />
+            <Route path="/manage/books/:id/edit" element={<EditBook />} />
+          </Route>
         </Route>
       </Route>
 

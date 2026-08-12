@@ -32,6 +32,12 @@ export const env = {
 
   cookieSecret: process.env.COOKIE_SECRET,
 
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+  },
+
   // Optional: if left unset, emailService falls back to logging the
   // password reset link to the console instead of sending a real
   // email — keeps local development unblocked without SMTP setup.

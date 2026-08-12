@@ -8,6 +8,11 @@ import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
 import { corsOptions } from "./config/corsOptions.js";
 import authRoutes from "./routes/authRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import authorRoutes from "./routes/authorRoutes.js";
+import publisherRoutes from "./routes/publisherRoutes.js";
+import bookRoutes from "./routes/bookRoutes.js";
+import userLibraryRoutes from "./routes/userLibraryRoutes.js";
 
 const app = express();
 
@@ -49,6 +54,11 @@ app.get("/api/health", (req, res) => {
 
 // Feature routes
 app.use("/api/auth", authRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/authors", authorRoutes);
+app.use("/api/publishers", publisherRoutes);
+app.use("/api/books", bookRoutes);
+app.use("/api/me", userLibraryRoutes);
 
 // 404 handler
 app.use((req, res) => {

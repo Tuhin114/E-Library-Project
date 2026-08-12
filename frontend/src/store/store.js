@@ -1,6 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
-
+import categoriesReducer from "./slices/categoriesSlice";
+import authorsReducer from "./slices/authorsSlice";
+import publishersReducer from "./slices/publishersSlice";
+import booksReducer from "./slices/booksSlice";
+import libraryReducer from "./slices/librarySlice";
 /**
  * Central Redux store.
  * Feature slices are registered in the `reducer` map as they are built.
@@ -8,6 +12,11 @@ import authReducer from "./slices/authSlice";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    categories: categoriesReducer,
+    authors: authorsReducer,
+    publishers: publishersReducer,
+    books: booksReducer,
+    library: libraryReducer,
   },
   devTools: import.meta.env.MODE !== "production",
 });

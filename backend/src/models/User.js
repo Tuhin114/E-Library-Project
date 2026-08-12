@@ -1,28 +1,31 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-import { ROLE_VALUES, ROLES } from '../constants/roles.js';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import { ROLE_VALUES, ROLES } from "../constants/roles.js";
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
-      minlength: [2, 'Name must be at least 2 characters'],
-      maxlength: [100, 'Name cannot exceed 100 characters'],
+      minlength: [2, "Name must be at least 2 characters"],
+      maxlength: [100, "Name cannot exceed 100 characters"],
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email address'],
+      match: [
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        "Please provide a valid email address",
+      ],
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters'],
+      required: [true, "Password is required"],
+      minlength: [8, "Password must be at least 8 characters"],
       select: false, // never returned by default in queries
     },
     role: {
@@ -49,7 +52,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 /**
@@ -57,8 +60,8 @@ const userSchema = new mongoose.Schema(
  * modified — avoids re-hashing an already-hashed password on unrelated
  * document updates (e.g. changing `name`).
  */
-userSchema.pre('save', async function hashPassword(next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function hashPassword(next) {
+  if (!this.isModified("password")) return next();
 
   this.password = await bcrypt.hash(this.password, 12);
 
@@ -74,7 +77,9 @@ userSchema.pre('save', async function hashPassword(next) {
  * Compares a plaintext candidate password against the stored hash.
  * Consumed by the login flow (M4).
  */
-userSchema.methods.comparePassword = async function comparePassword(candidatePassword) {
+userSchema.methods.comparePassword = async function comparePassword(
+  candidatePassword,
+) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
@@ -93,6 +98,6 @@ userSchema.methods.toJSON = function toJSON() {
   return user;
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;
