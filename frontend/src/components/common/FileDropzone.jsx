@@ -5,29 +5,35 @@ import {
   Image as ImageIcon,
   X,
   Loader2,
+  Clipboard,
 } from "lucide-react";
 import { FILE_LIMITS } from "../../constants/fileUploadLimits";
 import { Button } from "../ui/button";
 import { toast } from "../../hooks/useToast";
 
-const ICONS = { cover: ImageIcon, pdf: FileText, epub: FileText };
+const ICONS = {
+  cover: ImageIcon,
+  pdf: FileText,
+  epub: FileText,
+};
 
 /**
- * Reusable drag-and-drop (or click-to-browse) upload control. Used for
- * cover image, PDF, and EPUB uploads on the Edit Book page.
+ * Reusable drag-and-drop / browse / paste upload control.
  *
- * Controlled/stateless by design — the parent owns the actual upload/delete
- * network calls (via Redux thunks) and passes them in as `onUpload`/`onDelete`.
- * This component only handles drag/drop UX, client-side validation, and
- * showing the current file if one exists.
+ * Supports:
+ * - Click to browse
+ * - Drag & drop
+ * - Clipboard image paste (Ctrl+V / Cmd+V)
+ *
+ * Clipboard paste is primarily useful for cover images.
  *
  * Props:
- * - label: string — field label shown above the control
- * - fileType: 'cover' | 'pdf' | 'epub' — determines validation rules
- * - currentFile: { url, originalName } | undefined — existing uploaded file
+ * - label: string
+ * - fileType: 'cover' | 'pdf' | 'epub'
+ * - currentFile: { url, originalName } | undefined
  * - onUpload: (file: File) => void
  * - onDelete: () => void
- * - isProcessing: boolean — disables interaction and shows a spinner
+ * - isProcessing: boolean
  */
 const FileDropzone = ({
   label,
@@ -38,39 +44,131 @@ const FileDropzone = ({
   isProcessing = false,
 }) => {
   const inputRef = useRef(null);
+
   const [isDragging, setIsDragging] = useState(false);
+  const [isPasting, setIsPasting] = useState(false);
+
   const limits = FILE_LIMITS[fileType];
   const Icon = ICONS[fileType] || UploadCloud;
 
   const validateAndUpload = (file) => {
-    if (!file) return;
+    if (!file) return false;
 
     if (!limits.allowedMimeTypes.includes(file.type)) {
       toast.error(
         `Invalid file type. Allowed: ${limits.allowedMimeTypes.join(", ")}`,
       );
-      return;
+      return false;
     }
 
     const maxBytes = limits.maxSizeMB * 1024 * 1024;
+
     if (file.size > maxBytes) {
       toast.error(`File is too large. Max size is ${limits.maxSizeMB}MB.`);
-      return;
+      return false;
     }
 
     onUpload(file);
+    return true;
+  };
+
+  /* ---------------------------------------------------------------------- */
+  /* DRAG & DROP                                                            */
+  /* ---------------------------------------------------------------------- */
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+
+    if (isProcessing) return;
+
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
   };
 
   const handleDrop = (event) => {
     event.preventDefault();
+
     setIsDragging(false);
+
     if (isProcessing) return;
-    validateAndUpload(event.dataTransfer.files?.[0]);
+
+    const file = event.dataTransfer.files?.[0];
+
+    validateAndUpload(file);
   };
 
+  /* ---------------------------------------------------------------------- */
+  /* BROWSE                                                                 */
+  /* ---------------------------------------------------------------------- */
+
   const handleBrowseClick = () => {
-    if (!isProcessing) inputRef.current?.click();
+    if (isProcessing) return;
+
+    inputRef.current?.click();
   };
+
+  /* ---------------------------------------------------------------------- */
+  /* CLIPBOARD PASTE                                                        */
+  /* ---------------------------------------------------------------------- */
+
+  const handlePaste = async (event) => {
+    if (isProcessing) return;
+
+    // Clipboard pasting is intended for images.
+    // Do not intercept PDF/EPUB paste operations.
+    if (fileType !== "cover") return;
+
+    const items = event.clipboardData?.items;
+
+    if (!items?.length) return;
+
+    let imageFile = null;
+
+    for (const item of items) {
+      if (!item.type.startsWith("image/")) continue;
+
+      imageFile = item.getAsFile();
+
+      if (imageFile) break;
+    }
+
+    // Clipboard contains text, not an image.
+    if (!imageFile) {
+      toast.error(
+        "No image found in the clipboard. Copy an image and press Ctrl+V.",
+      );
+      return;
+    }
+
+    event.preventDefault();
+
+    setIsPasting(true);
+
+    try {
+      /*
+       * Clipboard images sometimes don't have a useful filename.
+       * Give the generated File a sensible name so your backend metadata
+       * gets a useful originalName.
+       */
+      const extension = imageFile.type.split("/")[1] || "png";
+
+      const pastedFile = new File([imageFile], `pasted-cover.${extension}`, {
+        type: imageFile.type,
+        lastModified: Date.now(),
+      });
+
+      validateAndUpload(pastedFile);
+    } finally {
+      setIsPasting(false);
+    }
+  };
+
+  /* ---------------------------------------------------------------------- */
+  /* RENDER                                                                 */
+  /* ---------------------------------------------------------------------- */
 
   return (
     <div className="space-y-2">
@@ -80,6 +178,7 @@ const FileDropzone = ({
         <div className="flex items-center justify-between rounded-md border border-border p-3">
           <div className="flex items-center gap-2 overflow-hidden">
             <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
+
             <a
               href={currentFile.url}
               target="_blank"
@@ -89,6 +188,7 @@ const FileDropzone = ({
               {currentFile.originalName || "View file"}
             </a>
           </div>
+
           <Button
             type="button"
             variant="ghost"
@@ -105,30 +205,50 @@ const FileDropzone = ({
         </div>
       ) : (
         <div
-          onDragOver={(event) => {
-            event.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          onPaste={handlePaste}
           onClick={handleBrowseClick}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              handleBrowseClick();
+            }
+          }}
           role="button"
           tabIndex={0}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center transition-colors ${
+          aria-label={`${label} upload area`}
+          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             isDragging
               ? "border-primary bg-primary/5"
               : "border-border hover:bg-accent"
           }`}
         >
-          {isProcessing ? (
+          {isProcessing || isPasting ? (
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           ) : (
             <UploadCloud className="h-6 w-6 text-muted-foreground" />
           )}
+
           <p className="text-sm text-muted-foreground">
-            {isProcessing ? "Uploading..." : "Drag & drop or click to upload"}
+            {isProcessing
+              ? "Uploading..."
+              : isPasting
+                ? "Processing pasted image..."
+                : "Drag & drop or click to upload"}
           </p>
+
+          {fileType === "cover" && !isProcessing && !isPasting && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clipboard className="h-3.5 w-3.5" />
+              <span>Click here, then press Ctrl+V to paste</span>
+            </div>
+          )}
+
           <p className="text-xs text-muted-foreground">
+            {limits.allowedMimeTypes.join(", ")}
+            {" · "}
             Max {limits.maxSizeMB}MB
           </p>
         </div>
@@ -141,6 +261,8 @@ const FileDropzone = ({
         className="hidden"
         onChange={(event) => {
           validateAndUpload(event.target.files?.[0]);
+
+          // Allows selecting the same file again.
           event.target.value = "";
         }}
       />

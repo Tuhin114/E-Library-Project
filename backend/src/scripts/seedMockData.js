@@ -1,23 +1,30 @@
 // FILE PATH: backend/src/scripts/seedMockData.js
-// STATUS: NEW FILE
 //
-// Inserts mock Users, Categories, Authors, Publishers, Books, Favorites,
-// and RecentlyViewed entries for local/dev testing. See
-// MOCK_DATA_PLAN.md for the full rationale behind what's seeded and why.
+// Seeds:
+//   - Users
+//   - Categories
+//   - Authors
+//   - Publishers
+//   - 40 Books
+//   - Cover PNGs
+//   - PDF files
+//   - EPUB files
+//   - Favorites
+//   - Recently Viewed
 //
 // Usage:
-//   node src/scripts/seedMockData.js            # idempotent insert (skips existing records by name/email/ISBN)
-//   node src/scripts/seedMockData.js --fresh     # wipe managed collections + seed User accounts, then re-seed clean
+//   node src/scripts/seedMockData.js
+//   node src/scripts/seedMockData.js --fresh
 //
-// ⚠️ Never run --fresh against a production database.
-//
-// ⚠️ ASSUMPTION: your MongoDB connection string env var is MONGODB_URI,
-// matching the common Phase 1 naming convention. If your actual .env uses
-// a different name (e.g. MONGO_URI, DATABASE_URL), update the one line
-// below marked with ⚠️ — nothing else in this script needs to change.
+// WARNING:
+// --fresh is intended ONLY for your development/test database.
+// It deletes the existing Book/Category/Author/Publisher/Favorite/
+// RecentlyViewed data before rebuilding the mock dataset.
 
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import zlib from "node:zlib";
+
 import User from "../models/User.js";
 import Category from "../models/Category.js";
 import Author from "../models/Author.js";
@@ -25,19 +32,29 @@ import Publisher from "../models/Publisher.js";
 import Book from "../models/Book.js";
 import Favorite from "../models/Favorite.js";
 import RecentlyViewed from "../models/RecentlyViewed.js";
+
 import { generateSlug } from "../utils/slugify.js";
+import { uploadBuffer, deleteAsset } from "../utils/cloudinaryUpload.js";
+
 import { ROLES } from "../constants/roles.js";
 import { BOOK_STATUS } from "../constants/bookStatus.js";
 import { BOOK_VISIBILITY } from "../constants/bookVisibility.js";
+import { FILE_LIMITS } from "../constants/fileUploadLimits.js";
 
 dotenv.config();
 
+const MONGODB_URI = process.env.MONGO_URI;
 const isFreshRun = process.argv.includes("--fresh");
 
-// ⚠️ Update this line if your env var is named differently.
-const MONGODB_URI = process.env.MONGO_URI;
-
 const TEST_PASSWORD = "Password123!";
+
+const log = (message) => {
+  console.log(`[seed] ${message}`);
+};
+
+/* -------------------------------------------------------------------------- */
+/* USERS                                                                       */
+/* -------------------------------------------------------------------------- */
 
 const USERS = [
   {
@@ -45,8 +62,16 @@ const USERS = [
     email: "librarian@elibrary.test",
     role: ROLES.LIBRARIAN,
   },
-  { name: "Sam Okafor", email: "faculty@elibrary.test", role: ROLES.FACULTY },
-  { name: "Priya Nair", email: "student1@elibrary.test", role: ROLES.STUDENT },
+  {
+    name: "Sam Okafor",
+    email: "faculty@elibrary.test",
+    role: ROLES.FACULTY,
+  },
+  {
+    name: "Priya Nair",
+    email: "student1@elibrary.test",
+    role: ROLES.STUDENT,
+  },
   {
     name: "Diego Ramirez",
     email: "student2@elibrary.test",
@@ -54,370 +79,1202 @@ const USERS = [
   },
 ];
 
+/* -------------------------------------------------------------------------- */
+/* CATEGORIES                                                                  */
+/* -------------------------------------------------------------------------- */
+
 const CATEGORIES = [
-  { name: "Fiction", description: "Novels and short story collections." },
   {
-    name: "Science",
-    description: "Popular science and research-adjacent reading.",
+    name: "Computer Science",
+    description:
+      "Programming, algorithms, data structures, and general computing.",
   },
-  { name: "Technology", description: "Software, engineering, and computing." },
-  { name: "History", description: "World and regional history." },
-  { name: "Biography", description: "Life stories of notable people." },
   {
-    name: "Philosophy",
-    description: "Philosophical works, classic and modern.",
+    name: "Artificial Intelligence",
+    description:
+      "Machine learning, neural networks, NLP, computer vision, and AI.",
+  },
+  {
+    name: "Database Systems",
+    description: "SQL, NoSQL, data modeling, storage, and data engineering.",
+  },
+  {
+    name: "Computer Networks",
+    description:
+      "Networking protocols, distributed communication, and internet systems.",
+  },
+  {
+    name: "Operating Systems",
+    description:
+      "Processes, memory, filesystems, concurrency, and system software.",
+  },
+  {
+    name: "Web Development",
+    description:
+      "Frontend, backend, APIs, TypeScript, and modern web applications.",
+  },
+  {
+    name: "Cyber Security",
+    description:
+      "Application security, cryptography, authentication, and secure systems.",
+  },
+  {
+    name: "Software Engineering",
+    description:
+      "Architecture, testing, maintainability, design, and engineering practices.",
+  },
+  {
+    name: "Data Science",
+    description: "Statistics, analytics, visualization, and data processing.",
+  },
+  {
+    name: "Technology and Society",
+    description:
+      "Technology, privacy, ethics, digital life, and social impact.",
   },
 ];
+
+/* -------------------------------------------------------------------------- */
+/* AUTHORS                                                                     */
+/* -------------------------------------------------------------------------- */
 
 const AUTHORS = [
   {
-    name: "J.R.R. Tolkien",
+    name: "Maya Sen",
+    nationality: "Indian",
+    bio: "Technical educator focused on practical computing and software development.",
+  },
+  {
+    name: "Daniel Brooks",
+    nationality: "American",
+    bio: "Software engineer writing about reliable backend systems.",
+  },
+  {
+    name: "Aisha Rahman",
+    nationality: "Bangladeshi",
+    bio: "Technology educator specializing in data and intelligent applications.",
+  },
+  {
+    name: "Noah Bennett",
     nationality: "British",
-    bio: "English writer best known for The Hobbit and The Lord of the Rings.",
+    bio: "Writer covering networking, operating systems, and infrastructure.",
   },
   {
-    name: "Isabel Allende",
-    nationality: "Chilean",
-    bio: "Novelist known for magical realism.",
+    name: "Elena Torres",
+    nationality: "Spanish",
+    bio: "Engineer interested in secure and scalable software.",
   },
   {
-    name: "Yuval Noah Harari",
-    nationality: "Israeli",
-    bio: "Historian and author of Sapiens.",
+    name: "Arjun Mehta",
+    nationality: "Indian",
+    bio: "Developer and educator focused on web platforms and APIs.",
   },
   {
-    name: "Chimamanda Ngozi Adichie",
-    nationality: "Nigerian",
-    bio: "Novelist and essayist.",
+    name: "Sofia Laurent",
+    nationality: "French",
+    bio: "Data scientist writing accessible guides to statistics and analytics.",
   },
   {
-    name: "Carl Sagan",
+    name: "Marcus Chen",
+    nationality: "Canadian",
+    bio: "Computer scientist interested in distributed systems and databases.",
+  },
+  {
+    name: "Nora Williams",
     nationality: "American",
-    bio: "Astronomer and science communicator.",
+    bio: "Technical author focused on software engineering practices.",
   },
   {
-    name: "Haruki Murakami",
+    name: "Kenji Sato",
     nationality: "Japanese",
-    bio: "Novelist known for surreal, genre-blending fiction.",
+    bio: "Engineer exploring artificial intelligence and human-computer interaction.",
   },
   {
-    name: "Martin Kleppmann",
+    name: "Fatima Hassan",
+    nationality: "Egyptian",
+    bio: "Cybersecurity educator and application security practitioner.",
+  },
+  {
+    name: "Oliver Grant",
+    nationality: "Australian",
+    bio: "Writer focused on cloud infrastructure and modern development.",
+  },
+  {
+    name: "Riya Kapoor",
+    nationality: "Indian",
+    bio: "Data engineer working with analytics pipelines and information systems.",
+  },
+  {
+    name: "Lucas Pereira",
+    nationality: "Brazilian",
+    bio: "Developer interested in practical architecture and distributed applications.",
+  },
+  {
+    name: "Hannah Miller",
     nationality: "German",
-    bio: "Author of Designing Data-Intensive Applications.",
-  },
-  {
-    name: "Michelle Obama",
-    nationality: "American",
-    bio: "Author and former First Lady of the United States.",
+    bio: "Research-oriented writer covering technology and society.",
   },
 ];
+
+/* -------------------------------------------------------------------------- */
+/* PUBLISHERS                                                                  */
+/* -------------------------------------------------------------------------- */
 
 const PUBLISHERS = [
   {
-    name: "Penguin Random House",
-    country: "United States",
-    website: "https://www.penguinrandomhouse.com",
+    name: "Northstar Academic Press",
+    country: "India",
+    website: "https://example.com/northstar",
   },
   {
-    name: "HarperCollins",
+    name: "BlueOak Technical Books",
     country: "United States",
-    website: "https://www.harpercollins.com",
+    website: "https://example.com/blueoak",
   },
   {
-    name: "O'Reilly Media",
-    country: "United States",
-    website: "https://www.oreilly.com",
-  },
-  {
-    name: "Bloomsbury Publishing",
+    name: "Riverstone Digital Press",
     country: "United Kingdom",
-    website: "https://www.bloomsbury.com",
+    website: "https://example.com/riverstone",
   },
   {
-    name: "Simon & Schuster",
-    country: "United States",
-    website: "https://www.simonandschuster.com",
+    name: "Atlas Learning House",
+    country: "Canada",
+    website: "https://example.com/atlas",
+  },
+  {
+    name: "Open Circuit Publishing",
+    country: "Australia",
+    website: "https://example.com/opencircuit",
+  },
+  {
+    name: "Summit Knowledge Works",
+    country: "Singapore",
+    website: "https://example.com/summit",
   },
 ];
 
-// `category`/`authors`/`publisher` below are indexes into the arrays
-// above — resolved to real ids after Categories/Authors/Publishers exist.
+/* -------------------------------------------------------------------------- */
+/* BOOK DEFINITIONS                                                            */
+/* -------------------------------------------------------------------------- */
+
+// category = category index
+// authors = author indexes
+// publisher = publisher index
+
 const BOOKS = [
   {
-    title: "The Hobbit",
-    isbn: "9780547928227",
+    title: "Algorithms in Practice",
+    subtitle: "From Problem Statements to Efficient Solutions",
     category: 0,
-    authors: [0],
-    publisher: 1,
-    language: "English",
-    publicationYear: 1937,
-    numberOfPages: 310,
-    tags: ["fantasy", "classic", "adventure"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
-  },
-  {
-    title: "The House of the Spirits",
-    isbn: "9780553383805",
-    category: 0,
-    authors: [1],
+    authors: [0, 8],
     publisher: 0,
     language: "English",
-    publicationYear: 1982,
-    numberOfPages: 448,
-    tags: ["fiction", "magical realism"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2024,
+    pages: 184,
+    tags: ["algorithms", "programming", "problem solving"],
   },
   {
-    title: "Sapiens: A Brief History of Humankind",
-    isbn: "9780062316097",
-    category: 3,
-    authors: [2],
+    title: "Python for Practical Computing",
+    subtitle: "A Project-Based Introduction",
+    category: 0,
+    authors: [0, 5],
     publisher: 1,
     language: "English",
-    publicationYear: 2011,
-    numberOfPages: 443,
-    tags: ["history", "anthropology", "bestseller"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2025,
+    pages: 212,
+    tags: ["python", "programming", "projects"],
   },
   {
-    title: "Half of a Yellow Sun",
-    isbn: "9781400095209",
+    title: "Modern Data Structures",
+    subtitle: "Choosing the Right Structure for the Job",
     category: 0,
-    authors: [3],
-    publisher: 4,
+    authors: [0, 13],
+    publisher: 3,
     language: "English",
-    publicationYear: 2006,
-    numberOfPages: 448,
-    tags: ["fiction", "historical"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2023,
+    pages: 168,
+    tags: ["data structures", "algorithms", "programming"],
   },
   {
-    title: "Cosmos",
-    isbn: "9780345539434",
+    title: "Foundations of Machine Learning",
+    subtitle: "Concepts, Models, and Evaluation",
     category: 1,
-    authors: [4],
+    authors: [2, 6],
     publisher: 0,
     language: "English",
-    publicationYear: 1980,
-    numberOfPages: 396,
-    tags: ["science", "astronomy", "classic"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2024,
+    pages: 236,
+    tags: ["machine learning", "ai", "statistics"],
   },
   {
-    title: "Norwegian Wood",
-    isbn: "9780375704024",
-    category: 0,
-    authors: [5],
+    title: "Applied Neural Networks",
+    subtitle: "Building Small Intelligent Systems",
+    category: 1,
+    authors: [2, 9],
     publisher: 1,
     language: "English",
-    publicationYear: 1987,
-    numberOfPages: 296,
-    tags: ["fiction", "literary"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2025,
+    pages: 198,
+    tags: ["neural networks", "deep learning", "ai"],
   },
   {
-    title: "Designing Data-Intensive Applications",
-    isbn: "9781449373320",
-    category: 2,
-    authors: [6],
+    title: "Natural Language Systems",
+    subtitle: "From Text Processing to Assistants",
+    category: 1,
+    authors: [9, 2],
     publisher: 2,
     language: "English",
-    publicationYear: 2017,
-    numberOfPages: 616,
-    tags: ["technology", "databases", "engineering"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2023,
+    pages: 224,
+    tags: ["nlp", "ai", "language"],
   },
   {
-    title: "Becoming",
-    isbn: "9781524763138",
+    title: "Computer Vision Essentials",
+    subtitle: "Images, Features, and Recognition",
+    category: 1,
+    authors: [4, 9],
+    publisher: 4,
+    language: "English",
+    year: 2022,
+    pages: 206,
+    tags: ["computer vision", "ai", "images"],
+  },
+  {
+    title: "Responsible AI Engineering",
+    subtitle: "Designing Systems People Can Trust",
+    category: 1,
+    authors: [9, 14],
+    publisher: 5,
+    language: "English",
+    year: 2025,
+    pages: 176,
+    tags: ["ai ethics", "responsible ai", "ethics"],
+    draft: true,
+  },
+
+  {
+    title: "Database Design Patterns",
+    subtitle: "Schemas, Constraints, and Queries",
+    category: 2,
+    authors: [7, 12],
+    publisher: 0,
+    language: "English",
+    year: 2024,
+    pages: 190,
+    tags: ["databases", "sql", "design"],
+  },
+  {
+    title: "SQL for Application Developers",
+    subtitle: "Queries That Survive Real Projects",
+    category: 2,
+    authors: [12, 5],
+    publisher: 1,
+    language: "English",
+    year: 2023,
+    pages: 154,
+    tags: ["sql", "databases", "backend"],
+  },
+  {
+    title: "Data Modeling Fundamentals",
+    subtitle: "Relational and Document Approaches",
+    category: 2,
+    authors: [7, 8],
+    publisher: 3,
+    language: "English",
+    year: 2021,
+    pages: 172,
+    tags: ["data modeling", "mongodb", "sql"],
+    archived: true,
+  },
+  {
+    title: "Distributed Data Systems",
+    subtitle: "Replication, Partitioning, and Consistency",
+    category: 2,
+    authors: [7, 11],
+    publisher: 2,
+    language: "English",
+    year: 2025,
+    pages: 248,
+    tags: ["distributed systems", "databases", "scalability"],
+    restricted: true,
+  },
+
+  {
+    title: "Networking Fundamentals",
+    subtitle: "How Modern Networks Move Data",
+    category: 3,
+    authors: [3, 13],
+    publisher: 3,
+    language: "English",
+    year: 2022,
+    pages: 188,
+    tags: ["networks", "tcp ip", "internet"],
+  },
+  {
+    title: "Routing and Switching Concepts",
+    subtitle: "A Practical Network Guide",
+    category: 3,
+    authors: [3, 0],
+    publisher: 4,
+    language: "English",
+    year: 2024,
+    pages: 214,
+    tags: ["routing", "switching", "networks"],
+  },
+  {
+    title: "Internet Protocols Explained",
+    subtitle: "HTTP, DNS, TLS, and Beyond",
+    category: 3,
+    authors: [3, 5],
+    publisher: 1,
+    language: "English",
+    year: 2025,
+    pages: 164,
+    tags: ["http", "dns", "tls", "networks"],
+    draft: true,
+  },
+  {
+    title: "Distributed Communication",
+    subtitle: "Reliable Services Across Networks",
+    category: 3,
+    authors: [7, 11],
+    publisher: 2,
+    language: "English",
+    year: 2023,
+    pages: 202,
+    tags: ["distributed systems", "networks", "services"],
+    restricted: true,
+  },
+
+  {
+    title: "Operating Systems Concepts",
+    subtitle: "Processes, Memory, and Files",
     category: 4,
-    authors: [7],
-    publisher: 4,
-    language: "English",
-    publicationYear: 2018,
-    numberOfPages: 448,
-    tags: ["biography", "memoir"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
-  },
-  {
-    title: "The Fellowship of the Ring",
-    isbn: "9780547928210",
-    category: 0,
-    authors: [0],
-    publisher: 1,
-    language: "English",
-    publicationYear: 1954,
-    numberOfPages: 423,
-    tags: ["fantasy", "classic"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
-  },
-  {
-    title: "Homo Deus: A Brief History of Tomorrow",
-    isbn: "9780062464316",
-    category: 3,
-    authors: [2],
-    publisher: 1,
-    language: "English",
-    publicationYear: 2016,
-    numberOfPages: 450,
-    tags: ["history", "science", "future"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
-  },
-  {
-    title: "Kafka on the Shore",
-    isbn: "9781400079278",
-    category: 0,
-    authors: [5],
-    publisher: 1,
-    language: "English",
-    publicationYear: 2002,
-    numberOfPages: 505,
-    tags: ["fiction", "surreal"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
-  },
-  {
-    title: "Americanah",
-    isbn: "9780307455925",
-    category: 0,
-    authors: [3],
-    publisher: 4,
-    language: "English",
-    publicationYear: 2013,
-    numberOfPages: 588,
-    tags: ["fiction", "contemporary"],
-    status: BOOK_STATUS.DRAFT,
-    visibility: BOOK_VISIBILITY.PUBLIC,
-  },
-  {
-    title: "Pale Blue Dot",
-    isbn: "9780345376596",
-    category: 1,
-    authors: [4],
+    authors: [3, 8],
     publisher: 0,
     language: "English",
-    publicationYear: 1994,
-    numberOfPages: 384,
-    tags: ["science", "space"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2021,
+    pages: 226,
+    tags: ["operating systems", "processes", "memory"],
   },
   {
-    title: "The Two Towers",
-    isbn: "9780547928203",
-    category: 0,
-    authors: [0],
+    title: "Linux Systems Workshop",
+    subtitle: "Command Lines, Services, and Permissions",
+    category: 4,
+    authors: [3, 11],
+    publisher: 4,
+    language: "English",
+    year: 2024,
+    pages: 178,
+    tags: ["linux", "systems", "shell"],
+  },
+  {
+    title: "Concurrency Without Fear",
+    subtitle: "Threads, Locks, and Async Work",
+    category: 4,
+    authors: [1, 8],
     publisher: 1,
     language: "English",
-    publicationYear: 1954,
-    numberOfPages: 352,
-    tags: ["fantasy", "classic"],
-    status: BOOK_STATUS.ARCHIVED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2025,
+    pages: 192,
+    tags: ["concurrency", "threads", "async"],
+  },
+
+  {
+    title: "Web APIs with Node.js",
+    subtitle: "REST Services for Modern Applications",
+    category: 5,
+    authors: [5, 1],
+    publisher: 1,
+    language: "English",
+    year: 2025,
+    pages: 218,
+    tags: ["nodejs", "rest", "api", "backend"],
   },
   {
-    title: "Streaming Systems",
-    isbn: "9781491983874",
-    category: 2,
-    authors: [6],
+    title: "React Application Architecture",
+    subtitle: "Components, State, and Data Flow",
+    category: 5,
+    authors: [5, 8],
+    publisher: 0,
+    language: "English",
+    year: 2024,
+    pages: 204,
+    tags: ["react", "frontend", "architecture"],
+  },
+  {
+    title: "TypeScript for Full-Stack Teams",
+    subtitle: "Safer JavaScript at Scale",
+    category: 5,
+    authors: [5, 1],
     publisher: 2,
     language: "English",
-    publicationYear: 2018,
-    numberOfPages: 300,
-    tags: ["technology", "data engineering"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2025,
+    pages: 186,
+    tags: ["typescript", "javascript", "web"],
   },
   {
-    title: "Eva Luna",
-    isbn: "9780553381044",
-    category: 0,
-    authors: [1],
-    publisher: 0,
-    language: "Spanish",
-    publicationYear: 1987,
-    numberOfPages: 320,
-    tags: ["fiction", "magical realism"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
-  },
-  {
-    title: "21 Lessons for the 21st Century",
-    isbn: "9780525512172",
+    title: "Building Accessible Web Interfaces",
+    subtitle: "Inclusive Frontend Practices",
     category: 5,
-    authors: [2],
-    publisher: 1,
+    authors: [8, 5],
+    publisher: 3,
     language: "English",
-    publicationYear: 2018,
-    numberOfPages: 372,
-    tags: ["philosophy", "politics"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.RESTRICTED,
+    year: 2023,
+    pages: 142,
+    tags: ["accessibility", "frontend", "web"],
+    draft: true,
   },
+
   {
-    title: "The Return of the King",
-    isbn: "9780547928197",
-    category: 0,
-    authors: [0],
-    publisher: 1,
-    language: "English",
-    publicationYear: 1955,
-    numberOfPages: 416,
-    tags: ["fantasy", "classic"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
-  },
-  {
-    title: "Purple Hibiscus",
-    isbn: "9781616202415",
-    category: 0,
-    authors: [3],
+    title: "Application Security Basics",
+    subtitle: "Threats, Defenses, and Secure Coding",
+    category: 6,
+    authors: [10, 4],
     publisher: 4,
     language: "English",
-    publicationYear: 2003,
-    numberOfPages: 307,
-    tags: ["fiction"],
-    status: BOOK_STATUS.DRAFT,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2024,
+    pages: 196,
+    tags: ["security", "secure coding", "web"],
   },
   {
-    title: "The Demon-Haunted World",
-    isbn: "9780345409461",
-    category: 1,
-    authors: [4],
+    title: "Practical Cryptography",
+    subtitle: "Keys, Hashes, and Secure Communication",
+    category: 6,
+    authors: [10, 3],
+    publisher: 5,
+    language: "English",
+    year: 2022,
+    pages: 208,
+    tags: ["cryptography", "security", "privacy"],
+    restricted: true,
+  },
+  {
+    title: "API Security Handbook",
+    subtitle: "Authentication, Authorization, and Validation",
+    category: 6,
+    authors: [10, 1],
+    publisher: 1,
+    language: "English",
+    year: 2025,
+    pages: 174,
+    tags: ["api security", "jwt", "validation"],
+  },
+  {
+    title: "Secure Database Applications",
+    subtitle: "Protecting Data-Driven Services",
+    category: 6,
+    authors: [10, 12],
     publisher: 0,
     language: "English",
-    publicationYear: 1995,
-    numberOfPages: 480,
-    tags: ["science", "skepticism"],
-    status: BOOK_STATUS.PUBLISHED,
-    visibility: BOOK_VISIBILITY.PUBLIC,
+    year: 2023,
+    pages: 160,
+    tags: ["database security", "sql", "security"],
+    archived: true,
+  },
+
+  {
+    title: "Software Architecture Patterns",
+    subtitle: "Boundaries, Services, and Maintainability",
+    category: 7,
+    authors: [8, 13],
+    publisher: 2,
+    language: "English",
+    year: 2024,
+    pages: 230,
+    tags: ["architecture", "software engineering", "design"],
+  },
+  {
+    title: "Testing Node.js Services",
+    subtitle: "Unit, Integration, and API Testing",
+    category: 7,
+    authors: [1, 8],
+    publisher: 1,
+    language: "English",
+    year: 2025,
+    pages: 182,
+    tags: ["testing", "nodejs", "api"],
+  },
+  {
+    title: "Clean Code Workshop",
+    subtitle: "Readable Code and Practical Refactoring",
+    category: 7,
+    authors: [8, 0],
+    publisher: 0,
+    language: "English",
+    year: 2022,
+    pages: 156,
+    tags: ["clean code", "refactoring", "programming"],
+  },
+  {
+    title: "Engineering Reliable Systems",
+    subtitle: "Observability, Failure, and Recovery",
+    category: 7,
+    authors: [1, 11],
+    publisher: 4,
+    language: "English",
+    year: 2025,
+    pages: 240,
+    tags: ["reliability", "observability", "systems"],
+    restricted: true,
+  },
+
+  {
+    title: "Statistics for Data Projects",
+    subtitle: "Probability and Inference for Developers",
+    category: 8,
+    authors: [6, 12],
+    publisher: 3,
+    language: "English",
+    year: 2023,
+    pages: 210,
+    tags: ["statistics", "data science", "probability"],
+  },
+  {
+    title: "Data Visualization Principles",
+    subtitle: "Turning Data into Useful Stories",
+    category: 8,
+    authors: [6, 14],
+    publisher: 5,
+    language: "English",
+    year: 2024,
+    pages: 166,
+    tags: ["visualization", "analytics", "data science"],
+  },
+  {
+    title: "Analytics with Python",
+    subtitle: "From CSV Files to Useful Insights",
+    category: 8,
+    authors: [6, 12],
+    publisher: 1,
+    language: "English",
+    year: 2025,
+    pages: 194,
+    tags: ["python", "analytics", "pandas"],
+    draft: true,
+  },
+  {
+    title: "Information Retrieval Basics",
+    subtitle: "Search, Ranking, and Discovery",
+    category: 8,
+    authors: [2, 7],
+    publisher: 2,
+    language: "English",
+    year: 2022,
+    pages: 188,
+    tags: ["search", "information retrieval", "data"],
+  },
+
+  {
+    title: "Digital Privacy",
+    subtitle: "Understanding Data in Connected Life",
+    category: 9,
+    authors: [14, 10],
+    publisher: 5,
+    language: "English",
+    year: 2024,
+    pages: 152,
+    tags: ["privacy", "technology", "ethics"],
+  },
+  {
+    title: "Technology and Society",
+    subtitle: "How Digital Systems Change Everyday Life",
+    category: 9,
+    authors: [14, 6],
+    publisher: 3,
+    language: "English",
+    year: 2021,
+    pages: 178,
+    tags: ["technology", "society", "ethics"],
+  },
+  {
+    title: "Ethics for Software Developers",
+    subtitle: "Making Better Engineering Decisions",
+    category: 9,
+    authors: [8, 14],
+    publisher: 0,
+    language: "English",
+    year: 2025,
+    pages: 144,
+    tags: ["ethics", "software", "engineering"],
+    restricted: true,
+  },
+  {
+    title: "The Future of Digital Libraries",
+    subtitle: "Search, Access, and Preservation",
+    category: 9,
+    authors: [0, 14],
+    publisher: 2,
+    language: "English",
+    year: 2024,
+    pages: 170,
+    tags: ["digital libraries", "information", "technology"],
   },
 ];
 
-const log = (message) => console.log(`[seed] ${message}`);
+/* -------------------------------------------------------------------------- */
+/* SMALL FILE GENERATORS                                                       */
+/* -------------------------------------------------------------------------- */
+
+const crc32 = (buffer) => {
+  let crc = 0xffffffff;
+
+  for (const byte of buffer) {
+    crc ^= byte;
+
+    for (let i = 0; i < 8; i++) {
+      crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+  }
+
+  return (crc ^ 0xffffffff) >>> 0;
+};
+
+/**
+ * Generates a valid PNG.
+ *
+ * This intentionally uses simple geometric artwork rather than external
+ * image-generation services. That makes the seed reproducible and removes
+ * another dependency from your backend.
+ */
+const makeCoverPng = (book, index) => {
+  const width = 600;
+  const height = 800;
+
+  const raw = Buffer.alloc(height * (1 + width * 4));
+
+  const hue = (index * 37) % 360;
+
+  const hslToRgb = (h, s, l) => {
+    s /= 100;
+    l /= 100;
+
+    const k = (n) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) =>
+      l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+
+    return [
+      Math.round(255 * f(0)),
+      Math.round(255 * f(8)),
+      Math.round(255 * f(4)),
+    ];
+  };
+
+  const [r, g, b] = hslToRgb(hue, 55, 20);
+  const [r2, g2, b2] = hslToRgb((hue + 70) % 360, 60, 55);
+
+  for (let y = 0; y < height; y++) {
+    raw[y * (1 + width * 4)] = 0;
+
+    for (let x = 0; x < width; x++) {
+      const offset = y * (1 + width * 4) + 1 + x * 4;
+
+      const progress = y / height;
+
+      raw[offset] = Math.round(r + (r2 - r) * progress);
+      raw[offset + 1] = Math.round(g + (g2 - g) * progress);
+      raw[offset + 2] = Math.round(b + (b2 - b) * progress);
+      raw[offset + 3] = 255;
+    }
+  }
+
+  const makeChunk = (type, data) => {
+    const typeBuffer = Buffer.from(type);
+    const output = Buffer.alloc(12 + data.length);
+
+    output.writeUInt32BE(data.length, 0);
+    typeBuffer.copy(output, 4);
+    data.copy(output, 8);
+
+    output.writeUInt32BE(
+      crc32(Buffer.concat([typeBuffer, data])),
+      8 + data.length,
+    );
+
+    return output;
+  };
+
+  const header = Buffer.alloc(13);
+
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  return Buffer.concat([
+    signature,
+    makeChunk("IHDR", header),
+    makeChunk("IDAT", zlib.deflateSync(raw)),
+    makeChunk("IEND", Buffer.alloc(0)),
+  ]);
+};
+
+/**
+ * Generates a small valid PDF with several pages.
+ */
+const makePdf = (book, categoryName) => {
+  const pageCount = 6;
+  const objects = [];
+
+  const pageObjectIds = [];
+  const contentObjectIds = [];
+
+  let nextId = 3;
+
+  for (let i = 0; i < pageCount; i++) {
+    pageObjectIds.push(nextId++);
+    contentObjectIds.push(nextId++);
+  }
+
+  const fontObjectId = nextId++;
+
+  const pagesKids = pageObjectIds.map((id) => `${id} 0 R`).join(" ");
+
+  objects[1] = `<< /Type /Catalog /Pages 2 0 R >>`;
+
+  objects[2] = `<< /Type /Pages /Kids [${pagesKids}] /Count ${pageCount} >>`;
+
+  for (let i = 0; i < pageCount; i++) {
+    const pageId = pageObjectIds[i];
+    const contentId = contentObjectIds[i];
+
+    const textLines = [
+      book.title,
+      book.subtitle,
+      "",
+      `Synthetic E-Library test document`,
+      `Chapter ${i + 1}`,
+      "",
+      `This original placeholder content is generated for development`,
+      `and API testing of the E-Library application.`,
+      "",
+      `Category: ${categoryName}`,
+      `Tags: ${book.tags.join(", ")}`,
+      "",
+      `This document can be used to test PDF upload, storage metadata,`,
+      `book details, reading, downloading, and deletion workflows.`,
+    ];
+
+    const commands = ["BT", "/F1 14 Tf", "72 730 Td"];
+
+    textLines.forEach((line, index) => {
+      const safe = line.replace(/[()\\]/g, "\\$&");
+
+      if (index > 0) {
+        commands.push("0 -35 Td");
+      }
+
+      commands.push(`(${safe}) Tj`);
+    });
+
+    commands.push("ET");
+
+    const stream = commands.join("\n");
+
+    objects[pageId] =
+      `<< /Type /Page /Parent 2 0 R ` +
+      `/MediaBox [0 0 612 792] ` +
+      `/Resources << /Font << /F1 ${fontObjectId} 0 R >> >> ` +
+      `/Contents ${contentId} 0 R >>`;
+
+    objects[contentId] =
+      `<< /Length ${Buffer.byteLength(stream)} >>\n` +
+      `stream\n${stream}\nendstream`;
+  }
+
+  objects[fontObjectId] =
+    `<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>`;
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [];
+
+  for (let i = 1; i < objects.length; i++) {
+    offsets[i] = Buffer.byteLength(pdf);
+
+    pdf += `${i} 0 obj\n`;
+    pdf += `${objects[i]}\n`;
+    pdf += "endobj\n";
+  }
+
+  const xrefOffset = Buffer.byteLength(pdf);
+
+  pdf += `xref\n0 ${objects.length}\n`;
+  pdf += "0000000000 65535 f \n";
+
+  for (let i = 1; i < objects.length; i++) {
+    pdf += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`;
+  }
+
+  pdf +=
+    `trailer\n` +
+    `<< /Size ${objects.length} /Root 1 0 R >>\n` +
+    `startxref\n` +
+    `${xrefOffset}\n` +
+    "%%EOF\n";
+
+  return Buffer.from(pdf, "utf8");
+};
+
+/* -------------------------------------------------------------------------- */
+/* MINIMAL EPUB ZIP GENERATOR                                                  */
+/* -------------------------------------------------------------------------- */
+
+const createZipEntry = (name, data, compressionMethod = 8) => {
+  const nameBuffer = Buffer.from(name);
+  const raw = Buffer.isBuffer(data) ? data : Buffer.from(data);
+
+  const compressed = compressionMethod === 0 ? raw : zlib.deflateRawSync(raw);
+
+  const entryCrc = crc32(raw);
+
+  const localHeader = Buffer.alloc(30 + nameBuffer.length);
+
+  localHeader.writeUInt32LE(0x04034b50, 0);
+  localHeader.writeUInt16LE(20, 4);
+  localHeader.writeUInt16LE(0, 6);
+  localHeader.writeUInt16LE(compressionMethod, 8);
+  localHeader.writeUInt16LE(0, 10);
+  localHeader.writeUInt16LE(0, 12);
+  localHeader.writeUInt32LE(entryCrc, 14);
+  localHeader.writeUInt32LE(compressed.length, 18);
+  localHeader.writeUInt32LE(raw.length, 22);
+  localHeader.writeUInt16LE(nameBuffer.length, 26);
+  localHeader.writeUInt16LE(0, 28);
+
+  nameBuffer.copy(localHeader, 30);
+
+  return {
+    name,
+    raw,
+    compressed,
+    crc: entryCrc,
+    method: compressionMethod,
+    localHeader,
+  };
+};
+
+const makeEpub = (book, index, categoryName, authorName) => {
+  const bookId = `book-${index + 1}`;
+
+  const title = book.title.replace(/&/g, "&amp;");
+  const subtitle = book.subtitle.replace(/&/g, "&amp;");
+
+  const files = [
+    ["mimetype", "application/epub+zip", 0],
+
+    [
+      "META-INF/container.xml",
+      `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0"
+ xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile
+      full-path="OEBPS/content.opf"
+      media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>`,
+    ],
+
+    [
+      "OEBPS/content.opf",
+      `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf"
+ version="3.0"
+ unique-identifier="book-id">
+
+  <metadata
+    xmlns:dc="http://purl.org/dc/elements/1.1/">
+
+    <dc:identifier id="book-id">${book.isbn}</dc:identifier>
+    <dc:title>${title}</dc:title>
+    <dc:language>en</dc:language>
+    <dc:creator>${authorName}</dc:creator>
+
+  </metadata>
+
+  <manifest>
+
+    <item
+      id="nav"
+      href="nav.xhtml"
+      media-type="application/xhtml+xml"
+      properties="nav"/>
+
+    <item
+      id="${bookId}"
+      href="${bookId}.xhtml"
+      media-type="application/xhtml+xml"/>
+
+  </manifest>
+
+  <spine>
+    <itemref idref="${bookId}"/>
+  </spine>
+
+</package>`,
+    ],
+
+    [
+      "OEBPS/nav.xhtml",
+      `<?xml version="1.0" encoding="UTF-8"?>
+<html
+ xmlns="http://www.w3.org/1999/xhtml"
+ xmlns:epub="http://www.idpf.org/2007/ops">
+
+<head>
+  <title>${title}</title>
+</head>
+
+<body>
+
+<nav epub:type="toc">
+
+<ol>
+<li>
+<a href="${bookId}.xhtml">${title}</a>
+</li>
+</ol>
+
+</nav>
+
+</body>
+</html>`,
+    ],
+
+    [
+      `OEBPS/${bookId}.xhtml`,
+      `<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>${title}</title>
+</head>
+
+<body>
+
+<h1>${title}</h1>
+
+<h2>${subtitle}</h2>
+
+<p>
+Synthetic E-Library test content.
+</p>
+
+<h2>Overview</h2>
+
+<p>
+This original EPUB is generated specifically for development and
+API testing of the E-Library application.
+</p>
+
+<h2>Category</h2>
+
+<p>
+${categoryName}
+</p>
+
+<h2>Tags</h2>
+
+<p>
+${book.tags.join(", ")}
+</p>
+
+<h2>Testing Purpose</h2>
+
+<p>
+This file can be used to verify EPUB upload, Cloudinary storage,
+metadata persistence, downloading, and digital-library workflows.
+</p>
+
+</body>
+
+</html>`,
+    ],
+  ];
+
+  const entries = files.map(([name, data, method]) =>
+    createZipEntry(name, data, method ?? 8),
+  );
+
+  const localParts = [];
+  let offset = 0;
+
+  for (const entry of entries) {
+    entry.offset = offset;
+
+    localParts.push(entry.localHeader, entry.compressed);
+
+    offset += entry.localHeader.length + entry.compressed.length;
+  }
+
+  const centralParts = [];
+
+  for (const entry of entries) {
+    const nameBuffer = Buffer.from(entry.name);
+
+    const header = Buffer.alloc(46 + nameBuffer.length);
+
+    header.writeUInt32LE(0x02014b50, 0);
+    header.writeUInt16LE(20, 4);
+    header.writeUInt16LE(20, 6);
+    header.writeUInt16LE(0, 8);
+    header.writeUInt16LE(entry.method, 10);
+    header.writeUInt16LE(0, 12);
+    header.writeUInt16LE(0, 14);
+    header.writeUInt32LE(entry.crc, 16);
+    header.writeUInt32LE(entry.compressed.length, 20);
+    header.writeUInt32LE(entry.raw.length, 24);
+    header.writeUInt16LE(nameBuffer.length, 28);
+    header.writeUInt16LE(0, 30);
+    header.writeUInt16LE(0, 32);
+    header.writeUInt16LE(0, 34);
+    header.writeUInt16LE(0, 36);
+    header.writeUInt32LE(0, 38);
+    header.writeUInt32LE(entry.offset, 42);
+
+    nameBuffer.copy(header, 46);
+
+    centralParts.push(header);
+  }
+
+  const localBuffer = Buffer.concat(localParts);
+  const centralBuffer = Buffer.concat(centralParts);
+
+  const eocd = Buffer.alloc(22);
+
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(0, 4);
+  eocd.writeUInt16LE(0, 6);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(centralBuffer.length, 12);
+  eocd.writeUInt32LE(localBuffer.length, 16);
+  eocd.writeUInt16LE(0, 20);
+
+  return Buffer.concat([localBuffer, centralBuffer, eocd]);
+};
+
+/* -------------------------------------------------------------------------- */
+/* CLOUDINARY                                                                  */
+/* -------------------------------------------------------------------------- */
+
+const uploadAssets = async (book, index, categoryName, authorName) => {
+  const timestamp = Date.now();
+
+  const cover = await uploadBuffer(makeCoverPng(book, index), {
+    folder: FILE_LIMITS.cover.cloudinaryFolder,
+    resourceType: FILE_LIMITS.cover.cloudinaryResourceType,
+    publicId: `book-${book._id}-cover-${timestamp}`,
+  });
+
+  const pdf = await uploadBuffer(makePdf(book, categoryName), {
+    folder: FILE_LIMITS.pdf.cloudinaryFolder,
+    resourceType: FILE_LIMITS.pdf.cloudinaryResourceType,
+    publicId: `book-${book._id}-pdf-${timestamp}`,
+  });
+
+  const epub = await uploadBuffer(
+    makeEpub(book, index, categoryName, authorName),
+    {
+      folder: FILE_LIMITS.epub.cloudinaryFolder,
+      resourceType: FILE_LIMITS.epub.cloudinaryResourceType,
+      publicId: `book-${book._id}-epub-${timestamp}`,
+    },
+  );
+
+  const uploadedAt = new Date();
+
+  return {
+    coverImage: {
+      url: cover.secure_url,
+      publicId: cover.public_id,
+      format: cover.format,
+      sizeBytes: cover.bytes,
+      originalName: `${generateSlug(book.title)}-cover.png`,
+      uploadedAt,
+    },
+
+    digitalFiles: {
+      pdf: {
+        url: pdf.secure_url,
+        publicId: pdf.public_id,
+        format: pdf.format,
+        sizeBytes: pdf.bytes,
+        originalName: `${generateSlug(book.title)}.pdf`,
+        uploadedAt,
+      },
+
+      epub: {
+        url: epub.secure_url,
+        publicId: epub.public_id,
+        format: epub.format,
+        sizeBytes: epub.bytes,
+        originalName: `${generateSlug(book.title)}.epub`,
+        uploadedAt,
+      },
+    },
+  };
+};
+
+/* -------------------------------------------------------------------------- */
+/* CLOUDINARY CLEANUP                                                          */
+/* -------------------------------------------------------------------------- */
+
+const removeBookAssets = async (books) => {
+  for (const book of books) {
+    if (book.coverImage?.publicId) {
+      await deleteAsset(
+        book.coverImage.publicId,
+        FILE_LIMITS.cover.cloudinaryResourceType,
+      );
+    }
+
+    if (book.digitalFiles?.pdf?.publicId) {
+      await deleteAsset(
+        book.digitalFiles.pdf.publicId,
+        FILE_LIMITS.pdf.cloudinaryResourceType,
+      );
+    }
+
+    if (book.digitalFiles?.epub?.publicId) {
+      await deleteAsset(
+        book.digitalFiles.epub.publicId,
+        FILE_LIMITS.epub.cloudinaryResourceType,
+      );
+    }
+  }
+};
+
+/* -------------------------------------------------------------------------- */
+/* MAIN                                                                        */
+/* -------------------------------------------------------------------------- */
 
 async function run() {
   if (!MONGODB_URI) {
-    console.error("[seed] MONGODB_URI is not set. Aborting.");
+    console.error("[seed] MONGO_URI is not configured.");
+
     process.exit(1);
   }
 
   await mongoose.connect(MONGODB_URI);
+
   log("Connected to MongoDB.");
 
+  /* ---------------------------------------------------------------------- */
+  /* FRESH                                                                   */
+  /* ---------------------------------------------------------------------- */
+
   if (isFreshRun) {
-    log("--fresh flag detected: wiping existing mock collections...");
+    log("--fresh detected. Removing existing development data...");
+
+    const existingBooks = await Book.find({}).lean();
+
+    await removeBookAssets(existingBooks);
+
     await Promise.all([
       Favorite.deleteMany({}),
       RecentlyViewed.deleteMany({}),
@@ -425,136 +1282,346 @@ async function run() {
       Category.deleteMany({}),
       Author.deleteMany({}),
       Publisher.deleteMany({}),
-      User.deleteMany({ email: { $in: USERS.map((user) => user.email) } }),
+
+      User.deleteMany({
+        email: {
+          $in: USERS.map((user) => user.email),
+        },
+      }),
     ]);
-    log("Wipe complete.");
+
+    log("Development data removed.");
   }
 
-  // --- Users -----------------------------------------------------------
-  // Uses .create() (not insertMany) so the User model's pre-save bcrypt
-  // hash hook actually runs — insertMany bypasses Mongoose middleware.
+  /* ---------------------------------------------------------------------- */
+  /* USERS                                                                    */
+  /* ---------------------------------------------------------------------- */
+
   const userDocs = {};
+
   for (const userData of USERS) {
-    let user = await User.findOne({ email: userData.email });
+    let user = await User.findOne({
+      email: userData.email,
+    });
+
     if (!user) {
-      user = await User.create({ ...userData, password: TEST_PASSWORD });
-      log(`Created user: ${userData.email} (${userData.role})`);
+      user = await User.create({
+        ...userData,
+        password: TEST_PASSWORD,
+      });
+
+      log(`Created user: ${userData.email}`);
     } else {
-      log(`User already exists, skipping: ${userData.email}`);
+      log(`User already exists: ${userData.email}`);
     }
+
     userDocs[userData.email] = user;
   }
+
   const librarian = userDocs["librarian@elibrary.test"];
+
   const student1 = userDocs["student1@elibrary.test"];
 
-  // --- Categories --------------------------------------------------------
+  const student2 = userDocs["student2@elibrary.test"];
+
+  /* ---------------------------------------------------------------------- */
+  /* CATEGORIES                                                               */
+  /* ---------------------------------------------------------------------- */
+
   const categoryDocs = [];
-  for (const categoryData of CATEGORIES) {
-    let category = await Category.findOne({ name: categoryData.name });
+
+  for (const data of CATEGORIES) {
+    let category = await Category.findOne({
+      name: data.name,
+    });
+
     if (!category) {
       category = await Category.create({
-        ...categoryData,
-        slug: generateSlug(categoryData.name),
+        ...data,
+        slug: generateSlug(data.name),
         createdBy: librarian._id,
       });
-      log(`Created category: ${categoryData.name}`);
+
+      log(`Created category: ${data.name}`);
     }
+
     categoryDocs.push(category);
   }
 
-  // --- Authors -----------------------------------------------------------
+  /* ---------------------------------------------------------------------- */
+  /* AUTHORS                                                                  */
+  /* ---------------------------------------------------------------------- */
+
   const authorDocs = [];
-  for (const authorData of AUTHORS) {
-    let author = await Author.findOne({ name: authorData.name });
+
+  for (const data of AUTHORS) {
+    let author = await Author.findOne({
+      name: data.name,
+    });
+
     if (!author) {
       author = await Author.create({
-        ...authorData,
-        slug: generateSlug(authorData.name),
+        ...data,
+        slug: generateSlug(data.name),
         createdBy: librarian._id,
       });
-      log(`Created author: ${authorData.name}`);
+
+      log(`Created author: ${data.name}`);
     }
+
     authorDocs.push(author);
   }
 
-  // --- Publishers --------------------------------------------------------
+  /* ---------------------------------------------------------------------- */
+  /* PUBLISHERS                                                               */
+  /* ---------------------------------------------------------------------- */
+
   const publisherDocs = [];
-  for (const publisherData of PUBLISHERS) {
-    let publisher = await Publisher.findOne({ name: publisherData.name });
+
+  for (const data of PUBLISHERS) {
+    let publisher = await Publisher.findOne({
+      name: data.name,
+    });
+
     if (!publisher) {
       publisher = await Publisher.create({
-        ...publisherData,
-        slug: generateSlug(publisherData.name),
+        ...data,
+        slug: generateSlug(data.name),
         createdBy: librarian._id,
       });
-      log(`Created publisher: ${publisherData.name}`);
+
+      log(`Created publisher: ${data.name}`);
     }
+
     publisherDocs.push(publisher);
   }
 
-  // --- Books ---------------------------------------------------------
+  /* ---------------------------------------------------------------------- */
+  /* BOOKS                                                                    */
+  /* ---------------------------------------------------------------------- */
+
   const bookDocs = [];
-  for (const bookData of BOOKS) {
-    let book = await Book.findOne({ isbn: bookData.isbn });
+
+  for (const [index, data] of BOOKS.entries()) {
+    const isbn = `979${String(1000000000 + index).slice(-10)}`;
+
+    let book = await Book.findOne({
+      isbn,
+    });
+
     if (!book) {
       book = await Book.create({
-        title: bookData.title,
-        isbn: bookData.isbn,
-        language: bookData.language,
-        publicationYear: bookData.publicationYear,
-        numberOfPages: bookData.numberOfPages,
-        tags: bookData.tags,
-        status: bookData.status,
-        visibility: bookData.visibility,
-        category: categoryDocs[bookData.category]._id,
-        authors: bookData.authors.map(
-          (authorIndex) => authorDocs[authorIndex]._id,
-        ),
-        publisher: publisherDocs[bookData.publisher]._id,
+        title: data.title,
+
+        subtitle: data.subtitle,
+
+        isbn,
+
+        description:
+          `Original synthetic development content for "${data.title}". ` +
+          `This book is part of the E-Library mock catalog and is used ` +
+          `for testing search, filtering, metadata, reading, downloading, ` +
+          `and digital-file workflows.`,
+
+        language: data.language,
+
+        edition: `${(index % 3) + 1}st Edition`,
+
+        publicationYear: data.year,
+
+        numberOfPages: data.pages,
+
+        category: categoryDocs[data.category]._id,
+
+        authors: data.authors.map((authorIndex) => authorDocs[authorIndex]._id),
+
+        publisher: publisherDocs[data.publisher]._id,
+
+        tags: data.tags,
+
         uploadedBy: librarian._id,
+
+        visibility: data.restricted
+          ? BOOK_VISIBILITY.RESTRICTED
+          : BOOK_VISIBILITY.PUBLIC,
+
+        status: data.archived
+          ? BOOK_STATUS.ARCHIVED
+          : data.draft
+            ? BOOK_STATUS.DRAFT
+            : BOOK_STATUS.PUBLISHED,
       });
-      log(`Created book: ${bookData.title}`);
+
+      log(`Created book ${index + 1}/${BOOKS.length}: ${data.title}`);
+    } else {
+      log(`Book already exists: ${data.title}`);
     }
+
+    /* ------------------------------------------------------------------ */
+    /* DIGITAL ASSETS                                                      */
+    /* ------------------------------------------------------------------ */
+
+    const hasCover = Boolean(book.coverImage?.publicId);
+
+    const hasPdf = Boolean(book.digitalFiles?.pdf?.publicId);
+
+    const hasEpub = Boolean(book.digitalFiles?.epub?.publicId);
+
+    if (!hasCover || !hasPdf || !hasEpub) {
+      log(`Generating missing assets: ${data.title}`);
+
+      const assets = await uploadAssets(
+        book,
+        index,
+        CATEGORIES[data.category].name,
+        AUTHORS[data.authors[0]].name,
+      );
+
+      if (!hasCover) {
+        book.coverImage = assets.coverImage;
+      }
+
+      if (!hasPdf) {
+        book.digitalFiles.pdf = assets.digitalFiles.pdf;
+      }
+
+      if (!hasEpub) {
+        book.digitalFiles.epub = assets.digitalFiles.epub;
+      }
+
+      await book.save();
+
+      log(`Uploaded assets: ${data.title}`);
+    }
+
     bookDocs.push(book);
   }
 
-  // --- Favorites & Recently Viewed (demo data for student1) --------------
-  const favoritePicks = bookDocs.slice(0, 4);
-  for (const book of favoritePicks) {
+  /* ---------------------------------------------------------------------- */
+  /* FAVORITES                                                               */
+  /* ---------------------------------------------------------------------- */
+
+  const student1Favorites = bookDocs.slice(0, 6);
+
+  for (const book of student1Favorites) {
     await Favorite.findOneAndUpdate(
-      { user: student1._id, book: book._id },
-      { user: student1._id, book: book._id },
-      { upsert: true },
+      {
+        user: student1._id,
+        book: book._id,
+      },
+      {
+        user: student1._id,
+        book: book._id,
+      },
+      {
+        upsert: true,
+        setDefaultsOnInsert: true,
+      },
     );
   }
-  log(`Seeded ${favoritePicks.length} favorites for student1@elibrary.test`);
 
-  const recentPicks = bookDocs.slice(4, 10);
-  for (const [index, book] of recentPicks.entries()) {
+  const student2Favorites = bookDocs.slice(12, 17);
+
+  for (const book of student2Favorites) {
+    await Favorite.findOneAndUpdate(
+      {
+        user: student2._id,
+        book: book._id,
+      },
+      {
+        user: student2._id,
+        book: book._id,
+      },
+      {
+        upsert: true,
+        setDefaultsOnInsert: true,
+      },
+    );
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* RECENTLY VIEWED                                                         */
+  /* ---------------------------------------------------------------------- */
+
+  const student1Recent = bookDocs.slice(6, 14);
+
+  for (const [index, book] of student1Recent.entries()) {
     await RecentlyViewed.findOneAndUpdate(
-      { user: student1._id, book: book._id },
+      {
+        user: student1._id,
+        book: book._id,
+      },
       {
         user: student1._id,
         book: book._id,
         viewedAt: new Date(Date.now() - index * 60_000),
       },
-      { upsert: true },
+      {
+        upsert: true,
+        setDefaultsOnInsert: true,
+      },
     );
   }
-  log(
-    `Seeded ${recentPicks.length} recently-viewed entries for student1@elibrary.test`,
-  );
 
-  log("Done.");
-  log("---");
-  log(`Test accounts (password for all: "${TEST_PASSWORD}"):`);
-  USERS.forEach((user) => log(`  ${user.role.padEnd(10)} ${user.email}`));
+  const student2Recent = bookDocs.slice(20, 25);
+
+  for (const [index, book] of student2Recent.entries()) {
+    await RecentlyViewed.findOneAndUpdate(
+      {
+        user: student2._id,
+        book: book._id,
+      },
+      {
+        user: student2._id,
+        book: book._id,
+        viewedAt: new Date(Date.now() - index * 90_000),
+      },
+      {
+        upsert: true,
+        setDefaultsOnInsert: true,
+      },
+    );
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* SUMMARY                                                                  */
+  /* ---------------------------------------------------------------------- */
+
+  log("");
+  log("======================================");
+  log("E-LIBRARY MOCK DATA COMPLETE");
+  log("======================================");
+
+  log(`Users:       ${USERS.length}`);
+  log(`Categories:  ${categoryDocs.length}`);
+  log(`Authors:     ${authorDocs.length}`);
+  log(`Publishers:  ${publisherDocs.length}`);
+  log(`Books:       ${bookDocs.length}`);
+  log(`Favorites:   ${student1Favorites.length + student2Favorites.length}`);
+  log(`Recent views:${student1Recent.length + student2Recent.length}`);
+
+  log("");
+  log(`Password for all test users: ${TEST_PASSWORD}`);
+
+  USERS.forEach((user) => {
+    log(`${user.role.padEnd(10)} ${user.email}`);
+  });
+
+  log("");
+  log("Cloudinary folders used:");
+  log(`Cover: ${FILE_LIMITS.cover.cloudinaryFolder}`);
+  log(`PDF:   ${FILE_LIMITS.pdf.cloudinaryFolder}`);
+  log(`EPUB:  ${FILE_LIMITS.epub.cloudinaryFolder}`);
 
   await mongoose.disconnect();
-  process.exit(0);
+
+  log("Disconnected from MongoDB.");
 }
 
-run().catch((error) => {
+run().catch(async (error) => {
   console.error("[seed] Failed:", error);
+
+  await mongoose.disconnect().catch(() => {});
+
   process.exit(1);
 });
