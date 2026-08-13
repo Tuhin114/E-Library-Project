@@ -31,3 +31,12 @@ export const uploadDigitalFile = (id, type, file) => {
 
 export const deleteDigitalFile = (id, type) =>
   axiosInstance.delete(`${BASE_URL}/${id}/files/${type}`);
+
+// responseType: 'blob' — react-pdf/react-reader take an object URL, not
+// a raw network URL (they can't attach the Authorization header a
+// direct fetch to this route needs).
+export const fetchBookFile = (id, type, { download = false } = {}) =>
+  axiosInstance.get(`${BASE_URL}/${id}/files/${type}/stream`, {
+    params: { download: download ? "true" : "false" },
+    responseType: "blob",
+  });

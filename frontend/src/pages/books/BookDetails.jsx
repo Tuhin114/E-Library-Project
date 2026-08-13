@@ -36,7 +36,7 @@ const BookDetails = () => {
 
   const authorLinks = book.authors || [];
   const hasDigitalCopy = Boolean(
-    book.digitalFiles?.pdf?.url || book.digitalFiles?.epub?.url,
+    book.digitalFiles?.pdf?.available || book.digitalFiles?.epub?.available,
   );
 
   return (
@@ -166,8 +166,6 @@ const BookDetails = () => {
           </div>
         )}
 
-        {/* TODO (Phase 3, Milestone 3): Download action — gated behind
-            DRM-lite once file access moves off raw Cloudinary URLs. */}
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import {
 import {
   bookCoverParamSchema,
   bookDigitalFileParamSchema,
+  bookFileStreamQuerySchema,
 } from "../validators/bookFileValidator.js";
 import { ROLES } from "../constants/roles.js";
 
@@ -79,6 +80,15 @@ router.delete(
   authorize(ROLES.LIBRARIAN),
   validateParams(bookDigitalFileParamSchema),
   bookController.deleteDigitalFile,
+);
+
+// Digital file access — any authenticated role; visibility/status and
+// download-vs-read restrictions are enforced in the service layer.
+router.get(
+  "/:id/files/:type/stream",
+  validateParams(bookDigitalFileParamSchema),
+  validateQuery(bookFileStreamQuerySchema),
+  bookController.streamBookFile,
 );
 
 export default router;

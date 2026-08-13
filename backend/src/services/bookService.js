@@ -1,3 +1,4 @@
+import axios from "axios";
 import Book from "../models/Book.js";
 import Category from "../models/Category.js";
 import Author from "../models/Author.js";
@@ -6,8 +7,9 @@ import Favorite from "../models/Favorite.js";
 import RecentlyViewed from "../models/RecentlyViewed.js";
 import { ApiError } from "../utils/ApiError.js";
 import { uploadBuffer, deleteAsset } from "../utils/cloudinaryUpload.js";
-import { FILE_LIMITS } from "../constants/fileUploadLimits.js";
+import { FILE_LIMITS, DIGITAL_FILE_TYPES } from "../constants/fileUploadLimits.js";
 import { BOOK_STATUS } from "../constants/bookStatus.js";
+import { BOOK_VISIBILITY } from "../constants/bookVisibility.js";
 import { ROLES } from "../constants/roles.js";
 import {
   buildBookExactFilters,
@@ -57,6 +59,43 @@ const BOOK_POPULATE = [
   { path: "uploadedBy", select: "name email" },
 ];
 
+// A non-librarian can only ever read published books — used both for
+// direct-by-id fetches and for the file-streaming path below, so the
+// rule lives in exactly one place.
+const assertBookReadable = (book, user) => {
+  if (user.role !== ROLES.LIBRARIAN && book.status !== BOOK_STATUS.PUBLISHED) {
+    throw new ApiError(404, "Book not found");
+  }
+};
+
+// Digital files are stored with their raw Cloudinary URL + publicId,
+// but neither should ever reach the client — both are enough to fetch
+// the file directly, forever, bypassing auth entirely. Clients only
+// get to know a file exists; actual bytes flow through getFileStream.
+const sanitizeDigitalFile = (file) =>
+  file?.url
+    ? {
+        available: true,
+        format: file.format,
+        sizeBytes: file.sizeBytes,
+        originalName: file.originalName,
+        uploadedAt: file.uploadedAt,
+      }
+    : { available: false };
+
+const serializeBook = (bookDoc) => {
+  const book =
+    typeof bookDoc.toObject === "function" ? bookDoc.toObject() : bookDoc;
+
+  return {
+    ...book,
+    digitalFiles: {
+      pdf: sanitizeDigitalFile(book.digitalFiles?.pdf),
+      epub: sanitizeDigitalFile(book.digitalFiles?.epub),
+    },
+  };
+};
+
 export const createBook = async (payload, userId) => {
   const existingIsbn = await Book.findOne({ isbn: payload.isbn.trim() });
   if (existingIsbn) {
@@ -71,7 +110,7 @@ export const createBook = async (payload, userId) => {
     uploadedBy: userId,
   });
 
-  return book.populate(BOOK_POPULATE);
+  return serializeBook(await book.populate(BOOK_POPULATE));
 };
 
 export const listBooks = async (query, user) => {
@@ -127,7 +166,7 @@ export const listBooks = async (query, user) => {
   ]);
 
   return {
-    books,
+    books: books.map(serializeBook),
     pagination: buildPaginationMeta({ page, limit, totalItems }),
   };
 };
@@ -136,13 +175,9 @@ export const getBookById = async (id, user) => {
   const book = await Book.findById(id).populate(BOOK_POPULATE).lean();
   if (!book) throw new ApiError(404, "Book not found");
 
-  // 404, not 403 — a non-librarian shouldn't be able to confirm a
-  // draft/archived book exists at all.
-  if (user.role !== ROLES.LIBRARIAN && book.status !== BOOK_STATUS.PUBLISHED) {
-    throw new ApiError(404, "Book not found");
-  }
+  assertBookReadable(book, user);
 
-  return book;
+  return serializeBook(book);
 };
 
 export const updateBook = async (id, payload) => {
@@ -167,7 +202,7 @@ export const updateBook = async (id, payload) => {
   });
 
   await book.save();
-  return book.populate(BOOK_POPULATE);
+  return serializeBook(await book.populate(BOOK_POPULATE));
 };
 
 export const deleteBook = async (id) => {
@@ -234,7 +269,7 @@ export const uploadCoverImage = async (bookId, file) => {
   };
 
   await book.save();
-  return book.populate(BOOK_POPULATE);
+  return serializeBook(await book.populate(BOOK_POPULATE));
 };
 
 export const deleteCoverImage = async (bookId) => {
@@ -250,7 +285,7 @@ export const deleteCoverImage = async (bookId) => {
 
   book.coverImage = {};
   await book.save();
-  return book.populate(BOOK_POPULATE);
+  return serializeBook(await book.populate(BOOK_POPULATE));
 };
 
 export const uploadDigitalFile = async (bookId, type, file) => {
@@ -281,7 +316,7 @@ export const uploadDigitalFile = async (bookId, type, file) => {
   };
 
   await book.save();
-  return book.populate(BOOK_POPULATE);
+  return serializeBook(await book.populate(BOOK_POPULATE));
 };
 
 export const deleteDigitalFile = async (bookId, type) => {
@@ -298,5 +333,53 @@ export const deleteDigitalFile = async (bookId, type) => {
 
   book.digitalFiles[type] = {};
   await book.save();
-  return book.populate(BOOK_POPULATE);
+  return serializeBook(await book.populate(BOOK_POPULATE));
+};
+
+// Streams a digital file through the backend instead of ever handing
+// the client a direct Cloudinary URL. `download`d requests against a
+// restricted-visibility book are blocked for non-librarians — read
+// access still goes through (inline), only the "keep a copy" path is
+// gated. This is the actual DRM-lite enforcement point; sanitizeDigitalFile
+// above is what makes bypassing it (by reading the URL off a normal
+// book response) impossible.
+export const getFileStream = async (bookId, type, user, { download = false } = {}) => {
+  if (!DIGITAL_FILE_TYPES.includes(type)) {
+    throw new ApiError(400, "Invalid file type");
+  }
+
+  const book = await Book.findById(bookId).lean();
+  if (!book) throw new ApiError(404, "Book not found");
+
+  assertBookReadable(book, user);
+
+  const fileMeta = book.digitalFiles?.[type];
+  if (!fileMeta?.url) {
+    throw new ApiError(404, `No ${type.toUpperCase()} file available for this book`);
+  }
+
+  if (
+    download &&
+    book.visibility === BOOK_VISIBILITY.RESTRICTED &&
+    user.role !== ROLES.LIBRARIAN
+  ) {
+    throw new ApiError(
+      403,
+      "Downloading this title is restricted. You can read it online instead.",
+    );
+  }
+
+  let response;
+  try {
+    response = await axios.get(fileMeta.url, { responseType: "stream" });
+  } catch (error) {
+    throw new ApiError(502, "Failed to retrieve the file. Please try again.");
+  }
+
+  return {
+    stream: response.data,
+    contentType: FILE_LIMITS[type].allowedMimeTypes[0],
+    contentLength: response.headers["content-length"],
+    filename: fileMeta.originalName || `${book.title}.${type}`,
+  };
 };

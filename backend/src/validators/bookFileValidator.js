@@ -18,3 +18,7 @@ export const bookDigitalFileParamSchema = z.object({
     }),
   }),
 });
+
+export const bookFileStreamQuerySchema = z.object({
+  download: z.enum(["true", "false"]).optional(),
+});

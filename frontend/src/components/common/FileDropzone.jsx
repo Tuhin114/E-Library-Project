@@ -17,24 +17,6 @@ const ICONS = {
   epub: FileText,
 };
 
-/**
- * Reusable drag-and-drop / browse / paste upload control.
- *
- * Supports:
- * - Click to browse
- * - Drag & drop
- * - Clipboard image paste (Ctrl+V / Cmd+V)
- *
- * Clipboard paste is primarily useful for cover images.
- *
- * Props:
- * - label: string
- * - fileType: 'cover' | 'pdf' | 'epub'
- * - currentFile: { url, originalName } | undefined
- * - onUpload: (file: File) => void
- * - onDelete: () => void
- * - isProcessing: boolean
- */
 const FileDropzone = ({
   label,
   fileType,
@@ -50,6 +32,8 @@ const FileDropzone = ({
 
   const limits = FILE_LIMITS[fileType];
   const Icon = ICONS[fileType] || UploadCloud;
+
+  const exists = Boolean(currentFile?.url || currentFile?.available);
 
   const validateAndUpload = (file) => {
     if (!file) return false;
@@ -72,10 +56,6 @@ const FileDropzone = ({
     return true;
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* DRAG & DROP                                                            */
-  /* ---------------------------------------------------------------------- */
-
   const handleDragOver = (event) => {
     event.preventDefault();
 
@@ -95,14 +75,8 @@ const FileDropzone = ({
 
     if (isProcessing) return;
 
-    const file = event.dataTransfer.files?.[0];
-
-    validateAndUpload(file);
+    validateAndUpload(event.dataTransfer.files?.[0]);
   };
-
-  /* ---------------------------------------------------------------------- */
-  /* BROWSE                                                                 */
-  /* ---------------------------------------------------------------------- */
 
   const handleBrowseClick = () => {
     if (isProcessing) return;
@@ -110,15 +84,10 @@ const FileDropzone = ({
     inputRef.current?.click();
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* CLIPBOARD PASTE                                                        */
-  /* ---------------------------------------------------------------------- */
+  const handlePaste = (event) => {
+    if (isProcessing || isPasting) return;
 
-  const handlePaste = async (event) => {
-    if (isProcessing) return;
-
-    // Clipboard pasting is intended for images.
-    // Do not intercept PDF/EPUB paste operations.
+    // Clipboard paste is only supported for cover images.
     if (fileType !== "cover") return;
 
     const items = event.clipboardData?.items;
@@ -135,7 +104,7 @@ const FileDropzone = ({
       if (imageFile) break;
     }
 
-    // Clipboard contains text, not an image.
+    // Clipboard contains text or something other than an image.
     if (!imageFile) {
       toast.error(
         "No image found in the clipboard. Copy an image and press Ctrl+V.",
@@ -148,11 +117,7 @@ const FileDropzone = ({
     setIsPasting(true);
 
     try {
-      /*
-       * Clipboard images sometimes don't have a useful filename.
-       * Give the generated File a sensible name so your backend metadata
-       * gets a useful originalName.
-       */
+      // Clipboard images may not have a useful filename.
       const extension = imageFile.type.split("/")[1] || "png";
 
       const pastedFile = new File([imageFile], `pasted-cover.${extension}`, {
@@ -166,27 +131,29 @@ const FileDropzone = ({
     }
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* RENDER                                                                 */
-  /* ---------------------------------------------------------------------- */
-
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">{label}</p>
 
-      {currentFile?.url ? (
+      {exists ? (
         <div className="flex items-center justify-between rounded-md border border-border p-3">
           <div className="flex items-center gap-2 overflow-hidden">
             <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
 
-            <a
-              href={currentFile.url}
-              target="_blank"
-              rel="noreferrer"
-              className="truncate text-sm text-primary hover:underline"
-            >
-              {currentFile.originalName || "View file"}
-            </a>
+            {currentFile.url ? (
+              <a
+                href={currentFile.url}
+                target="_blank"
+                rel="noreferrer"
+                className="truncate text-sm text-primary hover:underline"
+              >
+                {currentFile.originalName || "View file"}
+              </a>
+            ) : (
+              <span className="truncate text-sm text-foreground">
+                {currentFile.originalName || "File uploaded"}
+              </span>
+            )}
           </div>
 
           <Button
@@ -247,8 +214,6 @@ const FileDropzone = ({
           )}
 
           <p className="text-xs text-muted-foreground">
-            {limits.allowedMimeTypes.join(", ")}
-            {" · "}
             Max {limits.maxSizeMB}MB
           </p>
         </div>

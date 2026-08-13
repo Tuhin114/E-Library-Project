@@ -81,3 +81,29 @@ export const deleteDigitalFile = async (id, type) => {
     throw new Error(getErrorMessage(error));
   }
 };
+
+// With `responseType: 'blob'`, axios never parses a JSON error body —
+// a failed request's `error.response.data` is itself a Blob, so
+// getErrorMessage's `data.message` lookup would always miss. Read it
+// back out manually before falling back to the normal path.
+const getBlobErrorMessage = async (error) => {
+  const data = error?.response?.data;
+  if (data instanceof Blob && data.type === "application/json") {
+    try {
+      const parsed = JSON.parse(await data.text());
+      return parsed.message || getErrorMessage(error);
+    } catch {
+      return getErrorMessage(error);
+    }
+  }
+  return getErrorMessage(error);
+};
+
+export const getBookFileBlob = async (id, type, options = {}) => {
+  try {
+    const { data } = await bookApi.fetchBookFile(id, type, options);
+    return data; // Blob
+  } catch (error) {
+    throw new Error(await getBlobErrorMessage(error));
+  }
+};

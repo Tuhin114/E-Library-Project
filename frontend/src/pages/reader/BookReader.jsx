@@ -1,19 +1,27 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBookById, clearSelectedBook } from "../../store/slices/booksSlice";
+import { getBookFileBlob } from "../../services/bookService";
+import { useAuth } from "../../hooks/useAuth";
+import { ROLES } from "../../constants/roles";
 import { Button } from "../../components/ui/button";
 import ReaderToolbar from "../../components/reader/ReaderToolbar";
 import PdfViewer from "../../components/reader/PdfViewer";
 import EpubViewer from "../../components/reader/EpubViewer";
 import ReaderErrorState from "../../components/reader/ReaderErrorState";
+import DownloadButton from "../../components/reader/DownloadButton";
 
 const BookReader = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selected: book, status } = useSelector((state) => state.books);
+
+  const [fileUrl, setFileUrl] = useState(null);
+  const [fileError, setFileError] = useState(null);
 
   useEffect(() => {
     dispatch(fetchBookById(id));
@@ -22,8 +30,8 @@ const BookReader = () => {
 
   const availableFormats = useMemo(() => {
     const formats = [];
-    if (book?.digitalFiles?.pdf?.url) formats.push("pdf");
-    if (book?.digitalFiles?.epub?.url) formats.push("epub");
+    if (book?.digitalFiles?.pdf?.available) formats.push("pdf");
+    if (book?.digitalFiles?.epub?.available) formats.push("epub");
     return formats;
   }, [book]);
 
@@ -31,6 +39,35 @@ const BookReader = () => {
   const format = availableFormats.includes(requestedFormat)
     ? requestedFormat
     : availableFormats[0];
+
+  // The book response only ever says a file is "available" — the
+  // actual bytes come from the authenticated stream endpoint, fetched
+  // as a blob since react-pdf/react-reader can't attach an
+  // Authorization header to a plain network URL.
+  useEffect(() => {
+    if (!format) return undefined;
+
+    let objectUrl;
+    let cancelled = false;
+
+    setFileUrl(null);
+    setFileError(null);
+
+    getBookFileBlob(id, format)
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setFileUrl(objectUrl);
+      })
+      .catch((error) => {
+        if (!cancelled) setFileError(error.message);
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [id, format]);
 
   const goBack = () => navigate(`/books/${id}`);
 
@@ -54,6 +91,9 @@ const BookReader = () => {
     );
   }
 
+  const canDownload =
+    book.visibility === "public" || user?.role === ROLES.LIBRARIAN;
+
   return (
     <div className="flex h-screen flex-col">
       <ReaderToolbar
@@ -76,11 +116,29 @@ const BookReader = () => {
             </div>
           )
         }
-      />
+      >
+        {canDownload && (
+          <DownloadButton
+            bookId={id}
+            type={format}
+            filename={`${book.title}.${format}`}
+          />
+        )}
+      </ReaderToolbar>
 
       <div className="min-h-0 flex-1">
-        {format === "pdf" && <PdfViewer fileUrl={book.digitalFiles.pdf.url} />}
-        {format === "epub" && <EpubViewer fileUrl={book.digitalFiles.epub.url} />}
+        {fileError && <ReaderErrorState message={fileError} onBack={goBack} />}
+        {!fileError && !fileUrl && (
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            Loading {format?.toUpperCase()}…
+          </div>
+        )}
+        {!fileError && fileUrl && format === "pdf" && (
+          <PdfViewer fileUrl={fileUrl} />
+        )}
+        {!fileError && fileUrl && format === "epub" && (
+          <EpubViewer fileUrl={fileUrl} />
+        )}
       </div>
     </div>
   );

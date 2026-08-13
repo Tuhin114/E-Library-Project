@@ -89,3 +89,28 @@ export const deleteDigitalFile = asyncHandler(async (req, res) => {
       ),
     );
 });
+
+// Streams file bytes directly — no ApiResponse envelope, since the
+// response body here is the file itself, not JSON.
+export const streamBookFile = asyncHandler(async (req, res) => {
+  const download = req.query.download === "true";
+
+  const { stream, contentType, contentLength, filename } =
+    await bookService.getFileStream(req.params.id, req.params.type, req.user, {
+      download,
+    });
+
+  res.setHeader("Content-Type", contentType);
+  if (contentLength) res.setHeader("Content-Length", contentLength);
+  res.setHeader(
+    "Content-Disposition",
+    `${download ? "attachment" : "inline"}; filename="${filename}"`,
+  );
+
+  stream.on("error", () => {
+    if (!res.headersSent) res.status(502);
+    res.end();
+  });
+
+  stream.pipe(res);
+});
