@@ -8,6 +8,7 @@ import {
 } from "../../store/slices/booksSlice";
 import { Badge } from "../../components/ui/badge";
 import { Skeleton } from "../../components/ui/skeleton";
+import { Button } from "../../components/ui/button";
 import FavoriteButton from "../../components/catalog/FavoriteButton";
 
 const BookDetails = () => {
@@ -34,6 +35,9 @@ const BookDetails = () => {
   }
 
   const authorLinks = book.authors || [];
+  const hasDigitalCopy = Boolean(
+    book.digitalFiles?.pdf?.url || book.digitalFiles?.epub?.url,
+  );
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-[280px_1fr]">
@@ -79,8 +83,16 @@ const BookDetails = () => {
           ))}
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <FavoriteButton bookId={book._id} variant="full" />
+          {hasDigitalCopy && (
+            <Link to={`/books/${book._id}/read`}>
+              <Button>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Read Online
+              </Button>
+            </Link>
+          )}
         </div>
 
         {book.description && (
@@ -154,9 +166,8 @@ const BookDetails = () => {
           </div>
         )}
 
-        {/* TODO (Phase 3): render Read / Download actions once the in-browser
-            reader exists — digitalFiles.pdf/epub URLs are already populated
-            from Milestone 3. */}
+        {/* TODO (Phase 3, Milestone 3): Download action — gated behind
+            DRM-lite once file access moves off raw Cloudinary URLs. */}
       </div>
     </div>
   );

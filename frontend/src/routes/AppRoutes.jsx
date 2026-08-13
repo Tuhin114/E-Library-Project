@@ -23,6 +23,7 @@ import BookDetails from "../pages/books/BookDetails";
 import ManageBooks from "../pages/manage/ManageBooks";
 import CreateBook from "../pages/manage/CreateBook";
 import EditBook from "../pages/manage/EditBook";
+import BookReader from "../pages/reader/BookReader";
 
 import Favorites from "../pages/favorites/Favorites";
 import RecentlyViewed from "../pages/library/RecentlyViewed";
@@ -107,6 +108,10 @@ export default function AppRoutes() {
       <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       <Route element={<PrivateRoute />}>
+        {/* Full-screen reader — deliberately outside MainLayout so the
+            nav/sidebar chrome doesn't compete with the reading surface. */}
+        <Route path="/books/:id/read" element={<BookReader />} />
+
         <Route element={<MainLayout />}>
           {/* Dashboard */}
           <Route path="/dashboard" element={<DashboardPlaceholder />} />
