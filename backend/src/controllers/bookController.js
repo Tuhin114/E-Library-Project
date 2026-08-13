@@ -10,19 +10,17 @@ export const createBook = asyncHandler(async (req, res) => {
 });
 
 export const getBooks = asyncHandler(async (req, res) => {
-  const result = await bookService.listBooks(req.query);
+  const result = await bookService.listBooks(req.query, req.user);
   res
     .status(200)
     .json(new ApiResponse(200, "Books fetched successfully", result));
 });
 
 export const getBookById = asyncHandler(async (req, res) => {
-  const book = await bookService.getBookById(req.params.id);
+  const book = await bookService.getBookById(req.params.id, req.user);
 
-  // Fire-and-forget: recording a view is a side effect of reading a book,
-  // not part of what the caller is waiting on. Logged, not thrown, so a
-  // transient DB hiccup here can never turn a successful book fetch into
-  // an error response.
+  // Fire-and-forget: a transient failure here should never fail the
+  // book fetch itself.
   userLibraryService
     .recordRecentlyViewed(req.user._id, req.params.id)
     .catch((error) => {

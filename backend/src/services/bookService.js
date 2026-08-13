@@ -7,6 +7,8 @@ import RecentlyViewed from "../models/RecentlyViewed.js";
 import { ApiError } from "../utils/ApiError.js";
 import { uploadBuffer, deleteAsset } from "../utils/cloudinaryUpload.js";
 import { FILE_LIMITS } from "../constants/fileUploadLimits.js";
+import { BOOK_STATUS } from "../constants/bookStatus.js";
+import { ROLES } from "../constants/roles.js";
 import {
   buildBookExactFilters,
   buildBookSearchRegex,
@@ -72,8 +74,16 @@ export const createBook = async (payload, userId) => {
   return book.populate(BOOK_POPULATE);
 };
 
-export const listBooks = async (query) => {
+export const listBooks = async (query, user) => {
   const filter = buildBookExactFilters(query);
+
+  // Non-librarians only ever see published books — overrides whatever
+  // status the client asked for, since draft/archived books shouldn't
+  // be discoverable outside catalog management.
+  if (user.role !== ROLES.LIBRARIAN) {
+    filter.status = BOOK_STATUS.PUBLISHED;
+  }
+
   const sort = buildBookSort(query.sort);
   const { page, limit, skip } = getPaginationParams(query);
 
@@ -122,9 +132,16 @@ export const listBooks = async (query) => {
   };
 };
 
-export const getBookById = async (id) => {
+export const getBookById = async (id, user) => {
   const book = await Book.findById(id).populate(BOOK_POPULATE).lean();
   if (!book) throw new ApiError(404, "Book not found");
+
+  // 404, not 403 — a non-librarian shouldn't be able to confirm a
+  // draft/archived book exists at all.
+  if (user.role !== ROLES.LIBRARIAN && book.status !== BOOK_STATUS.PUBLISHED) {
+    throw new ApiError(404, "Book not found");
+  }
+
   return book;
 };
 
@@ -182,9 +199,6 @@ export const deleteBook = async (id) => {
       ),
     );
   }
-  // Referential cleanup — a deleted book should disappear from every
-  // user's favorites and recently-viewed history, not linger as a
-  // dangling reference that populate() silently drops.
   cleanupTasks.push(Favorite.deleteMany({ book: id }));
   cleanupTasks.push(RecentlyViewed.deleteMany({ book: id }));
 
