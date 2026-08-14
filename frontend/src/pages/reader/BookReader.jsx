@@ -3,14 +3,18 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBookById, clearSelectedBook } from "../../store/slices/booksSlice";
 import { getBookFileBlob } from "../../services/bookService";
+import * as readingService from "../../services/readingService";
+import useReadingProgress from "../../hooks/useReadingProgress";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
+import { Bookmark } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import ReaderToolbar from "../../components/reader/ReaderToolbar";
 import PdfViewer from "../../components/reader/PdfViewer";
 import EpubViewer from "../../components/reader/EpubViewer";
 import ReaderErrorState from "../../components/reader/ReaderErrorState";
 import DownloadButton from "../../components/reader/DownloadButton";
+import BookmarkPanel from "../../components/reader/BookmarkPanel";
 
 const BookReader = () => {
   const { id } = useParams();
@@ -22,6 +26,13 @@ const BookReader = () => {
 
   const [fileUrl, setFileUrl] = useState(null);
   const [fileError, setFileError] = useState(null);
+
+  // `location` is a page number (pdf) or an EPUB CFI string (epub) —
+  // owned here, not inside the viewers, so a saved-progress resume and
+  // a bookmark "jump to" can both drive the same viewer instance.
+  const [location, setLocation] = useState(null);
+  const [totalPages, setTotalPages] = useState(null);
+  const [isBookmarkPanelOpen, setIsBookmarkPanelOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchBookById(id));
@@ -40,10 +51,31 @@ const BookReader = () => {
     ? requestedFormat
     : availableFormats[0];
 
-  // The book response only ever says a file is "available" — the
-  // actual bytes come from the authenticated stream endpoint, fetched
-  // as a blob since react-pdf/react-reader can't attach an
-  // Authorization header to a plain network URL.
+  // Resolve the starting location for the active format: saved
+  // progress if there is any (and it's for this format), otherwise
+  // page 1 for a PDF or the book's start for an EPUB.
+  useEffect(() => {
+    if (!format) return;
+
+    setTotalPages(null);
+    setLocation(format === "pdf" ? 1 : null);
+
+    readingService
+      .getProgress(id)
+      .then((progress) => {
+        if (progress && progress.format === format) {
+          setLocation(format === "pdf" ? Number(progress.location) : progress.location);
+        }
+      })
+      .catch(() => {
+        // No saved progress, or it failed to load — starting fresh is
+        // a perfectly fine fallback either way.
+      });
+  }, [id, format]);
+
+  // Fetch the active format as an authenticated blob and hand the
+  // viewers an object URL — react-pdf/react-reader can't attach the
+  // Authorization header a direct network URL would need.
   useEffect(() => {
     if (!format) return undefined;
 
@@ -68,6 +100,13 @@ const BookReader = () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [id, format]);
+
+  const percentComplete =
+    format === "pdf" && totalPages && location
+      ? Math.round((location / totalPages) * 100)
+      : 0;
+
+  useReadingProgress(id, format, location, percentComplete);
 
   const goBack = () => navigate(`/books/${id}`);
 
@@ -94,6 +133,10 @@ const BookReader = () => {
   const canDownload =
     book.visibility === "public" || user?.role === ROLES.LIBRARIAN;
 
+  const handleBookmarkJump = (bookmarkLocation) => {
+    setLocation(format === "pdf" ? Number(bookmarkLocation) : bookmarkLocation);
+  };
+
   return (
     <div className="flex h-screen flex-col">
       <ReaderToolbar
@@ -117,6 +160,14 @@ const BookReader = () => {
           )
         }
       >
+        <Button
+          variant={isBookmarkPanelOpen ? "default" : "outline"}
+          size="sm"
+          onClick={() => setIsBookmarkPanelOpen((open) => !open)}
+        >
+          <Bookmark className="mr-2 h-4 w-4" />
+          Bookmarks
+        </Button>
         {canDownload && (
           <DownloadButton
             bookId={id}
@@ -126,18 +177,39 @@ const BookReader = () => {
         )}
       </ReaderToolbar>
 
-      <div className="min-h-0 flex-1">
-        {fileError && <ReaderErrorState message={fileError} onBack={goBack} />}
-        {!fileError && !fileUrl && (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            Loading {format?.toUpperCase()}…
-          </div>
-        )}
-        {!fileError && fileUrl && format === "pdf" && (
-          <PdfViewer fileUrl={fileUrl} />
-        )}
-        {!fileError && fileUrl && format === "epub" && (
-          <EpubViewer fileUrl={fileUrl} />
+      <div className="flex min-h-0 flex-1">
+        <div className="min-h-0 flex-1">
+          {fileError && <ReaderErrorState message={fileError} onBack={goBack} />}
+          {!fileError && !fileUrl && (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Loading {format?.toUpperCase()}…
+            </div>
+          )}
+          {!fileError && fileUrl && format === "pdf" && (
+            <PdfViewer
+              fileUrl={fileUrl}
+              pageNumber={location || 1}
+              onPageChange={setLocation}
+              onDocumentLoad={setTotalPages}
+            />
+          )}
+          {!fileError && fileUrl && format === "epub" && (
+            <EpubViewer
+              fileUrl={fileUrl}
+              location={location}
+              onLocationChange={setLocation}
+            />
+          )}
+        </div>
+
+        {isBookmarkPanelOpen && !fileError && fileUrl && (
+          <BookmarkPanel
+            bookId={id}
+            format={format}
+            currentLocation={location}
+            onJumpTo={handleBookmarkJump}
+            onClose={() => setIsBookmarkPanelOpen(false)}
+          />
         )}
       </div>
     </div>

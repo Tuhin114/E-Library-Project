@@ -2,6 +2,7 @@ import Favorite from "../models/Favorite.js";
 import RecentlyViewed from "../models/RecentlyViewed.js";
 import Book from "../models/Book.js";
 import { ApiError } from "../utils/ApiError.js";
+import { serializeBook } from "../utils/sanitizeBook.js";
 
 const BOOK_POPULATE = [
   { path: "category", select: "name slug" },
@@ -45,7 +46,10 @@ export const getFavorites = async (userId) => {
   // .filter(Boolean) guards against a book that was deleted after being
   // favorited — deleteBook() also cleans up Favorite rows directly, but
   // this is a cheap second line of defense against a null populate result.
-  return favorites.map((favorite) => favorite.book).filter(Boolean);
+  return favorites
+    .map((favorite) => favorite.book)
+    .filter(Boolean)
+    .map(serializeBook);
 };
 
 /**
@@ -81,5 +85,8 @@ export const getRecentlyViewed = async (userId) => {
     .populate({ path: "book", populate: BOOK_POPULATE })
     .lean();
 
-  return entries.map((entry) => entry.book).filter(Boolean);
+  return entries
+    .map((entry) => entry.book)
+    .filter(Boolean)
+    .map(serializeBook);
 };

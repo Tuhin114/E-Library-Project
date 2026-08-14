@@ -9,3 +9,5 @@ export const removeFavorite = (bookId) =>
   axiosInstance.delete(`${BASE_URL}/favorites/${bookId}`);
 export const fetchRecentlyViewed = () =>
   axiosInstance.get(`${BASE_URL}/recently-viewed`);
+export const fetchContinueReading = () =>
+  axiosInstance.get(`${BASE_URL}/continue-reading`);

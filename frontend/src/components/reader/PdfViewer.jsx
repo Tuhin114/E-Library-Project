@@ -17,17 +17,19 @@ const MIN_SCALE = 0.6;
 const MAX_SCALE = 2.4;
 const SCALE_STEP = 0.15;
 
-const PdfViewer = ({ fileUrl }) => {
+const PdfViewer = ({ fileUrl, pageNumber, onPageChange, onDocumentLoad }) => {
   const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.1);
   const [loadError, setLoadError] = useState(false);
 
-  // Reset to page 1 when switching files (e.g. PDF <-> EPUB toggle then back).
   useEffect(() => {
-    setPageNumber(1);
     setLoadError(false);
   }, [fileUrl]);
+
+  const goToPage = (next) => {
+    const clamped = numPages ? Math.min(Math.max(1, next), numPages) : Math.max(1, next);
+    onPageChange(clamped);
+  };
 
   if (loadError) {
     return (
@@ -40,7 +42,10 @@ const PdfViewer = ({ fileUrl }) => {
       <div className="flex-1 overflow-auto bg-muted/40 py-6">
         <Document
           file={fileUrl}
-          onLoadSuccess={({ numPages: total }) => setNumPages(total)}
+          onLoadSuccess={({ numPages: total }) => {
+            setNumPages(total);
+            onDocumentLoad?.(total);
+          }}
           onLoadError={() => setLoadError(true)}
           loading={
             <div className="py-20 text-center text-sm text-muted-foreground">
@@ -57,7 +62,7 @@ const PdfViewer = ({ fileUrl }) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+          onClick={() => goToPage(pageNumber - 1)}
           disabled={pageNumber <= 1}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -69,9 +74,7 @@ const PdfViewer = ({ fileUrl }) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() =>
-            setPageNumber((p) => (numPages ? Math.min(numPages, p + 1) : p + 1))
-          }
+          onClick={() => goToPage(pageNumber + 1)}
           disabled={numPages ? pageNumber >= numPages : false}
         >
           <ChevronRight className="h-4 w-4" />

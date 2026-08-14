@@ -6,6 +6,7 @@ import {
   BookOpen,
   Heart,
   History,
+  BookMarked,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -82,6 +83,14 @@ const SidebarNav = ({ onNavigate }) => {
         >
           <History className="h-4 w-4" />
           Recently Viewed
+        </NavLink>
+        <NavLink
+          to="/continue-reading"
+          className={navLinkClasses}
+          onClick={handleClick}
+        >
+          <BookMarked className="h-4 w-4" />
+          Continue Reading
         </NavLink>
       </nav>
 

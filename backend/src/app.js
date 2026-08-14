@@ -13,6 +13,7 @@ import authorRoutes from "./routes/authorRoutes.js";
 import publisherRoutes from "./routes/publisherRoutes.js";
 import bookRoutes from "./routes/bookRoutes.js";
 import userLibraryRoutes from "./routes/userLibraryRoutes.js";
+import readingRoutes from "./routes/readingRoutes.js";
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use("/api/authors", authorRoutes);
 app.use("/api/publishers", publisherRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/me", userLibraryRoutes);
+app.use("/api/me", readingRoutes);
 
 // 404 handler
 app.use((req, res) => {

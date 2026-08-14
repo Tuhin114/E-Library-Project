@@ -6,6 +6,7 @@ const initialState = {
   favorites: [],
   favoriteIds: [],
   recentlyViewed: [],
+  continueReading: [],
   status: "idle",
   error: null,
 };
@@ -45,6 +46,17 @@ export const fetchRecentlyViewed = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       return await libraryService.getRecentlyViewed();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const fetchContinueReading = createAsyncThunk(
+  "library/fetchContinueReading",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await libraryService.getContinueReading();
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -95,6 +107,19 @@ const librarySlice = createSlice({
         state.status = "failed";
         state.error = action.payload;
         toast.error(action.payload || "Failed to load recently viewed books");
+      })
+      .addCase(fetchContinueReading.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchContinueReading.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.continueReading = action.payload;
+      })
+      .addCase(fetchContinueReading.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+        toast.error(action.payload || "Failed to load your continue reading list");
       });
   },
 });

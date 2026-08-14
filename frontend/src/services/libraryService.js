@@ -36,3 +36,12 @@ export const getRecentlyViewed = async () => {
     throw new Error(getErrorMessage(error));
   }
 };
+
+export const getContinueReading = async () => {
+  try {
+    const { data } = await libraryApi.fetchContinueReading();
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+};

@@ -27,6 +27,7 @@ import BookReader from "../pages/reader/BookReader";
 
 import Favorites from "../pages/favorites/Favorites";
 import RecentlyViewed from "../pages/library/RecentlyViewed";
+import ContinueReading from "../pages/library/ContinueReading";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -131,6 +132,7 @@ export default function AppRoutes() {
 
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/recently-viewed" element={<RecentlyViewed />} />
+          <Route path="/continue-reading" element={<ContinueReading />} />
 
           {/* Change password */}
           <Route path="/change-password" element={<ChangePassword />} />

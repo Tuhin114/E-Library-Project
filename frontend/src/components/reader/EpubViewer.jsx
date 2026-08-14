@@ -7,9 +7,7 @@ const MIN_FONT = 80;
 const MAX_FONT = 160;
 const FONT_STEP = 10;
 
-const EpubViewer = ({ fileUrl }) => {
-  console.log("EpubViewer fileUrl:", fileUrl);
-  const [location, setLocation] = useState(null);
+const EpubViewer = ({ fileUrl, location, onLocationChange }) => {
   const [fontSize, setFontSize] = useState(100);
   const renditionRef = useRef(null);
 
@@ -31,7 +29,7 @@ const EpubViewer = ({ fileUrl }) => {
         <ReactReader
           url={fileUrl}
           location={location}
-          locationChanged={setLocation}
+          locationChanged={onLocationChange}
           epubInitOptions={{
             openAs: "epub",
           }}

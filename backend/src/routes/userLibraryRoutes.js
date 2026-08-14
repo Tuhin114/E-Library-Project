@@ -24,4 +24,6 @@ router.delete(
 
 router.get("/recently-viewed", userLibraryController.getRecentlyViewed);
 
+router.get("/continue-reading", userLibraryController.getContinueReading);
+
 export default router;

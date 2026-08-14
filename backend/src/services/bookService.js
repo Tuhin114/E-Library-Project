@@ -7,7 +7,11 @@ import Favorite from "../models/Favorite.js";
 import RecentlyViewed from "../models/RecentlyViewed.js";
 import { ApiError } from "../utils/ApiError.js";
 import { uploadBuffer, deleteAsset } from "../utils/cloudinaryUpload.js";
-import { FILE_LIMITS, DIGITAL_FILE_TYPES } from "../constants/fileUploadLimits.js";
+import { serializeBook } from "../utils/sanitizeBook.js";
+import {
+  FILE_LIMITS,
+  DIGITAL_FILE_TYPES,
+} from "../constants/fileUploadLimits.js";
 import { BOOK_STATUS } from "../constants/bookStatus.js";
 import { BOOK_VISIBILITY } from "../constants/bookVisibility.js";
 import { ROLES } from "../constants/roles.js";
@@ -66,34 +70,6 @@ const assertBookReadable = (book, user) => {
   if (user.role !== ROLES.LIBRARIAN && book.status !== BOOK_STATUS.PUBLISHED) {
     throw new ApiError(404, "Book not found");
   }
-};
-
-// Digital files are stored with their raw Cloudinary URL + publicId,
-// but neither should ever reach the client — both are enough to fetch
-// the file directly, forever, bypassing auth entirely. Clients only
-// get to know a file exists; actual bytes flow through getFileStream.
-const sanitizeDigitalFile = (file) =>
-  file?.url
-    ? {
-        available: true,
-        format: file.format,
-        sizeBytes: file.sizeBytes,
-        originalName: file.originalName,
-        uploadedAt: file.uploadedAt,
-      }
-    : { available: false };
-
-const serializeBook = (bookDoc) => {
-  const book =
-    typeof bookDoc.toObject === "function" ? bookDoc.toObject() : bookDoc;
-
-  return {
-    ...book,
-    digitalFiles: {
-      pdf: sanitizeDigitalFile(book.digitalFiles?.pdf),
-      epub: sanitizeDigitalFile(book.digitalFiles?.epub),
-    },
-  };
 };
 
 export const createBook = async (payload, userId) => {
@@ -337,13 +313,16 @@ export const deleteDigitalFile = async (bookId, type) => {
 };
 
 // Streams a digital file through the backend instead of ever handing
-// the client a direct Cloudinary URL. `download`d requests against a
+// the client a direct Cloudinary URL. Download requests against a
 // restricted-visibility book are blocked for non-librarians — read
 // access still goes through (inline), only the "keep a copy" path is
-// gated. This is the actual DRM-lite enforcement point; sanitizeDigitalFile
-// above is what makes bypassing it (by reading the URL off a normal
-// book response) impossible.
-export const getFileStream = async (bookId, type, user, { download = false } = {}) => {
+// gated.
+export const getFileStream = async (
+  bookId,
+  type,
+  user,
+  { download = false } = {},
+) => {
   if (!DIGITAL_FILE_TYPES.includes(type)) {
     throw new ApiError(400, "Invalid file type");
   }
@@ -355,7 +334,10 @@ export const getFileStream = async (bookId, type, user, { download = false } = {
 
   const fileMeta = book.digitalFiles?.[type];
   if (!fileMeta?.url) {
-    throw new ApiError(404, `No ${type.toUpperCase()} file available for this book`);
+    throw new ApiError(
+      404,
+      `No ${type.toUpperCase()} file available for this book`,
+    );
   }
 
   if (

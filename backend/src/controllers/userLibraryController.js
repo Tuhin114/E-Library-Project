@@ -1,4 +1,5 @@
 import * as userLibraryService from "../services/userLibraryService.js";
+import * as readingService from "../services/readingService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -27,5 +28,18 @@ export const getRecentlyViewed = asyncHandler(async (req, res) => {
     .status(200)
     .json(
       new ApiResponse(200, "Recently viewed books fetched successfully", books),
+    );
+});
+
+// Delegates to readingService — it owns the ReadingProgress model this
+// query reads from — but stays exposed at /me/continue-reading, next
+// to favorites and recently-viewed, since that's the same "my library"
+// concern from the client's point of view.
+export const getContinueReading = asyncHandler(async (req, res) => {
+  const books = await readingService.getContinueReading(req.user._id);
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Continue reading list fetched successfully", books),
     );
 });
