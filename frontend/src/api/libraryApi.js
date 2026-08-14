@@ -11,3 +11,5 @@ export const fetchRecentlyViewed = () =>
   axiosInstance.get(`${BASE_URL}/recently-viewed`);
 export const fetchContinueReading = () =>
   axiosInstance.get(`${BASE_URL}/continue-reading`);
+export const fetchRecommendations = () =>
+  axiosInstance.get(`${BASE_URL}/recommendations`);

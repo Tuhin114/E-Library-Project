@@ -26,4 +26,6 @@ router.get("/recently-viewed", userLibraryController.getRecentlyViewed);
 
 router.get("/continue-reading", userLibraryController.getContinueReading);
 
+router.get("/recommendations", userLibraryController.getRecommendations);
+
 export default router;

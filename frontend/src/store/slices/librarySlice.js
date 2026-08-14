@@ -7,6 +7,7 @@ const initialState = {
   favoriteIds: [],
   recentlyViewed: [],
   continueReading: [],
+  recommendations: [],
   status: "idle",
   error: null,
 };
@@ -57,6 +58,17 @@ export const fetchContinueReading = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       return await libraryService.getContinueReading();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const fetchRecommendations = createAsyncThunk(
+  "library/fetchRecommendations",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await libraryService.getRecommendations();
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -120,6 +132,18 @@ const librarySlice = createSlice({
         state.status = "failed";
         state.error = action.payload;
         toast.error(action.payload || "Failed to load your continue reading list");
+      })
+      // Deliberately no pending/rejected status wiring for
+      // recommendations — it renders on the Books catalog page
+      // alongside the main grid, and that page already has its own
+      // loading state (`state.books.status`) driving the skeleton.
+      // A failed recommendations fetch just means the row doesn't
+      // render; it shouldn't flip the whole page into an error state.
+      .addCase(fetchRecommendations.fulfilled, (state, action) => {
+        state.recommendations = action.payload;
+      })
+      .addCase(fetchRecommendations.rejected, () => {
+        // Silent — see comment above.
       });
   },
 });

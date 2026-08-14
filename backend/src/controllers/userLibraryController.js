@@ -1,5 +1,6 @@
 import * as userLibraryService from "../services/userLibraryService.js";
 import * as readingService from "../services/readingService.js";
+import * as recommendationService from "../services/recommendationService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -42,4 +43,14 @@ export const getContinueReading = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(200, "Continue reading list fetched successfully", books),
     );
+});
+
+// Same delegation pattern as getContinueReading above — the scoring
+// logic lives in recommendationService.js, this just exposes it under
+// the "my library" route group.
+export const getRecommendations = asyncHandler(async (req, res) => {
+  const books = await recommendationService.getRecommendations(req.user._id);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Recommendations fetched successfully", books));
 });

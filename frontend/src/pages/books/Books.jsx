@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { SlidersHorizontal } from "lucide-react";
 import { fetchBooks } from "../../store/slices/booksSlice";
+import { fetchRecommendations } from "../../store/slices/librarySlice";
 import { useQueryParams } from "../../hooks/useQueryParams";
 import { useDebounce } from "../../hooks/useDebounce";
 import BookGrid from "../../components/catalog/BookGrid";
+import RecommendedRow from "../../components/catalog/RecommendedRow";
 import SearchBar from "../../components/common/SearchBar";
 import FilterSidebar from "../../components/common/FilterSidebar";
 import Pagination from "../../components/common/Pagination";
@@ -14,6 +16,7 @@ import { Button } from "../../components/ui/button";
 const Books = () => {
   const dispatch = useDispatch();
   const { items, pagination, status } = useSelector((state) => state.books);
+  const { recommendations } = useSelector((state) => state.library);
   const [params, setParams] = useQueryParams();
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
@@ -47,6 +50,12 @@ const Books = () => {
     params.limit,
   ]);
 
+  // Fetched once, independent of search/filters — it's not "results
+  // for this query", it's a standing "you might also like" row.
+  useEffect(() => {
+    dispatch(fetchRecommendations());
+  }, [dispatch]);
+
   const handleSearchChange = (value) =>
     setParams({ search: value || undefined, page: undefined });
   const handleFilterChange = (updates) =>
@@ -74,9 +83,13 @@ const Books = () => {
     "sort",
   ].filter((key) => Boolean(params[key])).length;
 
+  const isDefaultView = activeFilterCount === 0 && !params.search;
+
   return (
     <div>
       <h1 className="mb-6 text-2xl font-semibold tracking-tight">Books</h1>
+
+      {isDefaultView && <RecommendedRow books={recommendations} />}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="max-w-lg flex-1">
