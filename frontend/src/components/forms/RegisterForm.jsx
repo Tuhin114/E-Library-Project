@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -9,6 +9,13 @@ import { toast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 // Public self-registration is intentionally limited to student/faculty.
 // Librarian accounts carry elevated privileges and are provisioned by
@@ -34,6 +41,7 @@ export function RegisterForm({ onSuccess }) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerFormSchema),
@@ -81,17 +89,24 @@ export function RegisterForm({ onSuccess }) {
 
       <div className="space-y-2">
         <Label htmlFor="role">I am a</Label>
-        <select
-          id="role"
-          className="flex h-10 w-full rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          {...register("role")}
-        >
-          {SELF_REGISTRATION_ROLES.map((role) => (
-            <option key={role} value={role}>
-              {ROLE_LABELS[role]}
-            </option>
-          ))}
-        </select>
+        <Controller
+          name="role"
+          control={control}
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger id="role">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                {SELF_REGISTRATION_ROLES.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {ROLE_LABELS[role]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
       </div>
 
       <div className="space-y-2">

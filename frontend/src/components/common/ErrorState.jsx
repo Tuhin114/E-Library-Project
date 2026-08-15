@@ -14,11 +14,11 @@ const ErrorState = ({
 }) => (
   <div
     className={cn(
-      "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-destructive/40 py-16 text-center",
+      "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-destructive/40 bg-destructive/5 py-16 text-center",
       className,
     )}
   >
-    <AlertTriangle className="h-10 w-10 text-destructive" />
+    <AlertTriangle className="h-9 w-9 text-destructive" strokeWidth={1.5} />
     <p className="max-w-sm text-sm font-medium text-destructive">{message}</p>
     {onRetry && (
       <Button variant="outline" size="sm" onClick={onRetry}>

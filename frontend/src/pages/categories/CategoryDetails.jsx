@@ -6,10 +6,11 @@ import {
   clearSelectedCategory,
 } from "../../store/slices/categoriesSlice";
 import { fetchBooks } from "../../store/slices/booksSlice";
-import { Badge } from "../../components/ui/badge";
 import { Skeleton } from "../../components/ui/skeleton";
 import ErrorState from "../../components/common/ErrorState";
 import BookGrid from "../../components/catalog/BookGrid";
+import EntityDetailHeader from "../../components/catalog/EntityDetailHeader";
+import PageContainer from "../../components/layout/PageContainer";
 
 const CategoryDetails = () => {
   const { slug } = useParams();
@@ -34,45 +35,41 @@ const CategoryDetails = () => {
 
   if (detailStatus === "loading" || detailStatus === "idle") {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-4 w-2/3" />
-      </div>
+      <PageContainer>
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </PageContainer>
     );
   }
 
   if (detailStatus === "failed") {
     return (
-      <ErrorState
-        message="Couldn't load this category. It may have been deleted."
-        onRetry={() => dispatch(fetchCategoryBySlug(slug))}
-      />
+      <PageContainer>
+        <ErrorState
+          message="Couldn't load this category. It may have been deleted."
+          onRetry={() => dispatch(fetchCategoryBySlug(slug))}
+        />
+      </PageContainer>
     );
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {category.name}
-        </h1>
-        <Badge variant="secondary">{category.bookCount ?? 0} books</Badge>
-      </div>
-      {category.description && (
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          {category.description}
-        </p>
-      )}
+    <PageContainer>
+      <EntityDetailHeader
+        title={category.name}
+        badges={[{ label: `${category.bookCount ?? 0} books` }]}
+        description={category.description}
+      />
 
-      <div className="mt-8">
-        <BookGrid
-          books={books}
-          isLoading={booksStatus === "loading"}
-          emptyTitle="No books in this category yet"
-          emptyDescription="Books added to this category will appear here."
-        />
-      </div>
-    </div>
+      <BookGrid
+        books={books}
+        isLoading={booksStatus === "loading"}
+        emptyTitle="No books in this category yet"
+        emptyDescription="Books added to this category will appear here."
+      />
+    </PageContainer>
   );
 };
 

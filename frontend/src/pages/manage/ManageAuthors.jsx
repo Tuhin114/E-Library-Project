@@ -1,18 +1,12 @@
-// FILE PATH: frontend/src/pages/manage/ManageAuthors.jsx
-// STATUS: MODIFIED — replaces the Milestone 1 version of this file.
-// WHAT CHANGED: same pattern as ManageCategories.jsx — TableSkeleton while
-// loading, ErrorState with retry on failure.
-
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, Pencil, Trash2, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import {
   fetchAuthors,
   createAuthor,
   updateAuthor,
   deleteAuthor,
 } from "../../store/slices/authorsSlice";
-import { Button } from "../../components/ui/button";
 import {
   Table,
   TableHeader,
@@ -28,10 +22,12 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
-import EmptyState from "../../components/common/EmptyState";
-import ErrorState from "../../components/common/ErrorState";
 import TableSkeleton from "../../components/common/TableSkeleton";
 import AuthorForm from "../../components/forms/AuthorForm";
+import ManagePageHeader from "../../components/manage/ManagePageHeader";
+import ManageDataState from "../../components/manage/ManageDataState";
+import RowActions from "../../components/manage/RowActions";
+import PageContainer from "../../components/layout/PageContainer";
 
 const ManageAuthors = () => {
   const dispatch = useDispatch();
@@ -77,39 +73,25 @@ const ManageAuthors = () => {
   };
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Manage Authors
-        </h1>
-        <Button onClick={openCreateForm}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Author
-        </Button>
-      </div>
+    <PageContainer>
+      <ManagePageHeader
+        title="Manage Authors"
+        description="Create and maintain the roster of authors in the catalog."
+        createLabel="New Author"
+        onCreate={openCreateForm}
+      />
 
-      {status === "failed" && (
-        <ErrorState
-          message="Couldn't load authors."
-          onRetry={() => dispatch(fetchAuthors())}
-        />
-      )}
-
-      {status !== "failed" && status === "succeeded" && items.length === 0 && (
-        <EmptyState
-          icon={Users}
-          title="No authors yet"
-          description="Create your first author to start building the catalog."
-          action={
-            <Button onClick={openCreateForm} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Author
-            </Button>
-          }
-        />
-      )}
-
-      {status !== "failed" && (status === "loading" || items.length > 0) && (
+      <ManageDataState
+        status={status}
+        items={items}
+        icon={Users}
+        emptyTitle="No authors yet"
+        emptyDescription="Create your first author to start building the catalog."
+        createLabel="New Author"
+        onCreate={openCreateForm}
+        errorMessage="Couldn't load authors."
+        onRetry={() => dispatch(fetchAuthors())}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -129,29 +111,17 @@ const ManageAuthors = () => {
                     {author.nationality || "—"}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditForm(author)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteTarget(author)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+                    <RowActions
+                      onEdit={() => openEditForm(author)}
+                      onDelete={() => setDeleteTarget(author)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           )}
         </Table>
-      )}
+      </ManageDataState>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>
@@ -178,7 +148,7 @@ const ManageAuthors = () => {
         onConfirm={handleDelete}
         isLoading={isSubmitting}
       />
-    </div>
+    </PageContainer>
   );
 };
 

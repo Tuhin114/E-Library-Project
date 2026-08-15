@@ -6,6 +6,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -24,6 +25,14 @@ export default {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
@@ -46,6 +55,12 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        // Deliberately subtle — premium spacing/typography carries the
+        // design, not drop shadows. Used only where real elevation
+        // (popovers, drawers) matters.
+        elevated: '0 8px 24px -8px rgb(0 0 0 / 0.45)',
       },
     },
   },

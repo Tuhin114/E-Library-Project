@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, BookOpen } from "lucide-react";
+import { Pencil, Trash2, BookOpen } from "lucide-react";
 import { fetchBooks, deleteBook } from "../../store/slices/booksSlice";
-import { Button } from "../../components/ui/button";
 import {
   Table,
   TableHeader,
@@ -18,22 +17,16 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
-import ConfirmDialog from "../../components/common/ConfirmDialog";
-import EmptyState from "../../components/common/EmptyState";
-import ErrorState from "../../components/common/ErrorState";
-import TableSkeleton from "../../components/common/TableSkeleton";
+import { Button } from "../../components/ui/button";
 import { Skeleton } from "../../components/ui/skeleton";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
+import TableSkeleton from "../../components/common/TableSkeleton";
 import Pagination from "../../components/common/Pagination";
-
-const StatusBadge = ({ status }) => (
-  <Badge
-    variant={status === "published" ? "default" : "secondary"}
-    className="capitalize"
-  >
-    {status}
-  </Badge>
-);
+import BookStatusBadge from "../../components/catalog/BookStatusBadge";
+import ManagePageHeader from "../../components/manage/ManagePageHeader";
+import ManageDataState from "../../components/manage/ManageDataState";
+import RowActions from "../../components/manage/RowActions";
+import PageContainer from "../../components/layout/PageContainer";
 
 const ManageBooks = () => {
   const dispatch = useDispatch();
@@ -57,39 +50,25 @@ const ManageBooks = () => {
   };
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Manage Books</h1>
-        <Button onClick={() => navigate("/manage/books/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Book
-        </Button>
-      </div>
+    <PageContainer>
+      <ManagePageHeader
+        title="Manage Books"
+        description="Add, edit and publish books in the catalog."
+        createLabel="New Book"
+        onCreate={() => navigate("/manage/books/new")}
+      />
 
-      {status === "failed" && (
-        <ErrorState
-          message="Couldn't load books."
-          onRetry={() =>
-            dispatch(fetchBooks({ page, limit: 20, sort: "newest" }))
-          }
-        />
-      )}
-
-      {status !== "failed" && status === "succeeded" && items.length === 0 && (
-        <EmptyState
-          icon={BookOpen}
-          title="No books yet"
-          description="Add your first book to start building the catalog."
-          action={
-            <Button size="sm" onClick={() => navigate("/manage/books/new")}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Book
-            </Button>
-          }
-        />
-      )}
-
-      {status !== "failed" && (status === "loading" || items.length > 0) && (
+      <ManageDataState
+        status={status}
+        items={items}
+        icon={BookOpen}
+        emptyTitle="No books yet"
+        emptyDescription="Add your first book to start building the catalog."
+        createLabel="New Book"
+        onCreate={() => navigate("/manage/books/new")}
+        errorMessage="Couldn't load books."
+        onRetry={() => dispatch(fetchBooks({ page, limit: 20, sort: "newest" }))}
+      >
         <>
           {/* Desktop / tablet: table */}
           <div className="hidden md:block">
@@ -119,27 +98,13 @@ const ManageBooks = () => {
                         {book.category?.name || "—"}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={book.status} />
+                        <BookStatusBadge status={book.status} />
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate(`/manage/books/${book._id}/edit`)
-                            }
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteTarget(book)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                        <RowActions
+                          onEdit={() => navigate(`/manage/books/${book._id}/edit`)}
+                          onDelete={() => setDeleteTarget(book)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -162,7 +127,7 @@ const ManageBooks = () => {
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <CardTitle className="text-sm">{book.title}</CardTitle>
-                        <StatusBadge status={book.status} />
+                        <BookStatusBadge status={book.status} />
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-2 pt-0">
@@ -204,7 +169,7 @@ const ManageBooks = () => {
             </div>
           )}
         </>
-      )}
+      </ManageDataState>
 
       <ConfirmDialog
         open={!!deleteTarget}
@@ -215,7 +180,7 @@ const ManageBooks = () => {
         onConfirm={handleDelete}
         isLoading={isDeleting}
       />
-    </div>
+    </PageContainer>
   );
 };
 

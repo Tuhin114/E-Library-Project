@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchContinueReading } from "../../store/slices/librarySlice";
 import BookGrid from "../../components/catalog/BookGrid";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
 
 const ContinueReading = () => {
   const dispatch = useDispatch();
@@ -12,17 +14,18 @@ const ContinueReading = () => {
   }, [dispatch]);
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">
-        Continue Reading
-      </h1>
+    <PageContainer>
+      <PageHeader
+        title="Continue Reading"
+        description="Pick up where you left off."
+      />
       <BookGrid
         books={continueReading}
         isLoading={status === "loading"}
         emptyTitle="Nothing in progress"
         emptyDescription="Books you've started reading will show up here until you finish them."
       />
-    </div>
+    </PageContainer>
   );
 };
 

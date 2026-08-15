@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, Pencil, Trash2, LayoutGrid } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import {
   fetchCategories,
   createCategory,
   updateCategory,
   deleteCategory,
 } from "../../store/slices/categoriesSlice";
-import { Button } from "../../components/ui/button";
 import {
   Table,
   TableHeader,
@@ -23,10 +22,12 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
-import EmptyState from "../../components/common/EmptyState";
-import ErrorState from "../../components/common/ErrorState";
 import TableSkeleton from "../../components/common/TableSkeleton";
 import CategoryForm from "../../components/forms/CategoryForm";
+import ManagePageHeader from "../../components/manage/ManagePageHeader";
+import ManageDataState from "../../components/manage/ManageDataState";
+import RowActions from "../../components/manage/RowActions";
+import PageContainer from "../../components/layout/PageContainer";
 
 const ManageCategories = () => {
   const dispatch = useDispatch();
@@ -72,39 +73,25 @@ const ManageCategories = () => {
   };
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Manage Categories
-        </h1>
-        <Button onClick={openCreateForm}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Category
-        </Button>
-      </div>
+    <PageContainer>
+      <ManagePageHeader
+        title="Manage Categories"
+        description="Create and organize the subjects books are grouped under."
+        createLabel="New Category"
+        onCreate={openCreateForm}
+      />
 
-      {status === "failed" && (
-        <ErrorState
-          message="Couldn't load categories."
-          onRetry={() => dispatch(fetchCategories())}
-        />
-      )}
-
-      {status !== "failed" && status === "succeeded" && items.length === 0 && (
-        <EmptyState
-          icon={LayoutGrid}
-          title="No categories yet"
-          description="Create your first category to start organizing the catalog."
-          action={
-            <Button onClick={openCreateForm} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Category
-            </Button>
-          }
-        />
-      )}
-
-      {status !== "failed" && (status === "loading" || items.length > 0) && (
+      <ManageDataState
+        status={status}
+        items={items}
+        icon={LayoutGrid}
+        emptyTitle="No categories yet"
+        emptyDescription="Create your first category to start organizing the catalog."
+        createLabel="New Category"
+        onCreate={openCreateForm}
+        errorMessage="Couldn't load categories."
+        onRetry={() => dispatch(fetchCategories())}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -124,29 +111,17 @@ const ManageCategories = () => {
                     {category.description || "—"}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditForm(category)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteTarget(category)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+                    <RowActions
+                      onEdit={() => openEditForm(category)}
+                      onDelete={() => setDeleteTarget(category)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           )}
         </Table>
-      )}
+      </ManageDataState>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>
@@ -175,7 +150,7 @@ const ManageCategories = () => {
         onConfirm={handleDelete}
         isLoading={isSubmitting}
       />
-    </div>
+    </PageContainer>
   );
 };
 

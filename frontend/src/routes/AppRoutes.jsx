@@ -36,6 +36,8 @@ import { logoutUser } from "@/store/slices/authSlice";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/useToast";
 import { Button } from "@/components/ui/button";
+import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
 
 /**
  * Temporary placeholder for the post-login landing page.
@@ -43,6 +45,10 @@ import { Button } from "@/components/ui/button";
  * milestones — this exists to give Login.jsx somewhere valid to
  * redirect to, something for PrivateRoute to guard, and (now that
  * logout exists) a way to exercise the full login/logout loop.
+ *
+ * Renders inside MainLayout (Navbar/Sidebar already wrap it), so it
+ * uses the same PageContainer/PageHeader shell as every other page
+ * instead of a competing full-screen centered layout.
  */
 function DashboardPlaceholder() {
   const dispatch = useDispatch();
@@ -56,25 +62,23 @@ function DashboardPlaceholder() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 text-center">
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-foreground">
-          Welcome{user?.name ? `, ${user.name}` : ""} 🎉
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          The real dashboard is built in a later phase — this route is a
-          placeholder.
-        </p>
-        <div className="flex justify-center gap-3">
-          <Link to="/change-password">
-            <Button variant="secondary">Change password</Button>
-          </Link>
-          <Button variant="outline" onClick={handleLogout}>
-            Log out
-          </Button>
-        </div>
+    <PageContainer>
+      <PageHeader
+        title={`Welcome${user?.name ? `, ${user.name}` : ""}`}
+        description="The full dashboard is coming in a later phase — for now, here's quick access to your account and the catalog."
+      />
+      <div className="flex flex-wrap gap-3">
+        <Link to="/books">
+          <Button>Browse books</Button>
+        </Link>
+        <Link to="/change-password">
+          <Button variant="secondary">Change password</Button>
+        </Link>
+        <Button variant="outline" onClick={handleLogout}>
+          Log out
+        </Button>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

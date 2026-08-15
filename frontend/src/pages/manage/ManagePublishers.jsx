@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import {
   fetchPublishers,
   createPublisher,
   updatePublisher,
   deletePublisher,
 } from "../../store/slices/publishersSlice";
-import { Button } from "../../components/ui/button";
 import {
   Table,
   TableHeader,
@@ -23,10 +22,12 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
-import EmptyState from "../../components/common/EmptyState";
-import ErrorState from "../../components/common/ErrorState";
 import TableSkeleton from "../../components/common/TableSkeleton";
 import PublisherForm from "../../components/forms/PublisherForm";
+import ManagePageHeader from "../../components/manage/ManagePageHeader";
+import ManageDataState from "../../components/manage/ManageDataState";
+import RowActions from "../../components/manage/RowActions";
+import PageContainer from "../../components/layout/PageContainer";
 
 const ManagePublishers = () => {
   const dispatch = useDispatch();
@@ -72,39 +73,25 @@ const ManagePublishers = () => {
   };
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Manage Publishers
-        </h1>
-        <Button onClick={openCreateForm}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Publisher
-        </Button>
-      </div>
+    <PageContainer>
+      <ManagePageHeader
+        title="Manage Publishers"
+        description="Create and maintain the publishers in the catalog."
+        createLabel="New Publisher"
+        onCreate={openCreateForm}
+      />
 
-      {status === "failed" && (
-        <ErrorState
-          message="Couldn't load publishers."
-          onRetry={() => dispatch(fetchPublishers())}
-        />
-      )}
-
-      {status !== "failed" && status === "succeeded" && items.length === 0 && (
-        <EmptyState
-          icon={Building2}
-          title="No publishers yet"
-          description="Create your first publisher to start building the catalog."
-          action={
-            <Button onClick={openCreateForm} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Publisher
-            </Button>
-          }
-        />
-      )}
-
-      {status !== "failed" && (status === "loading" || items.length > 0) && (
+      <ManageDataState
+        status={status}
+        items={items}
+        icon={Building2}
+        emptyTitle="No publishers yet"
+        emptyDescription="Create your first publisher to start building the catalog."
+        createLabel="New Publisher"
+        onCreate={openCreateForm}
+        errorMessage="Couldn't load publishers."
+        onRetry={() => dispatch(fetchPublishers())}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -126,29 +113,17 @@ const ManagePublishers = () => {
                     {publisher.country || "—"}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditForm(publisher)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteTarget(publisher)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+                    <RowActions
+                      onEdit={() => openEditForm(publisher)}
+                      onDelete={() => setDeleteTarget(publisher)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           )}
         </Table>
-      )}
+      </ManageDataState>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>
@@ -177,7 +152,7 @@ const ManagePublishers = () => {
         onConfirm={handleDelete}
         isLoading={isSubmitting}
       />
-    </div>
+    </PageContainer>
   );
 };
 

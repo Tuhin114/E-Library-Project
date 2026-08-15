@@ -15,6 +15,8 @@ import BookForm from "../../components/forms/BookForm";
 import FileDropzone from "../../components/common/FileDropzone";
 import { Skeleton } from "../../components/ui/skeleton";
 import ErrorState from "../../components/common/ErrorState";
+import PageContainer from "../../components/layout/PageContainer";
+import PageHeader from "../../components/layout/PageHeader";
 
 const toFormValues = (book) => ({
   title: book.title,
@@ -88,26 +90,30 @@ const EditBook = () => {
 
   if (status === "loading" || status === "idle") {
     return (
-      <div className="max-w-3xl space-y-4">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
+      <PageContainer>
+        <div className="max-w-3xl space-y-4">
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+      </PageContainer>
     );
   }
 
   if (status === "failed" || !book) {
     return (
-      <ErrorState
-        message="Couldn't load this book. It may have been deleted."
-        onRetry={() => dispatch(fetchBookById(id))}
-      />
+      <PageContainer>
+        <ErrorState
+          message="Couldn't load this book. It may have been deleted."
+          onRetry={() => dispatch(fetchBookById(id))}
+        />
+      </PageContainer>
     );
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Edit Book</h1>
+    <PageContainer>
+      <PageHeader title="Edit Book" description={book.title} />
 
       <div className="max-w-3xl space-y-10">
         <BookForm
@@ -148,7 +154,7 @@ const EditBook = () => {
           />
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

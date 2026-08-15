@@ -1,48 +1,82 @@
 import { Link } from "react-router-dom";
 import { BookOpen } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
+import { cn } from "../../lib/utils";
 import FavoriteButton from "./FavoriteButton";
 
-const BookCard = ({ book }) => {
+/**
+ * Catalog book tile. `variant="grid"` (default) is the full catalog
+ * grid card; `variant="compact"` is a smaller fixed-width tile for
+ * horizontally-scrolling rows (RecommendedRow) — same implementation,
+ * so the two contexts never drift out of sync with each other.
+ */
+const BookCard = ({ book, variant = "grid", subtitle }) => {
   const authorNames = (book.authors || [])
     .map((author) => author.name)
     .join(", ");
+  const isCompact = variant === "compact";
 
   return (
-    <Link to={`/books/${book._id}`}>
-      <Card className="flex h-full flex-col overflow-hidden transition-colors hover:border-primary/50">
-        <div className="relative flex aspect-[3/4] items-center justify-center bg-muted">
+    <Link
+      to={`/books/${book._id}`}
+      className={cn("block", isCompact && "w-36 shrink-0 snap-start sm:w-40")}
+    >
+      <div className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/40">
+        <div className="relative aspect-[2/3] overflow-hidden bg-secondary">
           {book.coverImage?.url ? (
             <img
               src={book.coverImage.url}
               alt={book.title}
-              className="h-full w-full object-cover"
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             />
           ) : (
-            <BookOpen className="h-10 w-10 text-muted-foreground" />
+            <div className="flex h-full w-full items-center justify-center">
+              <BookOpen
+                className={cn(
+                  "text-muted-foreground",
+                  isCompact ? "h-6 w-6" : "h-9 w-9",
+                )}
+                strokeWidth={1.5}
+              />
+            </div>
           )}
 
           <div className="absolute right-1.5 top-1.5 rounded-full bg-background/80 backdrop-blur">
             <FavoriteButton bookId={book._id} variant="icon" />
           </div>
         </div>
-        <CardHeader className="flex-1 pb-2">
-          <CardTitle className="line-clamp-2 text-sm">{book.title}</CardTitle>
+
+        <div className={cn("flex flex-1 flex-col gap-1", isCompact ? "p-2.5" : "p-3.5")}>
+          {book.category?.name && !isCompact && (
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+              {book.category.name}
+            </span>
+          )}
+          <h3
+            className={cn(
+              "line-clamp-2 font-display font-medium leading-snug text-foreground",
+              isCompact ? "text-xs" : "text-sm",
+            )}
+          >
+            {book.title}
+          </h3>
           {authorNames && (
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+            <p
+              className={cn(
+                "line-clamp-1 text-muted-foreground",
+                isCompact ? "text-[11px]" : "text-xs",
+              )}
+            >
               {authorNames}
             </p>
           )}
-        </CardHeader>
-        <CardContent className="pt-0">
-          {book.category?.name && (
-            <Badge variant="secondary" className="text-xs">
-              {book.category.name}
-            </Badge>
+          {subtitle && (
+            <p className="line-clamp-2 text-[10px] leading-snug text-muted-foreground/80">
+              {subtitle}
+            </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 };

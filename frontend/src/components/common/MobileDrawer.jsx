@@ -12,11 +12,14 @@ const MobileDrawer = ({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
           className={cn(
-            "fixed top-0 z-50 h-full w-72 max-w-[85vw] overflow-y-auto bg-background p-4 shadow-lg",
-            side === "left" ? "left-0" : "right-0",
+            "fixed top-0 z-50 h-full w-72 max-w-[85vw] overflow-y-auto border-border bg-background p-4 shadow-elevated",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out",
+            side === "left"
+              ? "left-0 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left"
+              : "right-0 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
           )}
         >
           <DialogPrimitive.Title className="sr-only">

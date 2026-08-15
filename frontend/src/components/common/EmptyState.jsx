@@ -15,15 +15,15 @@ const EmptyState = ({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-16 text-center",
+        "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-secondary/20 py-16 text-center",
         className,
       )}
     >
-      <Icon className="h-10 w-10 text-muted-foreground" />
+      <Icon className="h-9 w-9 text-muted-foreground" strokeWidth={1.5} />
       <div className="space-y-1">
-        <p className="text-sm font-medium">{title}</p>
+        <p className="text-sm font-medium text-foreground">{title}</p>
         {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
         )}
       </div>
       {action}

@@ -1,45 +1,77 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { LogOut, User } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 
 import { logoutUser } from "../../store/slices/authSlice";
 import { Button } from "../ui/button";
 import { useAuth } from "../../hooks/useAuth";
+import ThemeToggle from "../common/ThemeToggle";
+import MobileDrawer from "../common/MobileDrawer";
+import SidebarNav from "./SidebarNav";
 
 /**
- * Top navigation bar. Shows the app brand, current user, and logout.
- * Mobile nav / hamburger menu is added in Milestone 6 (responsive pass).
+ * Top navigation bar. Brand, current user, theme toggle, logout — and,
+ * below `md`, a hamburger that opens the same SidebarNav used on
+ * desktop inside a MobileDrawer, so the app has real mobile navigation.
  */
 const Navbar = () => {
   const { user } = useAuth();
   const dispatch = useDispatch();
+  const [isNavOpen, setIsNavOpen] = useState(false);
 
   const handleLogout = () => {
     dispatch(logoutUser());
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-      <div className="flex h-16 items-center justify-between px-4 md:px-8">
-        <Link to="/categories" className="text-lg font-semibold tracking-tight">
-          E-Library
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+      <div className="page-container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsNavOpen(true)}
+            aria-label="Open navigation"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden items-center gap-2 text-sm text-muted-foreground md:flex">
-            <User className="h-4 w-4" />
-            <span>{user?.name}</span>
+          <Link
+            to="/books"
+            className="font-display text-lg font-semibold tracking-tight text-foreground"
+          >
+            E-Library
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 border-r border-border pr-3 text-sm text-muted-foreground md:flex">
+            <span className="font-medium text-foreground">{user?.name}</span>
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs capitalize text-primary">
               {user?.role}
             </span>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
+          <ThemeToggle />
+
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Logout</span>
           </Button>
         </div>
       </div>
+
+      <MobileDrawer
+        open={isNavOpen}
+        onOpenChange={setIsNavOpen}
+        title="Navigation"
+        side="left"
+      >
+        <SidebarNav onNavigate={() => setIsNavOpen(false)} />
+      </MobileDrawer>
     </header>
   );
 };

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../../store/slices/categoriesSlice";
 import { fetchAuthors } from "../../store/slices/authorsSlice";
 import { fetchPublishers } from "../../store/slices/publishersSlice";
+import { ALL_FILTER_VALUE } from "../../constants/filterSentinel";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -14,27 +15,11 @@ import {
   SelectItem,
 } from "../ui/select";
 
-// Radix Select doesn't allow an empty-string item value, so "no filter
-// selected" is represented by this sentinel instead and translated back to
-// `undefined` before it reaches the URL/query params.
-const ALL = "__all__";
-
-const SORT_OPTIONS = [
-  { value: "newest", label: "Newest First" },
-  { value: "oldest", label: "Oldest First" },
-  { value: "title_asc", label: "Title A–Z" },
-  { value: "title_desc", label: "Title Z–A" },
-  { value: "year_desc", label: "Publication Year (Newest)" },
-  { value: "year_asc", label: "Publication Year (Oldest)" },
-];
-
 /**
- * Category/Author/Publisher options are loaded from their own slices
- * (already populated from Milestone 1's browse pages in most sessions —
- * dispatching again here is a no-op network-wise if Redux already has
- * them cached... actually these thunks always refetch; that's fine at this
- * catalog scale and keeps the filter list fresh if a librarian just added
- * a new category elsewhere).
+ * Full filter field set, rendered inside the "Filters" drawer opened
+ * from DiscoveryToolbar (see Books.jsx) — used on every breakpoint now,
+ * not just mobile, so Category/Author here mirror DiscoveryToolbar's
+ * own quick selects while Publisher/Language/Tags only live here.
  */
 const FilterSidebar = ({ filters, onFilterChange, onClearFilters }) => {
   const dispatch = useDispatch();
@@ -49,7 +34,7 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters }) => {
   }, [dispatch]);
 
   const handleSelectChange = (key) => (value) => {
-    onFilterChange({ [key]: value === ALL ? undefined : value });
+    onFilterChange({ [key]: value === ALL_FILTER_VALUE ? undefined : value });
   };
 
   const handleTextChange = (key) => (event) => {
@@ -57,7 +42,7 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters }) => {
   };
 
   return (
-    <aside className="w-full shrink-0 space-y-5 md:w-64">
+    <div className="w-full space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Filters</h3>
         <Button variant="ghost" size="sm" onClick={onClearFilters}>
@@ -66,35 +51,16 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters }) => {
       </div>
 
       <div className="space-y-2">
-        <Label>Sort By</Label>
-        <Select
-          value={filters.sort || "newest"}
-          onValueChange={handleSelectChange("sort")}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
         <Label>Category</Label>
         <Select
-          value={filters.category || ALL}
+          value={filters.category || ALL_FILTER_VALUE}
           onValueChange={handleSelectChange("category")}
         >
           <SelectTrigger>
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All categories</SelectItem>
+            <SelectItem value={ALL_FILTER_VALUE}>All categories</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category._id} value={category._id}>
                 {category.name}
@@ -107,14 +73,14 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters }) => {
       <div className="space-y-2">
         <Label>Author</Label>
         <Select
-          value={filters.author || ALL}
+          value={filters.author || ALL_FILTER_VALUE}
           onValueChange={handleSelectChange("author")}
         >
           <SelectTrigger>
             <SelectValue placeholder="All authors" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All authors</SelectItem>
+            <SelectItem value={ALL_FILTER_VALUE}>All authors</SelectItem>
             {authors.map((author) => (
               <SelectItem key={author._id} value={author._id}>
                 {author.name}
@@ -127,14 +93,14 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters }) => {
       <div className="space-y-2">
         <Label>Publisher</Label>
         <Select
-          value={filters.publisher || ALL}
+          value={filters.publisher || ALL_FILTER_VALUE}
           onValueChange={handleSelectChange("publisher")}
         >
           <SelectTrigger>
             <SelectValue placeholder="All publishers" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All publishers</SelectItem>
+            <SelectItem value={ALL_FILTER_VALUE}>All publishers</SelectItem>
             {publishers.map((publisher) => (
               <SelectItem key={publisher._id} value={publisher._id}>
                 {publisher.name}
@@ -163,7 +129,7 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters }) => {
           onChange={handleTextChange("tags")}
         />
       </div>
-    </aside>
+    </div>
   );
 };
 

@@ -18,7 +18,7 @@ const SearchBar = ({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="pl-9 pr-9"
+        className="h-10 pl-9 pr-9"
       />
       {value && (
         <Button

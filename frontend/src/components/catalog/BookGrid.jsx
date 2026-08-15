@@ -1,25 +1,35 @@
-import { BookOpen } from 'lucide-react';
-import BookCard from './BookCard';
-import { Skeleton } from '../ui/skeleton';
-import EmptyState from '../common/EmptyState';
+import { BookOpen } from "lucide-react";
+import BookCard from "./BookCard";
+import { Skeleton } from "../ui/skeleton";
+import EmptyState from "../common/EmptyState";
 
-const BookGrid = ({ books, isLoading, emptyTitle = 'No books found', emptyDescription = '' }) => {
+const GRID_CLASSES =
+  "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6";
+
+const BookGrid = ({
+  books,
+  isLoading,
+  emptyTitle = "No books found",
+  emptyDescription = "",
+}) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {Array.from({ length: 10 }).map((_, index) => (
-          <Skeleton key={index} className="aspect-[3/4] w-full" />
+      <div className={GRID_CLASSES}>
+        {Array.from({ length: 12 }).map((_, index) => (
+          <Skeleton key={index} className="aspect-[2/3] w-full rounded-lg" />
         ))}
       </div>
     );
   }
 
   if (!books || books.length === 0) {
-    return <EmptyState icon={BookOpen} title={emptyTitle} description={emptyDescription} />;
+    return (
+      <EmptyState icon={BookOpen} title={emptyTitle} description={emptyDescription} />
+    );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <div className={GRID_CLASSES}>
       {books.map((book) => (
         <BookCard key={book._id} book={book} />
       ))}
