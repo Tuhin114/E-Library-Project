@@ -22,6 +22,7 @@ const SORT_OPTIONS = [
   { value: "title_desc", label: "Title Z–A" },
   { value: "year_desc", label: "Publication Year (Newest)" },
   { value: "year_asc", label: "Publication Year (Oldest)" },
+  { value: "rating_desc", label: "Top Rated" },
 ];
 
 /**

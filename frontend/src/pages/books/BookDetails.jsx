@@ -10,9 +10,11 @@ import { fetchRecommendations } from "../../store/slices/librarySlice";
 import { Badge } from "../../components/ui/badge";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Button } from "../../components/ui/button";
+import { StarRating } from "../../components/ui/star-rating";
 import FavoriteButton from "../../components/catalog/FavoriteButton";
 import RecommendedRow from "../../components/catalog/RecommendedRow";
 import BookStatusBadge from "../../components/catalog/BookStatusBadge";
+import ReviewList from "../../components/reviews/ReviewList";
 import PageContainer from "../../components/layout/PageContainer";
 
 const BookDetails = () => {
@@ -83,6 +85,16 @@ const BookDetails = () => {
             </h1>
             <BookStatusBadge status={book.status} />
           </div>
+
+          {book.reviewCount > 0 && (
+            <div className="mt-2 flex items-center gap-2">
+              <StarRating value={book.avgRating} size="sm" />
+              <span className="text-sm text-muted-foreground">
+                {book.avgRating.toFixed(1)} ({book.reviewCount}{" "}
+                {book.reviewCount === 1 ? "review" : "reviews"})
+              </span>
+            </div>
+          )}
 
           {book.subtitle && (
             <p className="mt-1 text-muted-foreground">{book.subtitle}</p>
@@ -173,6 +185,15 @@ const BookDetails = () => {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="mt-12 max-w-3xl border-t border-border pt-8">
+        <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+          Reviews
+        </h2>
+        <div className="mt-4">
+          <ReviewList bookId={book._id} />
         </div>
       </div>
 

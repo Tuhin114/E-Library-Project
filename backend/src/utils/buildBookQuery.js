@@ -46,6 +46,7 @@ export const BOOK_SORT_OPTIONS = {
   title_desc: { title: -1 },
   year_desc: { publicationYear: -1 },
   year_asc: { publicationYear: 1 },
+  rating_desc: { avgRating: -1 },
 };
 
 export const buildBookSort = (sortKey) =>

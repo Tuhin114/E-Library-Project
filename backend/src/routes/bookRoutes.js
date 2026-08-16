@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as bookController from "../controllers/bookController.js";
+import * as reviewController from "../controllers/reviewController.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { validateParams } from "../middleware/validateParams.js";
@@ -20,6 +21,10 @@ import {
   bookDigitalFileParamSchema,
   bookFileStreamQuerySchema,
 } from "../validators/bookFileValidator.js";
+import {
+  createReviewSchema,
+  reviewQuerySchema,
+} from "../validators/reviewValidator.js";
 import { ROLES } from "../constants/roles.js";
 
 const router = Router();
@@ -89,6 +94,21 @@ router.get(
   validateParams(bookDigitalFileParamSchema),
   validateQuery(bookFileStreamQuerySchema),
   bookController.streamBookFile,
+);
+
+// Reviews — any authenticated role; ownership/moderation is enforced
+// in the service layer. Edit/delete-by-review-id live in reviewRoutes.
+router.get(
+  "/:id/reviews",
+  validateParams(bookIdParamSchema),
+  validateQuery(reviewQuerySchema),
+  reviewController.getBookReviews,
+);
+router.post(
+  "/:id/reviews",
+  validateParams(bookIdParamSchema),
+  validateRequest(createReviewSchema),
+  reviewController.createReview,
 );
 
 export default router;

@@ -15,6 +15,7 @@ import bookRoutes from "./routes/bookRoutes.js";
 import userLibraryRoutes from "./routes/userLibraryRoutes.js";
 import readingRoutes from "./routes/readingRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use("/api/books", bookRoutes);
 app.use("/api/me", userLibraryRoutes);
 app.use("/api/me", readingRoutes);
 app.use("/api/me", profileRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // 404 handler
 app.use((req, res) => {

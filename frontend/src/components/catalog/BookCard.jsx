@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Star } from "lucide-react";
 import { cn } from "../../lib/utils";
 import FavoriteButton from "./FavoriteButton";
 
@@ -69,6 +69,13 @@ const BookCard = ({ book, variant = "grid", subtitle }) => {
             >
               {authorNames}
             </p>
+          )}
+          {book.reviewCount > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Star className="h-3 w-3 fill-primary text-primary" />
+              <span>{book.avgRating.toFixed(1)}</span>
+              <span className="text-muted-foreground/70">({book.reviewCount})</span>
+            </div>
           )}
           {subtitle && (
             <p className="line-clamp-2 text-[10px] leading-snug text-muted-foreground/80">

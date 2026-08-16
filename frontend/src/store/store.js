@@ -5,6 +5,7 @@ import authorsReducer from "./slices/authorsSlice";
 import publishersReducer from "./slices/publishersSlice";
 import booksReducer from "./slices/booksSlice";
 import libraryReducer from "./slices/librarySlice";
+import reviewsReducer from "./slices/reviewsSlice";
 /**
  * Central Redux store.
  * Feature slices are registered in the `reducer` map as they are built.
@@ -17,6 +18,7 @@ export const store = configureStore({
     publishers: publishersReducer,
     books: booksReducer,
     library: libraryReducer,
+    reviews: reviewsReducer,
   },
   devTools: import.meta.env.MODE !== "production",
 });

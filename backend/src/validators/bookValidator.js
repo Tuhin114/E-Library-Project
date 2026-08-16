@@ -119,6 +119,7 @@ export const bookQuerySchema = z.object({
       "title_desc",
       "year_desc",
       "year_asc",
+      "rating_desc",
     ])
     .optional(),
 

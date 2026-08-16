@@ -115,6 +115,17 @@ const bookSchema = new mongoose.Schema(
       enum: BOOK_STATUS_VALUES,
       default: BOOK_STATUS.DRAFT,
     },
+    avgRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true },
 );
@@ -136,5 +147,6 @@ bookSchema.index({ language: 1 });
 bookSchema.index({ createdAt: -1 });
 bookSchema.index({ title: 1 });
 bookSchema.index({ publicationYear: -1 });
+bookSchema.index({ avgRating: -1 });
 
 export default mongoose.model("Book", bookSchema);
