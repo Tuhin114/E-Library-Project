@@ -15,6 +15,9 @@ import FavoriteButton from "../../components/catalog/FavoriteButton";
 import RecommendedRow from "../../components/catalog/RecommendedRow";
 import BookStatusBadge from "../../components/catalog/BookStatusBadge";
 import ReviewList from "../../components/reviews/ReviewList";
+import DiscussionList from "../../components/discussions/DiscussionList";
+import ShareButton from "../../components/common/ShareButton";
+import { useDocumentMeta } from "../../hooks/useDocumentMeta";
 import PageContainer from "../../components/layout/PageContainer";
 
 const BookDetails = () => {
@@ -31,6 +34,8 @@ const BookDetails = () => {
   useEffect(() => {
     dispatch(fetchRecommendations());
   }, [dispatch]);
+
+  useDocumentMeta({ title: book?.title, description: book?.description });
 
   if (status === "loading" || !book) {
     return (
@@ -126,6 +131,7 @@ const BookDetails = () => {
                 </Button>
               </Link>
             )}
+            <ShareButton title={book.title} text={`Check out "${book.title}" on E-Library`} />
           </div>
 
           {book.description && (
@@ -194,6 +200,15 @@ const BookDetails = () => {
         </h2>
         <div className="mt-4">
           <ReviewList bookId={book._id} />
+        </div>
+      </div>
+
+      <div className="mt-12 max-w-3xl border-t border-border pt-8">
+        <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+          Discussion
+        </h2>
+        <div className="mt-4">
+          <DiscussionList bookId={book._id} />
         </div>
       </div>
 

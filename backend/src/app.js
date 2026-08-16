@@ -16,6 +16,8 @@ import userLibraryRoutes from "./routes/userLibraryRoutes.js";
 import readingRoutes from "./routes/readingRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import discussionRoutes from "./routes/discussionRoutes.js";
+import discussionReplyRoutes from "./routes/discussionReplyRoutes.js";
 
 const app = express();
 
@@ -65,6 +67,8 @@ app.use("/api/me", userLibraryRoutes);
 app.use("/api/me", readingRoutes);
 app.use("/api/me", profileRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/discussions", discussionRoutes);
+app.use("/api/discussion-replies", discussionReplyRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -6,6 +6,7 @@ import publishersReducer from "./slices/publishersSlice";
 import booksReducer from "./slices/booksSlice";
 import libraryReducer from "./slices/librarySlice";
 import reviewsReducer from "./slices/reviewsSlice";
+import discussionsReducer from "./slices/discussionsSlice";
 /**
  * Central Redux store.
  * Feature slices are registered in the `reducer` map as they are built.
@@ -19,6 +20,7 @@ export const store = configureStore({
     books: booksReducer,
     library: libraryReducer,
     reviews: reviewsReducer,
+    discussions: discussionsReducer,
   },
   devTools: import.meta.env.MODE !== "production",
 });

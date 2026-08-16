@@ -25,6 +25,11 @@ import {
   createReviewSchema,
   reviewQuerySchema,
 } from "../validators/reviewValidator.js";
+import * as discussionController from "../controllers/discussionController.js";
+import {
+  createDiscussionSchema,
+  discussionQuerySchema,
+} from "../validators/discussionValidator.js";
 import { ROLES } from "../constants/roles.js";
 
 const router = Router();
@@ -109,6 +114,22 @@ router.post(
   validateParams(bookIdParamSchema),
   validateRequest(createReviewSchema),
   reviewController.createReview,
+);
+
+// Discussions — any authenticated role; ownership/moderation is
+// enforced in the service layer. Reply/delete-by-id live in
+// discussionRoutes and discussionReplyRoutes.
+router.get(
+  "/:id/discussions",
+  validateParams(bookIdParamSchema),
+  validateQuery(discussionQuerySchema),
+  discussionController.getBookDiscussions,
+);
+router.post(
+  "/:id/discussions",
+  validateParams(bookIdParamSchema),
+  validateRequest(createDiscussionSchema),
+  discussionController.createDiscussion,
 );
 
 export default router;
