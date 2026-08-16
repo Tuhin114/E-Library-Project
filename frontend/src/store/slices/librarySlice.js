@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as libraryService from "../../services/libraryService";
+import * as profileService from "../../services/profileService";
 import { toast } from "../../hooks/useToast";
 
 const initialState = {
@@ -8,6 +9,7 @@ const initialState = {
   recentlyViewed: [],
   continueReading: [],
   recommendations: [],
+  savedSearches: [],
   status: "idle",
   error: null,
 };
@@ -75,6 +77,39 @@ export const fetchRecommendations = createAsyncThunk(
   },
 );
 
+export const fetchSavedSearches = createAsyncThunk(
+  "library/fetchSavedSearches",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await profileService.getSavedSearches();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const saveCurrentSearch = createAsyncThunk(
+  "library/saveCurrentSearch",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await profileService.saveSearch(payload);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const removeSavedSearch = createAsyncThunk(
+  "library/removeSavedSearch",
+  async (id, { rejectWithValue }) => {
+    try {
+      return await profileService.deleteSavedSearch(id);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
 const librarySlice = createSlice({
   name: "library",
   initialState,
@@ -131,14 +166,31 @@ const librarySlice = createSlice({
       .addCase(fetchContinueReading.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
-        toast.error(action.payload || "Failed to load your continue reading list");
+        toast.error(
+          action.payload || "Failed to load your continue reading list",
+        );
       })
-      // Deliberately no pending/rejected status wiring for
-      // recommendations — it renders on the Books catalog page
-      // alongside the main grid, and that page already has its own
-      // loading state (`state.books.status`) driving the skeleton.
-      // A failed recommendations fetch just means the row doesn't
-      // render; it shouldn't flip the whole page into an error state.
+      .addCase(fetchSavedSearches.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchSavedSearches.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.savedSearches = action.payload;
+      })
+      .addCase(fetchSavedSearches.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+        toast.error(action.payload || "Failed to load saved searches");
+      })
+      .addCase(removeSavedSearch.fulfilled, (state, action) => {
+        state.savedSearches = state.savedSearches.filter(
+          (search) => search._id !== action.meta.arg,
+        );
+      })
+      .addCase(saveCurrentSearch.fulfilled, (state, action) => {
+        state.savedSearches.push(action.payload);
+      })
       .addCase(fetchRecommendations.fulfilled, (state, action) => {
         state.recommendations = action.payload;
       })

@@ -5,6 +5,7 @@ import { LogOut, Menu } from "lucide-react";
 
 import { logoutUser } from "../../store/slices/authSlice";
 import { Button } from "../ui/button";
+import { Avatar } from "../ui/avatar";
 import { useAuth } from "../../hooks/useAuth";
 import ThemeToggle from "../common/ThemeToggle";
 import MobileDrawer from "../common/MobileDrawer";
@@ -48,12 +49,16 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-2 border-r border-border pr-3 text-sm text-muted-foreground md:flex">
+          <Link
+            to="/profile"
+            className="hidden items-center gap-2 border-r border-border pr-3 text-sm text-muted-foreground transition-colors hover:text-foreground md:flex"
+          >
+            <Avatar src={user?.avatar?.url} name={user?.name} size="sm" />
             <span className="font-medium text-foreground">{user?.name}</span>
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs capitalize text-primary">
               {user?.role}
             </span>
-          </div>
+          </Link>
 
           <ThemeToggle />
 

@@ -1,9 +1,7 @@
 /**
- * Server-side source of truth for allowed file types and max sizes per
- * upload category. Mirrored on the frontend at
- * frontend/src/constants/fileUploadLimits.js for client-side pre-validation
- * — but this backend copy is the one that's actually enforced, since
- * client-side checks can always be bypassed.
+ * Server-side source of truth for allowed file types/sizes per upload
+ * category. Mirrored on the frontend for pre-validation; this copy is
+ * the one actually enforced.
  */
 export const FILE_LIMITS = {
   cover: {
@@ -11,6 +9,12 @@ export const FILE_LIMITS = {
     allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
     cloudinaryResourceType: "image",
     cloudinaryFolder: "e-library/covers",
+  },
+  avatar: {
+    maxSizeMB: 2,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    cloudinaryResourceType: "image",
+    cloudinaryFolder: "e-library/avatars",
   },
   pdf: {
     maxSizeMB: 50,

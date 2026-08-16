@@ -28,6 +28,7 @@ import BookReader from "../pages/reader/BookReader";
 import Favorites from "../pages/favorites/Favorites";
 import RecentlyViewed from "../pages/library/RecentlyViewed";
 import ContinueReading from "../pages/library/ContinueReading";
+import Profile from "../pages/profile/Profile";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -140,6 +141,9 @@ export default function AppRoutes() {
 
           {/* Change password */}
           <Route path="/change-password" element={<ChangePassword />} />
+
+          {/* Profile */}
+          <Route path="/profile" element={<Profile />} />
 
           {/* Librarian only */}
           <Route element={<RoleRoute allowedRoles={[ROLES.LIBRARIAN]} />}>

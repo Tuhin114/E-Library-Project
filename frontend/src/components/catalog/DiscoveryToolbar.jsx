@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal, X, BookmarkPlus } from "lucide-react";
 import { fetchCategories } from "../../store/slices/categoriesSlice";
 import { fetchAuthors } from "../../store/slices/authorsSlice";
 import { ALL_FILTER_VALUE } from "../../constants/filterSentinel";
 import SearchBar from "../common/SearchBar";
+import SaveSearchDialog from "../profile/SaveSearchDialog";
 import { Button } from "../ui/button";
 import {
   Select,
@@ -42,6 +43,7 @@ const DiscoveryToolbar = ({
   const dispatch = useDispatch();
   const { items: categories } = useSelector((state) => state.categories);
   const { items: authors } = useSelector((state) => state.authors);
+  const [isSaveSearchOpen, setIsSaveSearchOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -130,7 +132,27 @@ const DiscoveryToolbar = ({
             <X className="h-4 w-4" />
           </Button>
         )}
+
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setIsSaveSearchOpen(true)}
+            aria-label="Save this search"
+          >
+            <BookmarkPlus className="h-4 w-4" />
+          </Button>
+        )}
       </div>
+
+      <SaveSearchDialog
+        open={isSaveSearchOpen}
+        onOpenChange={setIsSaveSearchOpen}
+        queryParams={Object.fromEntries(
+          Object.entries(filters).filter(([key]) => key !== "page" && key !== "limit"),
+        )}
+      />
     </div>
   );
 };

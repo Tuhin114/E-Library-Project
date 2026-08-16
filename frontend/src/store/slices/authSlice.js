@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as authService from "@/services/authService";
+import * as profileService from "@/services/profileService";
 
 /**
  * Login thunk. Delegates the actual HTTP call + error normalization to
@@ -78,6 +79,12 @@ const authSlice = createSlice({
     clearAuthError(state) {
       state.error = null;
     },
+    // Patches the logged-in user in place — unlike setCredentials, does
+    // not touch accessToken/isAuthenticated. Used after a profile/avatar
+    // update, where the session itself hasn't changed.
+    updateUser(state, action) {
+      state.user = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -111,7 +118,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, clearCredentials, clearAuthError } =
+export const { setCredentials, clearCredentials, clearAuthError, updateUser } =
   authSlice.actions;
 export default authSlice.reducer;
 
@@ -141,4 +148,24 @@ export const logoutUser = () => async (dispatch) => {
 export const changeUserPassword = (payload) => async (dispatch) => {
   await authService.changePassword(payload);
   dispatch(clearCredentials());
+};
+
+/**
+ * Profile/avatar thunks (M1). Errors are intentionally NOT swallowed —
+ * the calling form/page shows them via toast, same convention as
+ * changeUserPassword above.
+ */
+export const updateUserProfile = (payload) => async (dispatch) => {
+  const user = await profileService.updateProfile(payload);
+  dispatch(updateUser(user));
+};
+
+export const uploadUserAvatar = (file) => async (dispatch) => {
+  const user = await profileService.uploadAvatar(file);
+  dispatch(updateUser(user));
+};
+
+export const removeUserAvatar = () => async (dispatch) => {
+  const user = await profileService.removeAvatar();
+  dispatch(updateUser(user));
 };

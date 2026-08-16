@@ -34,10 +34,11 @@ const buildMulterInstance = (type) => {
 };
 
 /**
- * Static middleware for the cover-image upload route — type is fixed,
- * so the multer instance can be built once at module load.
+ * Static middlewares — type is fixed per route, so each multer
+ * instance can be built once at module load.
  */
 export const uploadCoverMiddleware = buildMulterInstance("cover");
+export const uploadAvatarMiddleware = buildMulterInstance("avatar");
 
 /**
  * The PDF/EPUB upload route takes `:type` as a dynamic URL param, so the

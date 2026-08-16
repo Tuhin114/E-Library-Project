@@ -37,6 +37,16 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    avatar: {
+      url: { type: String, default: null },
+      publicId: { type: String, default: null },
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [300, "Bio cannot exceed 300 characters"],
+      default: "",
+    },
     passwordChangedAt: {
       type: Date,
       select: false,

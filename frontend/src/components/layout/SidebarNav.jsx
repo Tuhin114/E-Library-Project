@@ -7,6 +7,7 @@ import {
   Heart,
   History,
   BookMarked,
+  User,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -90,6 +91,14 @@ const SidebarNav = ({ onNavigate }) => {
         >
           <BookMarked className="h-4 w-4" />
           Continue Reading
+        </NavLink>
+      </nav>
+
+      <nav className="mt-8 space-y-1">
+        <p className={sectionLabelClasses}>Account</p>
+        <NavLink to="/profile" className={navLinkClasses} onClick={handleClick}>
+          <User className="h-4 w-4" />
+          Profile
         </NavLink>
       </nav>
 

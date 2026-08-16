@@ -12,6 +12,11 @@ export const FILE_LIMITS = {
     allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
     accept: ".jpg,.jpeg,.png,.webp",
   },
+  avatar: {
+    maxSizeMB: 2,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    accept: ".jpg,.jpeg,.png,.webp",
+  },
   pdf: {
     maxSizeMB: 50,
     allowedMimeTypes: ["application/pdf"],
