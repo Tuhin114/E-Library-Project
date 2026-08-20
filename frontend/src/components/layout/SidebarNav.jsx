@@ -8,6 +8,8 @@ import {
   History,
   BookMarked,
   User,
+  MessageSquare,
+  Flag,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -63,6 +65,10 @@ const SidebarNav = ({ onNavigate }) => {
         <NavLink to="/books" className={navLinkClasses} onClick={handleClick}>
           <BookOpen className="h-4 w-4" />
           Books
+        </NavLink>
+        <NavLink to="/forum" className={navLinkClasses} onClick={handleClick}>
+          <MessageSquare className="h-4 w-4" />
+          Forum
         </NavLink>
       </nav>
 
@@ -136,6 +142,14 @@ const SidebarNav = ({ onNavigate }) => {
           >
             <BookOpen className="h-4 w-4" />
             Manage Books
+          </NavLink>
+          <NavLink
+            to="/forum/reports"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <Flag className="h-4 w-4" />
+            Forum Reports
           </NavLink>
         </nav>
       )}

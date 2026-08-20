@@ -18,6 +18,9 @@ import profileRoutes from "./routes/profileRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import discussionRoutes from "./routes/discussionRoutes.js";
 import discussionReplyRoutes from "./routes/discussionReplyRoutes.js";
+import forumThreadRoutes from "./routes/forumThreadRoutes.js";
+import forumReplyRoutes from "./routes/forumReplyRoutes.js";
+import forumReportRoutes from "./routes/forumReportRoutes.js";
 
 const app = express();
 
@@ -69,6 +72,9 @@ app.use("/api/me", profileRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/discussions", discussionRoutes);
 app.use("/api/discussion-replies", discussionReplyRoutes);
+app.use("/api/forum/threads", forumThreadRoutes);
+app.use("/api/forum/replies", forumReplyRoutes);
+app.use("/api/forum/reports", forumReportRoutes);
 
 // 404 handler
 app.use((req, res) => {

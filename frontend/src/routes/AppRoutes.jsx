@@ -29,6 +29,9 @@ import Favorites from "../pages/favorites/Favorites";
 import RecentlyViewed from "../pages/library/RecentlyViewed";
 import ContinueReading from "../pages/library/ContinueReading";
 import Profile from "../pages/profile/Profile";
+import Forum from "../pages/forum/Forum";
+import ForumThreadDetail from "../pages/forum/ForumThreadDetail";
+import ForumReports from "../pages/forum/ForumReports";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -145,6 +148,10 @@ export default function AppRoutes() {
           {/* Profile */}
           <Route path="/profile" element={<Profile />} />
 
+          {/* Forum */}
+          <Route path="/forum" element={<Forum />} />
+          <Route path="/forum/:id" element={<ForumThreadDetail />} />
+
           {/* Librarian only */}
           <Route element={<RoleRoute allowedRoles={[ROLES.LIBRARIAN]} />}>
             <Route path="/manage/categories" element={<ManageCategories />} />
@@ -153,6 +160,7 @@ export default function AppRoutes() {
             <Route path="/manage/books" element={<ManageBooks />} />
             <Route path="/manage/books/new" element={<CreateBook />} />
             <Route path="/manage/books/:id/edit" element={<EditBook />} />
+            <Route path="/forum/reports" element={<ForumReports />} />
           </Route>
         </Route>
       </Route>
