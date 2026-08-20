@@ -15,11 +15,6 @@ const getInitials = (name = "") =>
     .map((part) => part[0]?.toUpperCase())
     .join("");
 
-/**
- * Circular avatar. Renders the image when a URL is given and loads
- * successfully; falls back to initials-on-accent otherwise (missing
- * avatar, broken URL, still loading).
- */
 const Avatar = forwardRef(({ src, name, size = "md", className }, ref) => {
   const [hasError, setHasError] = useState(false);
   const showImage = Boolean(src) && !hasError;
@@ -28,7 +23,8 @@ const Avatar = forwardRef(({ src, name, size = "md", className }, ref) => {
     <div
       ref={ref}
       className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent font-display font-semibold text-accent-foreground",
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-full font-display font-semibold",
+        showImage ? "bg-white" : "bg-accent text-accent-foreground",
         SIZES[size],
         className,
       )}
@@ -46,6 +42,7 @@ const Avatar = forwardRef(({ src, name, size = "md", className }, ref) => {
     </div>
   );
 });
+
 Avatar.displayName = "Avatar";
 
 export { Avatar };

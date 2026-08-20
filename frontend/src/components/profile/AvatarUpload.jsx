@@ -21,7 +21,9 @@ const AvatarUpload = ({ src, name, onUpload, onRemove, isProcessing }) => {
     if (!file) return;
 
     if (!limits.allowedMimeTypes.includes(file.type)) {
-      toast.error(`Invalid file type. Allowed: ${limits.allowedMimeTypes.join(", ")}`);
+      toast.error(
+        `Invalid file type. Allowed: ${limits.allowedMimeTypes.join(", ")}`,
+      );
       return;
     }
     if (file.size > limits.maxSizeMB * 1024 * 1024) {

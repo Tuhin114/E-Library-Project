@@ -6,6 +6,8 @@ node_modules/
 !.env.example
 
 
+
+
 logs/
 *.log
 npm-debug.log*
