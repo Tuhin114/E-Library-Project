@@ -24,6 +24,12 @@ import forumReportRoutes from "./routes/forumReportRoutes.js";
 
 const app = express();
 
+// Trust the first proxy hop (Render/Railway/any PaaS sit behind a reverse
+// proxy). Required for express-rate-limit to read the real client IP from
+// X-Forwarded-For instead of throwing, and for req.secure to resolve
+// correctly behind TLS-terminating proxies.
+app.set("trust proxy", 1);
+
 // Security headers
 app.use(helmet());
 
