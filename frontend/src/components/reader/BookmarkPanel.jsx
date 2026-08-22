@@ -93,7 +93,7 @@ const BookmarkPanel = ({ bookId, format, currentLocation, onJumpTo, onClose }) =
         {bookmarks.map((bookmark) => (
           <div
             key={bookmark._id}
-            className="mb-1 flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-accent"
+            className="mb-1 flex items-center justify-between gap-2 rounded-xl px-2 py-1.5 hover:bg-accent/15"
           >
             <button
               type="button"

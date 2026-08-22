@@ -6,11 +6,15 @@
 //   - Authors
 //   - Publishers
 //   - 40 Books
-//   - Cover PNGs
-//   - PDF files
-//   - EPUB files
+//   - Real cover photos (downloaded from Picsum Photos, keyless & deterministic)
+//   - PDF files (generated placeholder documents)
+//   - EPUB files (generated placeholder documents)
 //   - Favorites
 //   - Recently Viewed
+//
+// Book/author/publisher/ISBN data here is synthetic mock data for
+// development and testing. Cover images are real downloaded photographs
+// rather than generated placeholder art — see fetchRealCoverImage() below.
 //
 // Usage:
 //   node src/scripts/seedMockData.js
@@ -24,6 +28,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import zlib from "node:zlib";
+import axios from "axios";
 
 import User from "../models/User.js";
 import Category from "../models/Category.js";
@@ -731,85 +736,65 @@ const crc32 = (buffer) => {
 };
 
 /**
- * Generates a valid PNG.
+ * Downloads a real photograph to use as a book cover, instead of
+ * generating a synthetic placeholder image.
  *
- * This intentionally uses simple geometric artwork rather than external
- * image-generation services. That makes the seed reproducible and removes
- * another dependency from your backend.
+ * Uses Picsum Photos (https://picsum.photos), a keyless image service
+ * that serves real photography (much of it sourced from Unsplash
+ * photographers) with no API key or rate-limit signup required. The
+ * `seed` value makes the choice deterministic per book — the same book
+ * always gets the same photo on repeated seed runs — while different
+ * books get different photos.
+ *
+ * Falls back through a couple of retries; if every attempt fails (e.g. no
+ * network access in this environment), returns null and the caller simply
+ * leaves the book without a cover rather than fabricating one.
  */
-const makeCoverPng = (book, index) => {
-  const width = 600;
-  const height = 800;
+const COVER_WIDTH = 600;
+const COVER_HEIGHT = 800;
+const COVER_FETCH_ATTEMPTS = 3;
+const COVER_FETCH_TIMEOUT_MS = 15000;
 
-  const raw = Buffer.alloc(height * (1 + width * 4));
+const looksLikeImageBuffer = (buffer) => {
+  if (!buffer || buffer.length < 500) return false;
+  const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8;
+  const isPng =
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47;
+  return isJpeg || isPng;
+};
 
-  const hue = (index * 37) % 360;
+const fetchRealCoverImage = async (book, index) => {
+  const seed = `${generateSlug(book.title) || "book"}-${index}`;
+  const url = `https://picsum.photos/seed/${encodeURIComponent(seed)}/${COVER_WIDTH}/${COVER_HEIGHT}`;
 
-  const hslToRgb = (h, s, l) => {
-    s /= 100;
-    l /= 100;
+  for (let attempt = 1; attempt <= COVER_FETCH_ATTEMPTS; attempt++) {
+    try {
+      const response = await axios.get(url, {
+        responseType: "arraybuffer",
+        timeout: COVER_FETCH_TIMEOUT_MS,
+        maxRedirects: 5,
+        headers: { "User-Agent": "e-library-seed-script/1.0" },
+      });
 
-    const k = (n) => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = (n) =>
-      l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+      const buffer = Buffer.from(response.data);
 
-    return [
-      Math.round(255 * f(0)),
-      Math.round(255 * f(8)),
-      Math.round(255 * f(4)),
-    ];
-  };
-
-  const [r, g, b] = hslToRgb(hue, 55, 20);
-  const [r2, g2, b2] = hslToRgb((hue + 70) % 360, 60, 55);
-
-  for (let y = 0; y < height; y++) {
-    raw[y * (1 + width * 4)] = 0;
-
-    for (let x = 0; x < width; x++) {
-      const offset = y * (1 + width * 4) + 1 + x * 4;
-
-      const progress = y / height;
-
-      raw[offset] = Math.round(r + (r2 - r) * progress);
-      raw[offset + 1] = Math.round(g + (g2 - g) * progress);
-      raw[offset + 2] = Math.round(b + (b2 - b) * progress);
-      raw[offset + 3] = 255;
+      if (looksLikeImageBuffer(buffer)) {
+        return buffer;
+      }
+    } catch (error) {
+      log(
+        `Cover fetch attempt ${attempt}/${COVER_FETCH_ATTEMPTS} failed for "${book.title}": ${error.message}`,
+      );
     }
   }
 
-  const makeChunk = (type, data) => {
-    const typeBuffer = Buffer.from(type);
-    const output = Buffer.alloc(12 + data.length);
-
-    output.writeUInt32BE(data.length, 0);
-    typeBuffer.copy(output, 4);
-    data.copy(output, 8);
-
-    output.writeUInt32BE(
-      crc32(Buffer.concat([typeBuffer, data])),
-      8 + data.length,
-    );
-
-    return output;
-  };
-
-  const header = Buffer.alloc(13);
-
-  header.writeUInt32BE(width, 0);
-  header.writeUInt32BE(height, 4);
-  header[8] = 8;
-  header[9] = 6;
-
-  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-
-  return Buffer.concat([
-    signature,
-    makeChunk("IHDR", header),
-    makeChunk("IDAT", zlib.deflateSync(raw)),
-    makeChunk("IEND", Buffer.alloc(0)),
-  ]);
+  log(
+    `Could not fetch a real cover photo for "${book.title}" — leaving cover unset.`,
+  );
+  return null;
 };
 
 /**
@@ -1165,11 +1150,26 @@ metadata persistence, downloading, and digital-library workflows.
 const uploadAssets = async (book, index, categoryName, authorName) => {
   const timestamp = Date.now();
 
-  const cover = await uploadBuffer(makeCoverPng(book, index), {
-    folder: FILE_LIMITS.cover.cloudinaryFolder,
-    resourceType: FILE_LIMITS.cover.cloudinaryResourceType,
-    publicId: `book-${book._id}-cover-${timestamp}`,
-  });
+  const coverBuffer = await fetchRealCoverImage(book, index);
+
+  let coverImage = null;
+
+  if (coverBuffer) {
+    const cover = await uploadBuffer(coverBuffer, {
+      folder: FILE_LIMITS.cover.cloudinaryFolder,
+      resourceType: FILE_LIMITS.cover.cloudinaryResourceType,
+      publicId: `book-${book._id}-cover-${timestamp}`,
+    });
+
+    coverImage = {
+      url: cover.secure_url,
+      publicId: cover.public_id,
+      format: cover.format,
+      sizeBytes: cover.bytes,
+      originalName: `${generateSlug(book.title)}-cover.jpg`,
+      uploadedAt: new Date(),
+    };
+  }
 
   const pdf = await uploadBuffer(makePdf(book, categoryName), {
     folder: FILE_LIMITS.pdf.cloudinaryFolder,
@@ -1189,14 +1189,7 @@ const uploadAssets = async (book, index, categoryName, authorName) => {
   const uploadedAt = new Date();
 
   return {
-    coverImage: {
-      url: cover.secure_url,
-      publicId: cover.public_id,
-      format: cover.format,
-      sizeBytes: cover.bytes,
-      originalName: `${generateSlug(book.title)}-cover.png`,
-      uploadedAt,
-    },
+    coverImage,
 
     digitalFiles: {
       pdf: {
@@ -1477,7 +1470,7 @@ async function run() {
         AUTHORS[data.authors[0]].name,
       );
 
-      if (!hasCover) {
+      if (!hasCover && assets.coverImage) {
         book.coverImage = assets.coverImage;
       }
 

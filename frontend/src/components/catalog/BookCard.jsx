@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { BookOpen, Star } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { Badge } from "../ui/badge";
 import FavoriteButton from "./FavoriteButton";
 
 /**
@@ -20,7 +21,7 @@ const BookCard = ({ book, variant = "grid", subtitle }) => {
       to={`/books/${book._id}`}
       className={cn("block", isCompact && "w-36 shrink-0 snap-start sm:w-40")}
     >
-      <div className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/40">
+      <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-elevated">
         <div className="relative aspect-[2/3] overflow-hidden bg-secondary">
           {book.coverImage?.url ? (
             <img
@@ -41,17 +42,21 @@ const BookCard = ({ book, variant = "grid", subtitle }) => {
             </div>
           )}
 
+          {book.category?.name && !isCompact && (
+            <Badge
+              variant="secondary"
+              className="absolute left-1.5 top-1.5 px-2 py-0.5 text-[10px]"
+            >
+              {book.category.name}
+            </Badge>
+          )}
+
           <div className="absolute right-1.5 top-1.5 rounded-full bg-background/80 backdrop-blur">
             <FavoriteButton bookId={book._id} variant="icon" />
           </div>
         </div>
 
         <div className={cn("flex flex-1 flex-col gap-1", isCompact ? "p-2.5" : "p-3.5")}>
-          {book.category?.name && !isCompact && (
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-              {book.category.name}
-            </span>
-          )}
           <h3
             className={cn(
               "line-clamp-2 font-display font-medium leading-snug text-foreground",

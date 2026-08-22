@@ -8,7 +8,7 @@ import { Skeleton } from "../ui/skeleton";
 const CardGridSkeleton = ({ count = 6 }) => (
   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {Array.from({ length: count }).map((_, index) => (
-      <Skeleton key={index} className="h-28 w-full" />
+      <Skeleton key={index} className="h-32 w-full rounded-2xl" />
     ))}
   </div>
 );

@@ -9,6 +9,7 @@ import { Badge } from "../ui/badge";
 const EntityDetailHeader = ({ title, badges = [], meta, description }) => (
   <div className="mb-10 border-b border-border pb-8">
     <div className="flex flex-wrap items-center gap-3">
+      <span className="h-6 w-1.5 rounded-full bg-primary" aria-hidden="true" />
       <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
         {title}
       </h1>
@@ -19,12 +20,12 @@ const EntityDetailHeader = ({ title, badges = [], meta, description }) => (
       ))}
     </div>
     {meta && (
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 pl-4 text-sm text-muted-foreground">
         {meta}
       </div>
     )}
     {description && (
-      <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
+      <p className="mt-3 max-w-2xl pl-4 leading-relaxed text-muted-foreground">
         {description}
       </p>
     )}

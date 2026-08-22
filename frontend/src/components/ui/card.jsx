@@ -1,11 +1,18 @@
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-const Card = forwardRef(({ className, ...props }, ref) => (
+/**
+ * Base surface used for book covers, info panels, dialogs content, etc.
+ * Pass `interactive` on cards that act as a link/click target (e.g.
+ * BookCard) to get the bookstore-style hover lift.
+ */
+const Card = forwardRef(({ className, interactive = false, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      'rounded-lg border border-border bg-card text-card-foreground transition-colors',
+      'rounded-2xl border border-border bg-card text-card-foreground transition-all duration-200',
+      interactive &&
+        'cursor-pointer hover:-translate-y-1 hover:shadow-elevated hover:border-primary/40',
       className,
     )}
     {...props}
@@ -19,7 +26,7 @@ const CardHeader = forwardRef(({ className, ...props }, ref) => (
 CardHeader.displayName = 'CardHeader';
 
 const CardTitle = forwardRef(({ className, ...props }, ref) => (
-  <h3 ref={ref} className={cn('text-xl font-semibold tracking-tight', className)} {...props} />
+  <h3 ref={ref} className={cn('font-display text-xl font-semibold tracking-tight', className)} {...props} />
 ));
 CardTitle.displayName = 'CardTitle';
 

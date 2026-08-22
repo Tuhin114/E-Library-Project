@@ -26,9 +26,9 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
       <div className="page-container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -40,22 +40,24 @@ const Navbar = () => {
             <Menu className="h-5 w-5" />
           </Button>
 
-          <Link
-            to="/books"
-            className="font-display text-lg font-semibold tracking-tight text-foreground"
-          >
-            E-Library
+          <Link to="/books" className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary font-display text-base font-bold text-primary-foreground">
+              E
+            </span>
+            <span className="font-display text-lg font-bold tracking-tight text-foreground">
+              Library
+            </span>
           </Link>
         </div>
 
         <div className="flex items-center gap-2">
           <Link
             to="/profile"
-            className="hidden items-center gap-2 border-r border-border pr-3 text-sm text-muted-foreground transition-colors hover:text-foreground md:flex"
+            className="hidden items-center gap-2 rounded-full border border-border bg-secondary/30 py-1 pl-1 pr-3 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground md:flex"
           >
             <Avatar src={user?.avatar?.url} name={user?.name} size="sm" />
             <span className="font-medium text-foreground">{user?.name}</span>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs capitalize text-primary">
+            <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold capitalize text-foreground">
               {user?.role}
             </span>
           </Link>

@@ -14,7 +14,7 @@ const ErrorState = ({
 }) => (
   <div
     className={cn(
-      "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-destructive/40 bg-destructive/5 py-16 text-center",
+      "flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-destructive/40 bg-destructive/5 py-16 text-center",
       className,
     )}
   >

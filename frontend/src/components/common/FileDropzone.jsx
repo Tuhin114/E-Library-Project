@@ -133,10 +133,10 @@ const FileDropzone = ({
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">{label}</p>
+      <p className="text-sm font-semibold">{label}</p>
 
       {exists ? (
-        <div className="flex items-center justify-between rounded-md border border-border p-3">
+        <div className="flex items-center justify-between rounded-2xl border border-border p-3">
           <div className="flex items-center gap-2 overflow-hidden">
             <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
 
@@ -186,10 +186,10 @@ const FileDropzone = ({
           role="button"
           tabIndex={0}
           aria-label={`${label} upload area`}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-6 text-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             isDragging
               ? "border-primary bg-primary/5"
-              : "border-border hover:bg-accent"
+              : "border-border hover:bg-accent/10"
           }`}
         >
           {isProcessing || isPasting ? (

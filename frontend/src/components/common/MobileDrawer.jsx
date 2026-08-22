@@ -25,7 +25,7 @@ const MobileDrawer = ({
           <DialogPrimitive.Title className="sr-only">
             {title || "Menu"}
           </DialogPrimitive.Title>
-          <DialogPrimitive.Close className="absolute right-3 top-3 rounded-sm p-1 text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus:outline-none">
+          <DialogPrimitive.Close className="absolute right-3 top-3 rounded-full p-1.5 text-muted-foreground opacity-70 transition-opacity hover:bg-accent/20 hover:opacity-100 focus:outline-none">
             <X className="h-5 w-5" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>

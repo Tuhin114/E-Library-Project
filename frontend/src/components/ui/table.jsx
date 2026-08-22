@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { cn } from "../../lib/utils";
 
 const Table = forwardRef(({ className, ...props }, ref) => (
-  <div className="w-full overflow-auto rounded-md border border-border">
+  <div className="w-full overflow-auto rounded-2xl border border-border">
     <table
       ref={ref}
       className={cn("w-full min-w-[560px] caption-bottom text-sm", className)}
@@ -15,7 +15,7 @@ Table.displayName = "Table";
 const TableHeader = forwardRef(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("[&_tr]:border-b [&_tr]:border-border", className)}
+    className={cn("bg-secondary/30 [&_tr]:border-b [&_tr]:border-border", className)}
     {...props}
   />
 ));
@@ -46,7 +46,7 @@ const TableHead = forwardRef(({ className, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
-      "h-11 px-4 text-left align-middle font-medium text-muted-foreground",
+      "h-11 px-4 text-left align-middle font-display font-semibold text-muted-foreground",
       className,
     )}
     {...props}

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const ICONS = { success: CheckCircle2, error: XCircle, info: Info };
 
 const VARIANT_STYLES = {
-  success: "border-primary/40 bg-primary/10",
+  success: "border-success/40 bg-success/10",
   error: "border-destructive/40 bg-destructive/10",
   info: "border-border bg-secondary/50",
 };
@@ -34,7 +34,7 @@ export function Toaster() {
               transition={{ duration: 0.2, ease: "easeOut" }}
               role="status"
               className={cn(
-                "pointer-events-auto flex items-start gap-2 rounded-lg border px-4 py-3 text-sm text-foreground shadow-lg backdrop-blur",
+                "pointer-events-auto flex items-start gap-2 rounded-2xl border px-4 py-3 text-sm text-foreground shadow-elevated backdrop-blur",
                 VARIANT_STYLES[t.type] || VARIANT_STYLES.info,
               )}
             >

@@ -2,12 +2,21 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Plus } from "lucide-react";
 import { fetchThreads } from "@/store/slices/forumSlice";
-import { FORUM_CATEGORY_OPTIONS, FORUM_SORT_OPTIONS } from "@/constants/forumCategories";
+import {
+  FORUM_CATEGORY_OPTIONS,
+  FORUM_SORT_OPTIONS,
+} from "@/constants/forumCategories";
 import { ALL_FILTER_VALUE } from "@/constants/filterSentinel";
 import PageContainer from "@/components/layout/PageContainer";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/common/EmptyState";
 import ForumThreadCard from "@/components/forum/ForumThreadCard";
@@ -80,7 +89,9 @@ const Forum = () => {
       ) : threads.length > 0 ? (
         <div className="space-y-3">
           {threads.map((thread) => (
-            <ForumThreadCard key={thread._id} thread={thread} />
+            <div key={thread._id}>
+              <ForumThreadCard key={thread._id} thread={thread} />
+            </div>
           ))}
         </div>
       ) : (

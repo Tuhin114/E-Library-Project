@@ -13,12 +13,12 @@ const SearchBar = ({
 }) => {
   return (
     <div className="relative">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-10 pl-9 pr-9"
+        className="h-11 pl-10 pr-10"
       />
       {value && (
         <Button
@@ -26,7 +26,7 @@ const SearchBar = ({
           variant="ghost"
           size="sm"
           onClick={() => onChange("")}
-          className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
+          className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full p-0"
         >
           <X className="h-4 w-4" />
         </Button>

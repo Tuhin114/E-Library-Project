@@ -10,13 +10,15 @@ const formatDate = (value) =>
 
 const ForumThreadCard = ({ thread }) => (
   <Link to={`/forum/${thread._id}`}>
-    <Card className="flex items-start gap-3 p-4 transition-colors hover:border-primary/40">
+    <Card interactive className="flex items-start gap-3 p-4">
       <Avatar src={thread.user?.avatar?.url} name={thread.user?.name} size="sm" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           {thread.isPinned && <Pin className="h-3.5 w-3.5 text-primary" />}
           {thread.isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-          <h3 className="truncate font-medium text-foreground">{thread.title}</h3>
+          <h3 className="truncate font-display font-medium text-foreground">
+            {thread.title}
+          </h3>
         </div>
         <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{thread.body}</p>
         <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">

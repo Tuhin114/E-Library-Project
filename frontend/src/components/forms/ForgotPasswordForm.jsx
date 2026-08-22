@@ -43,7 +43,7 @@ export function ForgotPasswordForm() {
     return (
       <div
         role="status"
-        className="rounded-md border border-border bg-secondary/50 px-3 py-3 text-sm text-foreground"
+        className="rounded-2xl border border-border bg-secondary/50 px-4 py-3 text-sm text-foreground"
       >
         {successMessage}
       </div>

@@ -44,7 +44,7 @@ const FilterSidebar = ({ filters, onFilterChange, onClearFilters }) => {
   return (
     <div className="w-full space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Filters</h3>
+        <h3 className="font-display text-sm font-semibold">Filters</h3>
         <Button variant="ghost" size="sm" onClick={onClearFilters}>
           Clear all
         </Button>

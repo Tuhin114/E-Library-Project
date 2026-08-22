@@ -289,7 +289,7 @@ const BookForm = ({
 
       <div className="space-y-2">
         <Label>Author(s)</Label>
-        <div className="flex flex-wrap gap-2 rounded-md border border-input p-3">
+        <div className="flex flex-wrap gap-2 rounded-2xl border border-input p-3">
           {authors.length === 0 && (
             <p className="text-sm text-muted-foreground">
               No authors available yet.
@@ -305,7 +305,7 @@ const BookForm = ({
                 className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                   isSelected
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:bg-accent"
+                    : "border-border text-muted-foreground hover:bg-accent/15"
                 }`}
               >
                 {author.name}
@@ -321,7 +321,7 @@ const BookForm = ({
       {/* File upload — enabled in Milestone 3 once Cloudinary upload endpoints exist. */}
       <div className="space-y-2">
         <Label>Cover Image, PDF & EPUB</Label>
-        <div className="flex items-center gap-3 rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
           <UploadCloud className="h-5 w-5" />
           File uploads will be available here once this book is saved.
         </div>

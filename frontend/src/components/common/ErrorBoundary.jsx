@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component {
       return (
         <div className="flex min-h-screen items-center justify-center bg-background px-4 text-center">
           <div className="space-y-4">
-            <h1 className="text-xl font-semibold text-foreground">
+            <h1 className="font-display text-xl font-semibold text-foreground">
               Something went wrong
             </h1>
             <p className="text-sm text-muted-foreground">

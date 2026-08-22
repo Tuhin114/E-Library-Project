@@ -41,7 +41,7 @@ const BookDetails = () => {
     return (
       <PageContainer>
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[300px_1fr]">
-          <Skeleton className="aspect-[2/3] w-full max-w-sm rounded-lg md:max-w-none" />
+          <Skeleton className="aspect-[2/3] w-full max-w-sm rounded-2xl md:max-w-none" />
           <div className="space-y-3 pt-2">
             <Skeleton className="h-9 w-2/3" />
             <Skeleton className="h-4 w-1/3" />
@@ -60,7 +60,7 @@ const BookDetails = () => {
   return (
     <PageContainer>
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[300px_1fr]">
-        <div className="aspect-[2/3] w-full max-w-sm overflow-hidden rounded-lg border border-border bg-secondary md:max-w-none">
+        <div className="aspect-[2/3] w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-secondary md:max-w-none">
           {book.coverImage?.url ? (
             <img
               src={book.coverImage.url}

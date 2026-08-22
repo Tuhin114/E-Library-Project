@@ -16,7 +16,7 @@ const BookGrid = ({
     return (
       <div className={GRID_CLASSES}>
         {Array.from({ length: 12 }).map((_, index) => (
-          <Skeleton key={index} className="aspect-[2/3] w-full rounded-lg" />
+          <Skeleton key={index} className="aspect-[2/3] w-full rounded-2xl" />
         ))}
       </div>
     );

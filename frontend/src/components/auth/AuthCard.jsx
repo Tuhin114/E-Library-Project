@@ -15,9 +15,14 @@ export function AuthCard({ title, description, children, footer }) {
         transition={{ duration: 0.35, ease: 'easeOut' }}
         className="w-full max-w-md"
       >
-        <p className="mb-8 text-center font-display text-lg font-semibold tracking-tight text-foreground">
-          E-Library
-        </p>
+        <div className="mb-8 flex items-center justify-center gap-2.5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-display text-lg font-bold text-primary-foreground">
+            E
+          </span>
+          <span className="font-display text-xl font-bold tracking-tight text-foreground">
+            Library
+          </span>
+        </div>
 
         <Card className="shadow-elevated">
           <CardHeader className="space-y-2 text-center">

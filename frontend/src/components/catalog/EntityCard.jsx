@@ -9,7 +9,7 @@ import { Badge } from "../ui/badge";
  */
 const EntityCard = ({ to, title, countLabel, description }) => (
   <Link to={to}>
-    <Card className="h-full transition-colors hover:border-primary/50">
+    <Card interactive className="h-full">
       <CardHeader className="flex flex-row items-start justify-between gap-2">
         <CardTitle className="font-display text-base">{title}</CardTitle>
         {countLabel && (

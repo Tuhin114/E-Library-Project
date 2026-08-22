@@ -5,8 +5,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+        // Body copy, UI chrome, buttons.
+        sans: ['Montserrat', 'ui-sans-serif', 'sans-serif'],
+        // Headings only — applied via the `font-display` utility (see
+        // globals.css, h1/h2/h3 default to it).
+        display: ['Lexend', 'ui-sans-serif', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -53,13 +56,14 @@ export default {
       },
       borderRadius: {
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        md: 'calc(var(--radius) - 4px)',
+        sm: 'calc(var(--radius) - 8px)',
+        full: '9999px',
       },
       boxShadow: {
-        // Deliberately subtle — premium spacing/typography carries the
-        // design, not drop shadows. Used only where real elevation
-        // (popovers, drawers) matters.
+        // Kept subtle — the bright accent surfaces carry the visual
+        // weight, not drop shadows. Used only for real elevation
+        // (popovers, drawers, dialogs).
         elevated: '0 8px 24px -8px rgb(0 0 0 / 0.45)',
       },
     },

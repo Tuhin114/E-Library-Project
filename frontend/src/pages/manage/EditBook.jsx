@@ -124,7 +124,9 @@ const EditBook = () => {
         />
 
         <div className="space-y-6 border-t border-border pt-6">
-          <h2 className="text-lg font-semibold">Digital Files</h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+            Digital Files
+          </h2>
 
           <FileDropzone
             label="Cover Image"
