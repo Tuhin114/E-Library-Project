@@ -28,6 +28,7 @@ import BookReader from "../pages/reader/BookReader";
 import Favorites from "../pages/favorites/Favorites";
 import RecentlyViewed from "../pages/library/RecentlyViewed";
 import ContinueReading from "../pages/library/ContinueReading";
+import Activity from "../pages/activity/Activity";
 import Profile from "../pages/profile/Profile";
 import Forum from "../pages/forum/Forum";
 import ForumThreadDetail from "../pages/forum/ForumThreadDetail";
@@ -141,6 +142,7 @@ export default function AppRoutes() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/recently-viewed" element={<RecentlyViewed />} />
           <Route path="/continue-reading" element={<ContinueReading />} />
+          <Route path="/activity" element={<Activity />} />
 
           {/* Change password */}
           <Route path="/change-password" element={<ChangePassword />} />

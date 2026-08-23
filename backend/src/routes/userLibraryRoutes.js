@@ -28,4 +28,6 @@ router.get("/continue-reading", userLibraryController.getContinueReading);
 
 router.get("/recommendations", userLibraryController.getRecommendations);
 
+router.get("/activity", userLibraryController.getActivity);
+
 export default router;

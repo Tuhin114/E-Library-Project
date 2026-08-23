@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutGrid,
+  LayoutDashboard,
   Users,
   Building2,
   BookOpen,
@@ -10,6 +11,9 @@ import {
   User,
   MessageSquare,
   Flag,
+  BarChart3,
+  TrendingUp,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -102,6 +106,10 @@ const SidebarNav = ({ onNavigate }) => {
 
       <nav className="mt-8 space-y-1">
         <p className={sectionLabelClasses}>Account</p>
+        <NavLink to="/activity" className={navLinkClasses} onClick={handleClick}>
+          <LayoutDashboard className="h-4 w-4" />
+          Activity
+        </NavLink>
         <NavLink to="/profile" className={navLinkClasses} onClick={handleClick}>
           <User className="h-4 w-4" />
           Profile
@@ -150,6 +158,30 @@ const SidebarNav = ({ onNavigate }) => {
           >
             <Flag className="h-4 w-4" />
             Forum Reports
+          </NavLink>
+          <NavLink
+            to="/analytics/catalog"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <BarChart3 className="h-4 w-4" />
+            Catalog Analytics
+          </NavLink>
+          <NavLink
+            to="/analytics/engagement"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <TrendingUp className="h-4 w-4" />
+            Engagement Analytics
+          </NavLink>
+          <NavLink
+            to="/analytics/moderation"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <ShieldAlert className="h-4 w-4" />
+            Moderation Analytics
           </NavLink>
         </nav>
       )}

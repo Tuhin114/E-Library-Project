@@ -54,3 +54,12 @@ export const getRecommendations = async () => {
     throw new Error(getErrorMessage(error));
   }
 };
+
+export const getActivity = async () => {
+  try {
+    const { data } = await libraryApi.fetchActivity();
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+};

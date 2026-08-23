@@ -13,3 +13,4 @@ export const fetchContinueReading = () =>
   axiosInstance.get(`${BASE_URL}/continue-reading`);
 export const fetchRecommendations = () =>
   axiosInstance.get(`${BASE_URL}/recommendations`);
+export const fetchActivity = () => axiosInstance.get(`${BASE_URL}/activity`);

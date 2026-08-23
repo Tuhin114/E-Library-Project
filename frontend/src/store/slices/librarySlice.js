@@ -10,6 +10,8 @@ const initialState = {
   continueReading: [],
   recommendations: [],
   savedSearches: [],
+  activity: null,
+  activityStatus: "idle",
   status: "idle",
   error: null,
 };
@@ -71,6 +73,23 @@ export const fetchRecommendations = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       return await libraryService.getRecommendations();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+// Deliberately tracked under its own `activityStatus`/`activity` fields
+// rather than reusing the shared `status`/individual list fields above —
+// the Activity Dashboard combines four sections in one request, and
+// piggybacking on the shared `status` flag would make it flip between
+// "loading" states owned by unrelated pages (Favorites, Continue
+// Reading) that happen to dispatch around the same time.
+export const fetchActivity = createAsyncThunk(
+  "library/fetchActivity",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await libraryService.getActivity();
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -196,6 +215,17 @@ const librarySlice = createSlice({
       })
       .addCase(fetchRecommendations.rejected, () => {
         // Silent — see comment above.
+      })
+      .addCase(fetchActivity.pending, (state) => {
+        state.activityStatus = "loading";
+      })
+      .addCase(fetchActivity.fulfilled, (state, action) => {
+        state.activityStatus = "succeeded";
+        state.activity = action.payload;
+      })
+      .addCase(fetchActivity.rejected, (state, action) => {
+        state.activityStatus = "failed";
+        toast.error(action.payload || "Failed to load your activity");
       });
   },
 });

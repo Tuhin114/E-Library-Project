@@ -1,6 +1,7 @@
 import * as userLibraryService from "../services/userLibraryService.js";
 import * as readingService from "../services/readingService.js";
 import * as recommendationService from "../services/recommendationService.js";
+import * as activityService from "../services/activityService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -53,4 +54,15 @@ export const getRecommendations = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, "Recommendations fetched successfully", books));
+});
+
+// Same delegation pattern as getContinueReading/getRecommendations above —
+// activityService owns the cross-collection aggregation, this just
+// exposes it under the "my library" route group as the single endpoint
+// the Activity Dashboard page loads on mount.
+export const getActivity = asyncHandler(async (req, res) => {
+  const activity = await activityService.getActivitySummary(req.user._id);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Activity summary fetched successfully", activity));
 });
