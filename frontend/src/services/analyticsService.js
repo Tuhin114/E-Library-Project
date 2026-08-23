@@ -9,3 +9,12 @@ export const getCatalogAnalytics = async (params = {}) => {
     throw new Error(getErrorMessage(error, "Could not load catalog analytics."));
   }
 };
+
+export const getEngagementAnalytics = async (params = {}) => {
+  try {
+    const { data } = await analyticsApi.fetchEngagementAnalytics(params);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not load engagement analytics."));
+  }
+};

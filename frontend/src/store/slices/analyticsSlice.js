@@ -10,6 +10,8 @@ import { toast } from "../../hooks/useToast";
 const initialState = {
   catalog: null,
   catalogStatus: "idle",
+  engagement: null,
+  engagementStatus: "idle",
 };
 
 export const fetchCatalogAnalytics = createAsyncThunk(
@@ -17,6 +19,17 @@ export const fetchCatalogAnalytics = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       return await analyticsService.getCatalogAnalytics(params);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const fetchEngagementAnalytics = createAsyncThunk(
+  "analytics/fetchEngagementAnalytics",
+  async (params, { rejectWithValue }) => {
+    try {
+      return await analyticsService.getEngagementAnalytics(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -39,6 +52,17 @@ const analyticsSlice = createSlice({
       .addCase(fetchCatalogAnalytics.rejected, (state, action) => {
         state.catalogStatus = "failed";
         toast.error(action.payload || "Failed to load catalog analytics");
+      })
+      .addCase(fetchEngagementAnalytics.pending, (state) => {
+        state.engagementStatus = "loading";
+      })
+      .addCase(fetchEngagementAnalytics.fulfilled, (state, action) => {
+        state.engagementStatus = "succeeded";
+        state.engagement = action.payload;
+      })
+      .addCase(fetchEngagementAnalytics.rejected, (state, action) => {
+        state.engagementStatus = "failed";
+        toast.error(action.payload || "Failed to load engagement analytics");
       });
   },
 });

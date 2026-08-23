@@ -11,3 +11,13 @@ export const catalogAnalyticsQuerySchema = z.object({
     .max(50, "Limit cannot exceed 50")
     .optional(),
 });
+
+export const engagementAnalyticsQuerySchema = z.object({
+  range: z.enum(["7d", "30d", "90d", "all"]).optional(),
+  limit: z.coerce
+    .number()
+    .int("Limit must be a whole number")
+    .min(1, "Limit must be at least 1")
+    .max(50, "Limit cannot exceed 50")
+    .optional(),
+});
