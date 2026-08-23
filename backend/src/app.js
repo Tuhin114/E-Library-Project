@@ -21,6 +21,7 @@ import discussionReplyRoutes from "./routes/discussionReplyRoutes.js";
 import forumThreadRoutes from "./routes/forumThreadRoutes.js";
 import forumReplyRoutes from "./routes/forumReplyRoutes.js";
 import forumReportRoutes from "./routes/forumReportRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use("/api/discussion-replies", discussionReplyRoutes);
 app.use("/api/forum/threads", forumThreadRoutes);
 app.use("/api/forum/replies", forumReplyRoutes);
 app.use("/api/forum/reports", forumReportRoutes);
+app.use("/api/admin/analytics", analyticsRoutes);
 
 // 404 handler
 app.use((req, res) => {

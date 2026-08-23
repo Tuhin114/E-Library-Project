@@ -1,0 +1,46 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import * as analyticsService from "../../services/analyticsService";
+import { toast } from "../../hooks/useToast";
+
+// Deliberately its own slice rather than folded into librarySlice —
+// this is librarian-only catalog data, not "my library" data, and
+// M3/M4 will add engagement/moderation state here too, so keeping
+// analytics self-contained from the start avoids a student/faculty
+// user's library state carrying fields they'll never populate.
+const initialState = {
+  catalog: null,
+  catalogStatus: "idle",
+};
+
+export const fetchCatalogAnalytics = createAsyncThunk(
+  "analytics/fetchCatalogAnalytics",
+  async (params, { rejectWithValue }) => {
+    try {
+      return await analyticsService.getCatalogAnalytics(params);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+const analyticsSlice = createSlice({
+  name: "analytics",
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCatalogAnalytics.pending, (state) => {
+        state.catalogStatus = "loading";
+      })
+      .addCase(fetchCatalogAnalytics.fulfilled, (state, action) => {
+        state.catalogStatus = "succeeded";
+        state.catalog = action.payload;
+      })
+      .addCase(fetchCatalogAnalytics.rejected, (state, action) => {
+        state.catalogStatus = "failed";
+        toast.error(action.payload || "Failed to load catalog analytics");
+      });
+  },
+});
+
+export default analyticsSlice.reducer;

@@ -33,6 +33,7 @@ import Profile from "../pages/profile/Profile";
 import Forum from "../pages/forum/Forum";
 import ForumThreadDetail from "../pages/forum/ForumThreadDetail";
 import ForumReports from "../pages/forum/ForumReports";
+import CatalogAnalytics from "../pages/analytics/CatalogAnalytics";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -163,6 +164,7 @@ export default function AppRoutes() {
             <Route path="/manage/books/new" element={<CreateBook />} />
             <Route path="/manage/books/:id/edit" element={<EditBook />} />
             <Route path="/forum/reports" element={<ForumReports />} />
+            <Route path="/analytics/catalog" element={<CatalogAnalytics />} />
           </Route>
         </Route>
       </Route>
