@@ -10,3 +10,21 @@ export const fetchEngagementAnalytics = (params = {}) =>
 
 export const fetchModerationAnalytics = (params = {}) =>
   axiosInstance.get(`${BASE_URL}/moderation`, { params });
+
+export const exportCatalogAnalytics = (dataset, params = {}) =>
+  axiosInstance.get(`${BASE_URL}/catalog/export`, {
+    params: { dataset, ...params },
+    responseType: "blob",
+  });
+
+export const exportEngagementAnalytics = (dataset, params = {}) =>
+  axiosInstance.get(`${BASE_URL}/engagement/export`, {
+    params: { dataset, ...params },
+    responseType: "blob",
+  });
+
+export const exportModerationAnalytics = (dataset, params = {}) =>
+  axiosInstance.get(`${BASE_URL}/moderation/export`, {
+    params: { dataset, ...params },
+    responseType: "blob",
+  });

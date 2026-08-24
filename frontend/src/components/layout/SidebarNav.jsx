@@ -12,8 +12,6 @@ import {
   MessageSquare,
   Flag,
   BarChart3,
-  TrendingUp,
-  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -160,28 +158,12 @@ const SidebarNav = ({ onNavigate }) => {
             Forum Reports
           </NavLink>
           <NavLink
-            to="/analytics/catalog"
+            to="/analytics"
             className={navLinkClasses}
             onClick={handleClick}
           >
             <BarChart3 className="h-4 w-4" />
-            Catalog Analytics
-          </NavLink>
-          <NavLink
-            to="/analytics/engagement"
-            className={navLinkClasses}
-            onClick={handleClick}
-          >
-            <TrendingUp className="h-4 w-4" />
-            Engagement Analytics
-          </NavLink>
-          <NavLink
-            to="/analytics/moderation"
-            className={navLinkClasses}
-            onClick={handleClick}
-          >
-            <ShieldAlert className="h-4 w-4" />
-            Moderation Analytics
+            Analytics
           </NavLink>
         </nav>
       )}

@@ -6,7 +6,9 @@ export const getCatalogAnalytics = async (params = {}) => {
     const { data } = await analyticsApi.fetchCatalogAnalytics(params);
     return data.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error, "Could not load catalog analytics."));
+    throw new Error(
+      getErrorMessage(error, "Could not load catalog analytics."),
+    );
   }
 };
 
@@ -15,7 +17,9 @@ export const getEngagementAnalytics = async (params = {}) => {
     const { data } = await analyticsApi.fetchEngagementAnalytics(params);
     return data.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error, "Could not load engagement analytics."));
+    throw new Error(
+      getErrorMessage(error, "Could not load engagement analytics."),
+    );
   }
 };
 
@@ -24,6 +28,74 @@ export const getModerationAnalytics = async (params = {}) => {
     const { data } = await analyticsApi.fetchModerationAnalytics(params);
     return data.data;
   } catch (error) {
-    throw new Error(getErrorMessage(error, "Could not load moderation analytics."));
+    throw new Error(
+      getErrorMessage(error, "Could not load moderation analytics."),
+    );
+  }
+};
+
+export const exportCatalogAnalytics = async (dataset, params = {}) => {
+  try {
+    const response = await analyticsApi.exportCatalogAnalytics(dataset, params);
+
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ||
+      `catalog-${dataset}.csv`;
+
+    return {
+      blob: response.data,
+      filename,
+    };
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not export catalog analytics."),
+    );
+  }
+};
+
+export const exportEngagementAnalytics = async (dataset, params = {}) => {
+  try {
+    const response = await analyticsApi.exportEngagementAnalytics(
+      dataset,
+      params,
+    );
+
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ||
+      `engagement-${dataset}.csv`;
+
+    return {
+      blob: response.data,
+      filename,
+    };
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not export engagement analytics."),
+    );
+  }
+};
+
+export const exportModerationAnalytics = async (dataset, params = {}) => {
+  try {
+    const response = await analyticsApi.exportModerationAnalytics(
+      dataset,
+      params,
+    );
+
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ||
+      `moderation-${dataset}.csv`;
+
+    return {
+      blob: response.data,
+      filename,
+    };
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not export moderation analytics."),
+    );
   }
 };
