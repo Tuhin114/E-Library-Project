@@ -7,3 +7,6 @@ export const fetchCatalogAnalytics = (params = {}) =>
 
 export const fetchEngagementAnalytics = (params = {}) =>
   axiosInstance.get(`${BASE_URL}/engagement`, { params });
+
+export const fetchModerationAnalytics = (params = {}) =>
+  axiosInstance.get(`${BASE_URL}/moderation`, { params });

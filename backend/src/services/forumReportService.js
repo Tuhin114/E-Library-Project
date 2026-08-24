@@ -77,6 +77,7 @@ export const resolveReport = async (reportId) => {
   if (!report) throw new ApiError(404, "Report not found");
 
   report.status = REPORT_STATUS.RESOLVED;
+  report.resolvedAt = new Date();
   await report.save();
 
   return report;

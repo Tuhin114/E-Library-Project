@@ -43,6 +43,16 @@ const forumReportSchema = new mongoose.Schema(
       enum: REPORT_STATUS_VALUES,
       default: REPORT_STATUS.OPEN,
     },
+    // Added in Phase 5 M4 to support average-resolve-time analytics.
+    // Only set going forward, by resolveReport() — any report resolved
+    // before this field existed stays `null` forever. Analytics that
+    // average this field must exclude nulls explicitly rather than
+    // treating them as "resolved instantly" (see
+    // moderationAnalyticsService.js).
+    resolvedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );

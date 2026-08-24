@@ -3,7 +3,7 @@ import * as analyticsController from "../controllers/analyticsController.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { validateQuery } from "../middleware/validateQuery.js";
-import { catalogAnalyticsQuerySchema, engagementAnalyticsQuerySchema } from "../validators/analyticsValidator.js";
+import { catalogAnalyticsQuerySchema, engagementAnalyticsQuerySchema, moderationAnalyticsQuerySchema } from "../validators/analyticsValidator.js";
 import { ROLES } from "../constants/roles.js";
 
 const router = Router();
@@ -23,6 +23,12 @@ router.get(
   "/engagement",
   validateQuery(engagementAnalyticsQuerySchema),
   analyticsController.getEngagementAnalytics,
+);
+
+router.get(
+  "/moderation",
+  validateQuery(moderationAnalyticsQuerySchema),
+  analyticsController.getModerationAnalytics,
 );
 
 export default router;

@@ -35,6 +35,7 @@ import ForumThreadDetail from "../pages/forum/ForumThreadDetail";
 import ForumReports from "../pages/forum/ForumReports";
 import CatalogAnalytics from "../pages/analytics/CatalogAnalytics";
 import EngagementAnalytics from "../pages/analytics/EngagementAnalytics";
+import ModerationAnalytics from "../pages/analytics/ModerationAnalytics";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -167,6 +168,7 @@ export default function AppRoutes() {
             <Route path="/forum/reports" element={<ForumReports />} />
             <Route path="/analytics/catalog" element={<CatalogAnalytics />} />
             <Route path="/analytics/engagement" element={<EngagementAnalytics />} />
+            <Route path="/analytics/moderation" element={<ModerationAnalytics />} />
           </Route>
         </Route>
       </Route>

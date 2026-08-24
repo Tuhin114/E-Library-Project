@@ -21,3 +21,7 @@ export const engagementAnalyticsQuerySchema = z.object({
     .max(50, "Limit cannot exceed 50")
     .optional(),
 });
+
+export const moderationAnalyticsQuerySchema = z.object({
+  range: z.enum(["7d", "30d", "90d", "all"]).optional(),
+});

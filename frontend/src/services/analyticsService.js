@@ -18,3 +18,12 @@ export const getEngagementAnalytics = async (params = {}) => {
     throw new Error(getErrorMessage(error, "Could not load engagement analytics."));
   }
 };
+
+export const getModerationAnalytics = async (params = {}) => {
+  try {
+    const { data } = await analyticsApi.fetchModerationAnalytics(params);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not load moderation analytics."));
+  }
+};
