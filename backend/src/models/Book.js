@@ -126,6 +126,21 @@ const bookSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    // Denormalized from BookCopy — recalculated by bookCopyService
+    // whenever a copy is added, its status changes, or it's removed.
+    // "Total" excludes retired copies; "available" counts only copies
+    // currently borrowable. Lets the catalog show "X of Y available"
+    // without an extra query per book.
+    physicalCopiesTotal: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    physicalCopiesAvailable: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true },
 );

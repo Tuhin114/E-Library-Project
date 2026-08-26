@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Boxes, PackageCheck } from "lucide-react";
 import {
   fetchBookById,
   clearSelectedBook,
@@ -17,14 +17,18 @@ import BookStatusBadge from "../../components/catalog/BookStatusBadge";
 import ReviewList from "../../components/reviews/ReviewList";
 import DiscussionList from "../../components/discussions/DiscussionList";
 import ShareButton from "../../components/common/ShareButton";
+import RequestForm from "../../components/requests/RequestForm";
 import { useDocumentMeta } from "../../hooks/useDocumentMeta";
+import { useAuth } from "../../hooks/useAuth";
 import PageContainer from "../../components/layout/PageContainer";
 
 const BookDetails = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const { user } = useAuth();
   const { selected: book, status } = useSelector((state) => state.books);
   const { recommendations } = useSelector((state) => state.library);
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchBookById(id));
@@ -101,6 +105,20 @@ const BookDetails = () => {
             </div>
           )}
 
+          {book.physicalCopiesTotal > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Boxes className="h-4 w-4" />
+              {book.physicalCopiesAvailable > 0 ? (
+                <span>
+                  {book.physicalCopiesAvailable} of {book.physicalCopiesTotal} physical{" "}
+                  {book.physicalCopiesTotal === 1 ? "copy" : "copies"} available
+                </span>
+              ) : (
+                <span>All physical copies currently unavailable</span>
+              )}
+            </div>
+          )}
+
           {book.subtitle && (
             <p className="mt-1 text-muted-foreground">{book.subtitle}</p>
           )}
@@ -132,6 +150,12 @@ const BookDetails = () => {
               </Link>
             )}
             <ShareButton title={book.title} text={`Check out "${book.title}" on E-Library`} />
+            {user?.role !== "librarian" && book.physicalCopiesTotal > 0 && (
+              <Button variant="outline" onClick={() => setIsRequestOpen(true)}>
+                <PackageCheck className="mr-2 h-4 w-4" />
+                Request Physical Copy
+              </Button>
+            )}
           </div>
 
           {book.description && (
@@ -215,6 +239,8 @@ const BookDetails = () => {
       <div className="mt-16">
         <RecommendedRow books={recommendations} />
       </div>
+
+      <RequestForm open={isRequestOpen} onOpenChange={setIsRequestOpen} book={book} />
     </PageContainer>
   );
 };

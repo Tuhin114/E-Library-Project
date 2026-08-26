@@ -5,6 +5,7 @@ import Author from "../models/Author.js";
 import Publisher from "../models/Publisher.js";
 import Favorite from "../models/Favorite.js";
 import RecentlyViewed from "../models/RecentlyViewed.js";
+import { deleteCopiesForBook } from "./bookCopyService.js";
 import { ApiError } from "../utils/ApiError.js";
 import { uploadBuffer, deleteAsset } from "../utils/cloudinaryUpload.js";
 import { serializeBook } from "../utils/sanitizeBook.js";
@@ -184,6 +185,11 @@ export const updateBook = async (id, payload) => {
 export const deleteBook = async (id) => {
   const book = await Book.findById(id);
   if (!book) throw new ApiError(404, "Book not found");
+
+  // Runs first and throws before any other cleanup starts if a copy is
+  // currently issued/reserved — avoids deleting the book out from under
+  // a physical loan that isn't reflected anywhere else in the app yet.
+  await deleteCopiesForBook(id);
 
   const cleanupTasks = [];
   if (book.coverImage?.publicId) {

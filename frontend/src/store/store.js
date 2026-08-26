@@ -9,6 +9,8 @@ import reviewsReducer from "./slices/reviewsSlice";
 import discussionsReducer from "./slices/discussionsSlice";
 import forumReducer from "./slices/forumSlice";
 import analyticsReducer from "./slices/analyticsSlice";
+import copiesReducer from "./slices/copiesSlice";
+import requestsReducer from "./slices/requestsSlice";
 /**
  * Central Redux store.
  * Feature slices are registered in the `reducer` map as they are built.
@@ -25,6 +27,8 @@ export const store = configureStore({
     discussions: discussionsReducer,
     forum: forumReducer,
     analytics: analyticsReducer,
+    copies: copiesReducer,
+    requests: requestsReducer,
   },
   devTools: import.meta.env.MODE !== "production",
 });

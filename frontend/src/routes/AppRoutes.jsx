@@ -37,6 +37,8 @@ import CatalogAnalytics from "../pages/analytics/CatalogAnalytics";
 import EngagementAnalytics from "../pages/analytics/EngagementAnalytics";
 import ModerationAnalytics from "../pages/analytics/ModerationAnalytics";
 import AnalyticsDashboard from "../pages/analytics/AnalyticsDashboard";
+import MyRequests from "../pages/requests/MyRequests";
+import ManageRequests from "../pages/manage/ManageRequests";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -147,6 +149,7 @@ export default function AppRoutes() {
           <Route path="/recently-viewed" element={<RecentlyViewed />} />
           <Route path="/continue-reading" element={<ContinueReading />} />
           <Route path="/activity" element={<Activity />} />
+          <Route path="/requests" element={<MyRequests />} />
 
           {/* Change password */}
           <Route path="/change-password" element={<ChangePassword />} />
@@ -171,6 +174,7 @@ export default function AppRoutes() {
             <Route path="/analytics/catalog" element={<CatalogAnalytics />} />
             <Route path="/analytics/engagement" element={<EngagementAnalytics />} />
             <Route path="/analytics/moderation" element={<ModerationAnalytics />} />
+            <Route path="/manage/requests" element={<ManageRequests />} />
           </Route>
         </Route>
       </Route>

@@ -12,6 +12,8 @@ import {
   MessageSquare,
   Flag,
   BarChart3,
+  PackageCheck,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -100,6 +102,16 @@ const SidebarNav = ({ onNavigate }) => {
           <BookMarked className="h-4 w-4" />
           Continue Reading
         </NavLink>
+        {!isLibrarian && (
+          <NavLink
+            to="/requests"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <PackageCheck className="h-4 w-4" />
+            My Requests
+          </NavLink>
+        )}
       </nav>
 
       <nav className="mt-8 space-y-1">
@@ -148,6 +160,14 @@ const SidebarNav = ({ onNavigate }) => {
           >
             <BookOpen className="h-4 w-4" />
             Manage Books
+          </NavLink>
+          <NavLink
+            to="/manage/requests"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <ClipboardList className="h-4 w-4" />
+            Physical Requests
           </NavLink>
           <NavLink
             to="/forum/reports"

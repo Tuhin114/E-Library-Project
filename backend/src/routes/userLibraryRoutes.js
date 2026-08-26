@@ -3,6 +3,8 @@ import * as userLibraryController from "../controllers/userLibraryController.js"
 import { authenticate } from "../middleware/authenticate.js";
 import { validateParams } from "../middleware/validateParams.js";
 import { favoriteBookParamSchema } from "../validators/userLibraryValidator.js";
+import { validateQuery } from "../middleware/validateQuery.js";
+import { myRequestQuerySchema } from "../validators/physicalRequestValidator.js";
 
 const router = Router();
 
@@ -29,5 +31,11 @@ router.get("/continue-reading", userLibraryController.getContinueReading);
 router.get("/recommendations", userLibraryController.getRecommendations);
 
 router.get("/activity", userLibraryController.getActivity);
+
+router.get(
+  "/requests",
+  validateQuery(myRequestQuerySchema),
+  userLibraryController.getMyRequests,
+);
 
 export default router;

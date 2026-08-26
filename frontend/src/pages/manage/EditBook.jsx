@@ -13,6 +13,7 @@ import {
 import { toBookPayload } from "../../lib/validationSchemas/bookSchema";
 import BookForm from "../../components/forms/BookForm";
 import FileDropzone from "../../components/common/FileDropzone";
+import InventoryPanel from "../../components/manage/InventoryPanel";
 import { Skeleton } from "../../components/ui/skeleton";
 import ErrorState from "../../components/common/ErrorState";
 import PageContainer from "../../components/layout/PageContainer";
@@ -155,6 +156,8 @@ const EditBook = () => {
             isProcessing={uploadingField === "epub"}
           />
         </div>
+
+        <InventoryPanel bookId={book._id} />
       </div>
     </PageContainer>
   );

@@ -2,6 +2,7 @@ import * as userLibraryService from "../services/userLibraryService.js";
 import * as readingService from "../services/readingService.js";
 import * as recommendationService from "../services/recommendationService.js";
 import * as activityService from "../services/activityService.js";
+import * as physicalRequestService from "../services/physicalRequestService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -65,4 +66,15 @@ export const getActivity = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, "Activity summary fetched successfully", activity));
+});
+
+// Same delegation pattern as the above — physicalRequestService owns
+// the PhysicalRequest model (Phase 6), this just exposes "my own
+// requests" under the "my library" route group, same as every other
+// self-scoped list here.
+export const getMyRequests = asyncHandler(async (req, res) => {
+  const requests = await physicalRequestService.listRequestsForStudent(req.user._id, req.query);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Requests fetched successfully", requests));
 });

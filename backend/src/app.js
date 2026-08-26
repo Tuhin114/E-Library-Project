@@ -22,6 +22,8 @@ import forumThreadRoutes from "./routes/forumThreadRoutes.js";
 import forumReplyRoutes from "./routes/forumReplyRoutes.js";
 import forumReportRoutes from "./routes/forumReportRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import copyRoutes from "./routes/copyRoutes.js";
+import physicalRequestRoutes from "./routes/physicalRequestRoutes.js";
 
 const app = express();
 
@@ -83,6 +85,8 @@ app.use("/api/forum/threads", forumThreadRoutes);
 app.use("/api/forum/replies", forumReplyRoutes);
 app.use("/api/forum/reports", forumReportRoutes);
 app.use("/api/admin/analytics", analyticsRoutes);
+app.use("/api/copies", copyRoutes);
+app.use("/api/requests", physicalRequestRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -91,10 +95,7 @@ app.use((req, res) => {
     .json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
-// Temporary global error handler.
-// Will be extracted into middleware/errorHandler.js with a proper
-// ApiError class in M10 — kept minimal here so early milestones don't
-// leak unhandled stack traces to clients.
+// Global error handler.
 app.use((err, req, res, next) => {
   console.error(err.stack);
   const statusCode = err.statusCode || 500;
