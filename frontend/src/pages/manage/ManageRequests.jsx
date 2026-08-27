@@ -5,6 +5,7 @@ import {
   fetchRequestQueue,
   approveRequest,
   rejectRequest,
+  collectRequest,
 } from "../../store/slices/requestsSlice";
 import { REQUEST_STATUS_OPTIONS } from "../../constants/requestStatus";
 import PageContainer from "../../components/layout/PageContainer";
@@ -75,6 +76,7 @@ const ManageRequests = () => {
               request={request}
               onApprove={(id, note) => dispatch(approveRequest({ id, note }))}
               onReject={(id, reason) => dispatch(rejectRequest({ id, reason }))}
+              onCollect={(id) => dispatch(collectRequest({ id }))}
               isActing={actionPendingId === request._id}
             />
           ))}

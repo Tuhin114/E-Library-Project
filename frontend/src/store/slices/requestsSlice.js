@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as requestService from "../../services/requestService";
+import * as loanService from "../../services/loanService";
 import { fetchBookById } from "./booksSlice";
 import { toast } from "../../hooks/useToast";
 
@@ -99,6 +100,24 @@ export const cancelRequest = createAsyncThunk(
   },
 );
 
+// M3 — confirming physical collection. Distinct action from approve/
+// reject because it produces a Loan, not just a status change; the
+// queue is re-fetched afterward the same way approve/reject already do.
+export const collectRequest = createAsyncThunk(
+  "requests/collect",
+  async ({ id, copyId }, { dispatch, getState, rejectWithValue }) => {
+    try {
+      const loan = await loanService.collectRequest(id, copyId ? { copyId } : {});
+      toast.success(`Collection confirmed — due back ${new Date(loan.dueDate).toLocaleDateString()}`);
+      dispatch(fetchRequestQueue(getState().requests.lastQueueParams));
+      return loan;
+    } catch (error) {
+      toast.error(error.message);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
 const requestsSlice = createSlice({
   name: "requests",
   initialState,
@@ -161,6 +180,16 @@ const requestsSlice = createSlice({
         state.actionPendingId = null;
       })
       .addCase(cancelRequest.rejected, (state) => {
+        state.actionPendingId = null;
+      })
+
+      .addCase(collectRequest.pending, (state, action) => {
+        state.actionPendingId = action.meta.arg.id;
+      })
+      .addCase(collectRequest.fulfilled, (state) => {
+        state.actionPendingId = null;
+      })
+      .addCase(collectRequest.rejected, (state) => {
         state.actionPendingId = null;
       });
   },

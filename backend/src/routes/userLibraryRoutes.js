@@ -5,6 +5,7 @@ import { validateParams } from "../middleware/validateParams.js";
 import { favoriteBookParamSchema } from "../validators/userLibraryValidator.js";
 import { validateQuery } from "../middleware/validateQuery.js";
 import { myRequestQuerySchema } from "../validators/physicalRequestValidator.js";
+import { loanQuerySchema } from "../validators/loanValidator.js";
 
 const router = Router();
 
@@ -36,6 +37,12 @@ router.get(
   "/requests",
   validateQuery(myRequestQuerySchema),
   userLibraryController.getMyRequests,
+);
+
+router.get(
+  "/loans",
+  validateQuery(loanQuerySchema),
+  userLibraryController.getMyLoans,
 );
 
 export default router;

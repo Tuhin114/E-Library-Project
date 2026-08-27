@@ -70,3 +70,10 @@ export const requestQuerySchema = z.object({
 export const myRequestQuerySchema = z.object({
   status: z.enum(REQUEST_STATUS_VALUES).optional(),
 });
+
+// M3 — copyId is optional: if omitted, the service auto-picks the
+// first available copy for the book, matching the design decision not
+// to bind a specific copy until the moment of actual collection.
+export const collectRequestSchema = z.object({
+  copyId: objectIdSchema.optional(),
+});

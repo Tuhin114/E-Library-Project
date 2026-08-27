@@ -3,6 +3,9 @@ export const REQUEST_STATUS_OPTIONS = [
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
   { value: "cancelled", label: "Cancelled" },
+  // Added in M3
+  { value: "collected", label: "Collected" },
+  { value: "expired", label: "Expired" },
 ];
 
 export const REQUEST_STATUS_BADGE_VARIANT = {
@@ -10,4 +13,6 @@ export const REQUEST_STATUS_BADGE_VARIANT = {
   approved: "success",
   rejected: "destructive",
   cancelled: "secondary",
+  collected: "default",
+  expired: "secondary",
 };

@@ -52,6 +52,20 @@ const RequestCard = ({ request, onCancel, isCancelling }) => {
                 Librarian note: {request.decisionReason}
               </p>
             )}
+            {request.status === "collected" && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Collected — see{" "}
+                <Link to="/loans" className="underline">
+                  My Loans
+                </Link>{" "}
+                for the active due date.
+              </p>
+            )}
+            {request.status === "expired" && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                This request expired because it wasn't collected in time.
+              </p>
+            )}
           </div>
 
           {canCancel && onCancel && (

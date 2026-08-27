@@ -3,6 +3,7 @@ import * as readingService from "../services/readingService.js";
 import * as recommendationService from "../services/recommendationService.js";
 import * as activityService from "../services/activityService.js";
 import * as physicalRequestService from "../services/physicalRequestService.js";
+import * as loanService from "../services/loanService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -77,4 +78,10 @@ export const getMyRequests = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, "Requests fetched successfully", requests));
+});
+
+// M3 — same delegation pattern, this time for the student's own loans.
+export const getMyLoans = asyncHandler(async (req, res) => {
+  const loans = await loanService.listLoansForStudent(req.user._id, req.query);
+  res.status(200).json(new ApiResponse(200, "Loans fetched successfully", loans));
 });

@@ -21,6 +21,7 @@ const ConfirmDialog = ({
   cancelLabel = "Cancel",
   onConfirm,
   isLoading = false,
+  variant = "destructive",
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,7 +39,7 @@ const ConfirmDialog = ({
             {cancelLabel}
           </Button>
           <Button
-            variant="destructive"
+            variant={variant}
             onClick={onConfirm}
             disabled={isLoading}
           >

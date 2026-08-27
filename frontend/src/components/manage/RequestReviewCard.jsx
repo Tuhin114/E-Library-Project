@@ -6,6 +6,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import RequestStatusBadge from "../requests/RequestStatusBadge";
 import RequestDecisionDialog from "./RequestDecisionDialog";
+import ConfirmDialog from "../common/ConfirmDialog";
 
 const formatDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -14,16 +15,23 @@ const formatDate = (value) =>
     day: "numeric",
   });
 
-const RequestReviewCard = ({ request, onApprove, onReject, isActing }) => {
+const RequestReviewCard = ({ request, onApprove, onReject, onCollect, isActing }) => {
   const [dialogMode, setDialogMode] = useState(null); // "approve" | "reject" | null
+  const [isCollectDialogOpen, setIsCollectDialogOpen] = useState(false);
 
   const { book, student, conflictContext, studentHistory } = request;
   const isPending = request.status === "pending";
+  const isApproved = request.status === "approved";
 
   const handleConfirm = (text) => {
     if (dialogMode === "approve") onApprove(request._id, text);
     if (dialogMode === "reject") onReject(request._id, text);
     setDialogMode(null);
+  };
+
+  const handleCollectConfirm = () => {
+    onCollect(request._id);
+    setIsCollectDialogOpen(false);
   };
 
   return (
@@ -67,6 +75,19 @@ const RequestReviewCard = ({ request, onApprove, onReject, isActing }) => {
               </Button>
             </div>
           )}
+
+          {isApproved && onCollect && (
+            <div className="shrink-0">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setIsCollectDialogOpen(true)}
+                disabled={isActing}
+              >
+                Confirm Collection
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="grid gap-3 rounded-2xl border border-border bg-secondary/20 p-3 text-sm sm:grid-cols-2">
@@ -103,7 +124,8 @@ const RequestReviewCard = ({ request, onApprove, onReject, isActing }) => {
                 {conflictContext.overlappingApprovedRequests.map((r) => (
                   <li key={r._id}>
                     {r.student?.name} — {formatDate(r.requestedCollectionDate)} to{" "}
-                    {formatDate(r.requestedReturnDate)}
+                    {formatDate(r.requestedReturnDate)}{" "}
+                    <span className="capitalize">({r.status})</span>
                   </li>
                 ))}
               </ul>
@@ -131,6 +153,17 @@ const RequestReviewCard = ({ request, onApprove, onReject, isActing }) => {
         mode={dialogMode}
         onConfirm={handleConfirm}
         isLoading={isActing}
+      />
+
+      <ConfirmDialog
+        open={isCollectDialogOpen}
+        onOpenChange={setIsCollectDialogOpen}
+        title="Confirm physical collection?"
+        description="Only confirm once the student has the book in hand — this creates an active loan and marks a copy as issued. This can't be undone from here."
+        confirmLabel="Confirm Collection"
+        onConfirm={handleCollectConfirm}
+        isLoading={isActing}
+        variant="default"
       />
     </Card>
   );

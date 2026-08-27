@@ -11,6 +11,7 @@ import {
   rejectRequestSchema,
   requestIdParamSchema,
   requestQuerySchema,
+  collectRequestSchema,
 } from "../validators/physicalRequestValidator.js";
 import { ROLES } from "../constants/roles.js";
 
@@ -61,6 +62,14 @@ router.patch(
   authorize(ROLES.STUDENT, ROLES.FACULTY),
   validateParams(requestIdParamSchema),
   physicalRequestController.cancelRequest,
+);
+
+router.patch(
+  "/:id/collect",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(requestIdParamSchema),
+  validateRequest(collectRequestSchema),
+  physicalRequestController.collectRequest,
 );
 
 export default router;

@@ -87,6 +87,16 @@ export const listCopiesForBook = async (bookId, { status } = {}) => {
   return BookCopy.find(filter).sort({ copyNumber: 1 }).lean();
 };
 
+// M3 — used by loanService.collectRequest when a librarian confirms
+// collection without specifying a particular copy: picks the
+// lowest-numbered currently-available copy for the book. Deliberately
+// not exposed as its own route; it's an internal building block for the
+// collection flow, not a librarian-facing query.
+export const findAvailableCopyForBook = (bookId) =>
+  BookCopy.findOne({ book: bookId, status: COPY_STATUS.AVAILABLE }).sort({
+    copyNumber: 1,
+  });
+
 export const getInventorySummary = async (bookId) => {
   await assertBookExists(bookId);
 

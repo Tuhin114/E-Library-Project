@@ -24,6 +24,7 @@ import forumReportRoutes from "./routes/forumReportRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import copyRoutes from "./routes/copyRoutes.js";
 import physicalRequestRoutes from "./routes/physicalRequestRoutes.js";
+import loanRoutes from "./routes/loanRoutes.js";
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use("/api/forum/reports", forumReportRoutes);
 app.use("/api/admin/analytics", analyticsRoutes);
 app.use("/api/copies", copyRoutes);
 app.use("/api/requests", physicalRequestRoutes);
+app.use("/api/loans", loanRoutes);
 
 // 404 handler
 app.use((req, res) => {

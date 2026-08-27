@@ -1,4 +1,5 @@
 import * as physicalRequestService from "../services/physicalRequestService.js";
+import * as loanService from "../services/loanService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -30,4 +31,12 @@ export const rejectRequest = asyncHandler(async (req, res) => {
 export const cancelRequest = asyncHandler(async (req, res) => {
   const request = await physicalRequestService.cancelRequest(req.params.id, req.user._id);
   res.status(200).json(new ApiResponse(200, "Request cancelled", request));
+});
+
+// M3 — the collection step. Distinct from approval: this is the
+// librarian confirming, in person, that the student actually walked out
+// with the book. Produces a Loan and moves the request to "collected".
+export const collectRequest = asyncHandler(async (req, res) => {
+  const loan = await loanService.collectRequest(req.params.id, req.body.copyId);
+  res.status(200).json(new ApiResponse(200, "Request collected — loan is now active", loan));
 });

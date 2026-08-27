@@ -14,6 +14,7 @@ import {
   BarChart3,
   PackageCheck,
   ClipboardList,
+  CalendarClock,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -112,6 +113,16 @@ const SidebarNav = ({ onNavigate }) => {
             My Requests
           </NavLink>
         )}
+        {!isLibrarian && (
+          <NavLink
+            to="/loans"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <CalendarClock className="h-4 w-4" />
+            My Loans
+          </NavLink>
+        )}
       </nav>
 
       <nav className="mt-8 space-y-1">
@@ -168,6 +179,14 @@ const SidebarNav = ({ onNavigate }) => {
           >
             <ClipboardList className="h-4 w-4" />
             Physical Requests
+          </NavLink>
+          <NavLink
+            to="/manage/loans"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <CalendarClock className="h-4 w-4" />
+            Active Loans
           </NavLink>
           <NavLink
             to="/forum/reports"
