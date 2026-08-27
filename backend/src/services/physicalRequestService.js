@@ -1,7 +1,9 @@
 import PhysicalRequest from "../models/PhysicalRequest.js";
 import Book from "../models/Book.js";
+import Loan from "../models/Loan.js";
 import { ApiError } from "../utils/ApiError.js";
 import { REQUEST_STATUS } from "../constants/requestStatus.js";
+import { LOAN_STATUS } from "../constants/loanStatus.js";
 import { getPaginationParams, buildPaginationMeta } from "../utils/paginate.js";
 import { COLLECTION_GRACE_DAYS } from "../constants/requestPolicy.js";
 
@@ -43,8 +45,16 @@ export const expireStaleApprovals = async () => {
 // against a student double-submitting for the same book and to build
 // the "what else is already promised for this window" context a
 // librarian needs to make a manual decision.
-const findOverlappingRequests = (bookId, collectionDate, returnDate, { statuses, excludeId } = {}) =>
-  PhysicalRequest.find({
+//
+// M4 fix: a "collected" request only still represents a real conflict
+// while its loan is still active. Before M4, nothing could ever return a
+// loan, so every "collected" request's loan was necessarily active and
+// this distinction was invisible — M4's return flow makes it a real bug
+// if left unfixed: a book returned weeks ago would still block every
+// future overlapping request forever, because the *request* itself
+// never changes out of "collected" even after the *loan* is returned.
+const findOverlappingRequests = async (bookId, collectionDate, returnDate, { statuses, excludeId } = {}) => {
+  const requests = await PhysicalRequest.find({
     book: bookId,
     ...(excludeId && { _id: { $ne: excludeId } }),
     status: { $in: statuses },
@@ -53,6 +63,24 @@ const findOverlappingRequests = (bookId, collectionDate, returnDate, { statuses,
   })
     .populate(STUDENT_POPULATE)
     .lean();
+
+  if (!statuses.includes(REQUEST_STATUS.COLLECTED)) return requests;
+
+  const collectedIds = requests
+    .filter((r) => r.status === REQUEST_STATUS.COLLECTED)
+    .map((r) => r._id);
+  if (collectedIds.length === 0) return requests;
+
+  const activeLoanRequestIds = await Loan.find({
+    request: { $in: collectedIds },
+    status: LOAN_STATUS.ACTIVE,
+  }).distinct("request");
+  const stillActive = new Set(activeLoanRequestIds.map(String));
+
+  return requests.filter(
+    (r) => r.status !== REQUEST_STATUS.COLLECTED || stillActive.has(r._id.toString()),
+  );
+};
 
 export const createRequest = async (studentId, payload) => {
   const { book: bookId, requestedCollectionDate, requestedReturnDate, studentNote } = payload;

@@ -41,6 +41,8 @@ import MyRequests from "../pages/requests/MyRequests";
 import ManageRequests from "../pages/manage/ManageRequests";
 import MyLoans from "../pages/loans/MyLoans";
 import ManageLoans from "../pages/manage/ManageLoans";
+import MyFees from "../pages/fees/MyFees";
+import ManageFees from "../pages/manage/ManageFees";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -153,6 +155,7 @@ export default function AppRoutes() {
           <Route path="/activity" element={<Activity />} />
           <Route path="/requests" element={<MyRequests />} />
           <Route path="/loans" element={<MyLoans />} />
+          <Route path="/fees" element={<MyFees />} />
 
           {/* Change password */}
           <Route path="/change-password" element={<ChangePassword />} />
@@ -179,6 +182,7 @@ export default function AppRoutes() {
             <Route path="/analytics/moderation" element={<ModerationAnalytics />} />
             <Route path="/manage/requests" element={<ManageRequests />} />
             <Route path="/manage/loans" element={<ManageLoans />} />
+            <Route path="/manage/fees" element={<ManageFees />} />
           </Route>
         </Route>
       </Route>

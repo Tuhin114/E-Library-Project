@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { LOAN_STATUS, LOAN_STATUS_VALUES } from "../constants/loanStatus.js";
+import { COPY_CONDITION_VALUES } from "../constants/copyStatus.js";
 
 const loanSchema = new mongoose.Schema(
   {
@@ -50,6 +51,19 @@ const loanSchema = new mongoose.Schema(
     },
     returnedAt: {
       type: Date,
+      default: null,
+    },
+    // M4 — recorded at the moment of return, distinct from the copy's
+    // own ongoing `condition` field (which bookCopyService updates to
+    // match, once the return is processed).
+    returnCondition: {
+      type: String,
+      enum: COPY_CONDITION_VALUES,
+      default: null,
+    },
+    returnProcessedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       default: null,
     },
   },

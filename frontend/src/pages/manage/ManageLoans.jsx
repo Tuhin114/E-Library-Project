@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BookOpen } from "lucide-react";
-import { fetchLoanQueue } from "../../store/slices/loansSlice";
+import { fetchLoanQueue, returnLoan } from "../../store/slices/loansSlice";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import {
@@ -17,23 +17,30 @@ import LoanCard from "../../components/loans/LoanCard";
 const STATUS_OPTIONS = [
   { value: "all", label: "All" },
   { value: "active", label: "Active" },
+  { value: "overdue", label: "Overdue" },
   { value: "returned", label: "Returned" },
 ];
 
+const paramsForStatus = (status) => {
+  if (status === "all") return {};
+  if (status === "overdue") return { overdueOnly: true };
+  return { status };
+};
+
 const ManageLoans = () => {
   const dispatch = useDispatch();
-  const { queue, queueStatus } = useSelector((state) => state.loans);
+  const { queue, queueStatus, actionPendingId } = useSelector((state) => state.loans);
   const [status, setStatus] = useState("active");
 
   useEffect(() => {
-    dispatch(fetchLoanQueue(status === "all" ? {} : { status }));
+    dispatch(fetchLoanQueue(paramsForStatus(status)));
   }, [dispatch, status]);
 
   return (
     <PageContainer>
       <PageHeader
-        title="Active Loans"
-        description="Every physical copy currently issued, and its due date."
+        title="Loans"
+        description="Every physical copy currently issued, its due date, and returns."
         actions={
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-36">
@@ -57,11 +64,16 @@ const ManageLoans = () => {
         emptyTitle="No loans"
         emptyDescription="No loans match this filter right now."
         errorMessage="Couldn't load loans."
-        onRetry={() => dispatch(fetchLoanQueue(status === "all" ? {} : { status }))}
+        onRetry={() => dispatch(fetchLoanQueue(paramsForStatus(status)))}
       >
         <div className="space-y-3">
           {queue.map((loan) => (
-            <LoanCard key={loan._id} loan={loan} />
+            <LoanCard
+              key={loan._id}
+              loan={loan}
+              onReturn={(id, payload) => dispatch(returnLoan({ id, ...payload }))}
+              isReturning={actionPendingId === loan._id}
+            />
           ))}
         </div>
       </ManageDataState>

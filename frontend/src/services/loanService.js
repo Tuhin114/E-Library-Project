@@ -38,3 +38,14 @@ export const collectRequest = async (requestId, payload) => {
     );
   }
 };
+
+export const returnLoan = async (loanId, payload) => {
+  try {
+    const { data } = await loanApi.returnLoan(loanId, payload);
+    return data.data; // { loan, fee }
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not record this return. Please try again."),
+    );
+  }
+};

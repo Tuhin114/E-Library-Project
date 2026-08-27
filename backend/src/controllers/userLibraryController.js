@@ -4,6 +4,7 @@ import * as recommendationService from "../services/recommendationService.js";
 import * as activityService from "../services/activityService.js";
 import * as physicalRequestService from "../services/physicalRequestService.js";
 import * as loanService from "../services/loanService.js";
+import * as feeService from "../services/feeService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -84,4 +85,10 @@ export const getMyRequests = asyncHandler(async (req, res) => {
 export const getMyLoans = asyncHandler(async (req, res) => {
   const loans = await loanService.listLoansForStudent(req.user._id, req.query);
   res.status(200).json(new ApiResponse(200, "Loans fetched successfully", loans));
+});
+
+// M4 — same delegation pattern, this time for the student's own fees.
+export const getMyFees = asyncHandler(async (req, res) => {
+  const fees = await feeService.listFeesForStudent(req.user._id, req.query);
+  res.status(200).json(new ApiResponse(200, "Fees fetched successfully", fees));
 });

@@ -4,25 +4,30 @@ import BookCopy from "../models/BookCopy.js";
 import { ApiError } from "../utils/ApiError.js";
 import { REQUEST_STATUS } from "../constants/requestStatus.js";
 import { LOAN_STATUS } from "../constants/loanStatus.js";
-import { COPY_STATUS } from "../constants/copyStatus.js";
+import { COPY_STATUS, COPY_CONDITION } from "../constants/copyStatus.js";
 import * as bookCopyService from "./bookCopyService.js";
+import * as feeService from "./feeService.js";
 import { expireStaleApprovals } from "./physicalRequestService.js";
 
 const LOAN_POPULATE = [
   { path: "student", select: "name email" },
   { path: "book", select: "title isbn coverImage" },
   { path: "copy", select: "copyNumber condition" },
+  { path: "returnProcessedBy", select: "name email" },
 ];
 
-// isOverdue is deliberately computed at read time, not stored — a loan
-// is overdue the instant "now" passes its dueDate, with no event
-// required to make that true. Storing it would mean either a background
-// job to flip it or a stale flag between reads; computing it fresh
-// avoids both.
-const attachComputed = (loan) => ({
-  ...loan,
-  isOverdue: loan.status === LOAN_STATUS.ACTIVE && new Date(loan.dueDate) < new Date(),
-});
+// isOverdue/daysOverdue are deliberately computed at read time, not
+// stored — a loan is overdue the instant "now" passes its dueDate, with
+// no event required to make that true. Storing it would mean either a
+// background job to flip it or a stale value between reads; computing
+// it fresh avoids both.
+const attachComputed = (loan) => {
+  const isOverdue = loan.status === LOAN_STATUS.ACTIVE && new Date(loan.dueDate) < new Date();
+  const daysOverdue = isOverdue
+    ? Math.ceil((new Date() - new Date(loan.dueDate)) / (1000 * 60 * 60 * 24))
+    : 0;
+  return { ...loan, isOverdue, daysOverdue };
+};
 
 export const collectRequest = async (requestId, copyId) => {
   // A request that should have expired by now can't be collected, even
@@ -91,10 +96,19 @@ export const listLoansForStudent = async (studentId, { status } = {}) => {
   return loans.map(attachComputed);
 };
 
-export const listLoansForLibrarian = async ({ status } = {}) => {
-  const loans = await Loan.find({ ...(status && { status }) })
+// overdueOnly implies status=active (an already-returned loan can never
+// be "overdue"), and sorts oldest-due-first — the most overdue loans are
+// what a librarian scanning this list actually needs to see first.
+export const listLoansForLibrarian = async ({ status, overdueOnly } = {}) => {
+  const filter = { ...(status && { status }) };
+  if (overdueOnly) {
+    filter.status = LOAN_STATUS.ACTIVE;
+    filter.dueDate = { $lt: new Date() };
+  }
+
+  const loans = await Loan.find(filter)
     .populate(LOAN_POPULATE)
-    .sort({ collectedAt: -1 })
+    .sort(overdueOnly ? { dueDate: 1 } : { collectedAt: -1 })
     .lean();
 
   return loans.map(attachComputed);
@@ -110,4 +124,50 @@ export const getLoanById = async (loanId, requester) => {
   }
 
   return attachComputed(loan);
+};
+
+// M4 — the return step. A copy returned in "poor" condition doesn't go
+// straight back into circulation: it's flagged damaged so a librarian
+// has to look at it before anyone else can borrow it. Anything else
+// (new/good/fair) returns to available. A late fee is created here, and
+// only here — see feeService.createFeeForLateReturn.
+export const returnLoan = async (loanId, librarian, { condition, notes }) => {
+  const loan = await Loan.findById(loanId);
+  if (!loan) throw new ApiError(404, "Loan not found");
+  if (loan.status !== LOAN_STATUS.ACTIVE) {
+    throw new ApiError(409, `Cannot return a loan that is already ${loan.status}`);
+  }
+
+  const now = new Date();
+  const isLate = now > loan.dueDate;
+  const daysLate = isLate
+    ? Math.ceil((now - loan.dueDate) / (1000 * 60 * 60 * 24))
+    : 0;
+
+  loan.status = LOAN_STATUS.RETURNED;
+  loan.returnedAt = now;
+  loan.returnCondition = condition;
+  loan.returnProcessedBy = librarian._id;
+  await loan.save();
+
+  const nextCopyStatus =
+    condition === COPY_CONDITION.POOR ? COPY_STATUS.DAMAGED : COPY_STATUS.AVAILABLE;
+  await bookCopyService.updateCopy(loan.copy, {
+    status: nextCopyStatus,
+    condition,
+    ...(notes && { notes }),
+  });
+
+  let fee = null;
+  if (daysLate > 0) {
+    fee = await feeService.createFeeForLateReturn({
+      loanId: loan._id,
+      studentId: loan.student,
+      bookId: loan.book,
+      daysLate,
+    });
+  }
+
+  const populated = await loan.populate(LOAN_POPULATE);
+  return { loan: attachComputed(populated.toObject()), fee };
 };

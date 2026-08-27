@@ -8,3 +8,6 @@ export const fetchLoanById = (id) => axiosInstance.get(`/loans/${id}`);
 
 export const collectRequest = (requestId, payload = {}) =>
   axiosInstance.patch(`/requests/${requestId}/collect`, payload);
+
+export const returnLoan = (loanId, payload) =>
+  axiosInstance.patch(`/loans/${loanId}/return`, payload);

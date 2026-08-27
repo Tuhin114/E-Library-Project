@@ -15,6 +15,7 @@ import {
   PackageCheck,
   ClipboardList,
   CalendarClock,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -123,6 +124,16 @@ const SidebarNav = ({ onNavigate }) => {
             My Loans
           </NavLink>
         )}
+        {!isLibrarian && (
+          <NavLink
+            to="/fees"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <Receipt className="h-4 w-4" />
+            My Fees
+          </NavLink>
+        )}
       </nav>
 
       <nav className="mt-8 space-y-1">
@@ -187,6 +198,14 @@ const SidebarNav = ({ onNavigate }) => {
           >
             <CalendarClock className="h-4 w-4" />
             Active Loans
+          </NavLink>
+          <NavLink
+            to="/manage/fees"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <Receipt className="h-4 w-4" />
+            Fees
           </NavLink>
           <NavLink
             to="/forum/reports"

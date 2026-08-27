@@ -4,7 +4,8 @@ import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { validateParams } from "../middleware/validateParams.js";
 import { validateQuery } from "../middleware/validateQuery.js";
-import { loanIdParamSchema, loanQuerySchema } from "../validators/loanValidator.js";
+import { validateRequest } from "../middleware/validateRequest.js";
+import { loanIdParamSchema, loanQuerySchema, returnLoanSchema } from "../validators/loanValidator.js";
 import { ROLES } from "../constants/roles.js";
 
 const router = Router();
@@ -22,5 +23,13 @@ router.get(
 );
 
 router.get("/:id", validateParams(loanIdParamSchema), loanController.getLoan);
+
+router.patch(
+  "/:id/return",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(loanIdParamSchema),
+  validateRequest(returnLoanSchema),
+  loanController.returnLoan,
+);
 
 export default router;
