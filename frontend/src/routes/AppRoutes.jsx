@@ -43,6 +43,7 @@ import MyLoans from "../pages/loans/MyLoans";
 import ManageLoans from "../pages/manage/ManageLoans";
 import MyFees from "../pages/fees/MyFees";
 import ManageFees from "../pages/manage/ManageFees";
+import LibrarySettings from "../pages/manage/LibrarySettings";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -183,6 +184,7 @@ export default function AppRoutes() {
             <Route path="/manage/requests" element={<ManageRequests />} />
             <Route path="/manage/loans" element={<ManageLoans />} />
             <Route path="/manage/fees" element={<ManageFees />} />
+            <Route path="/manage/settings" element={<LibrarySettings />} />
           </Route>
         </Route>
       </Route>

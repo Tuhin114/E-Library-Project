@@ -10,3 +10,10 @@ export const MAX_LOAN_DURATION_DAYS = 21;
 // — this app has no job scheduler yet, and a lazy check on every read is
 // an honest, simple substitute until one exists.
 export const COLLECTION_GRACE_DAYS = 3;
+
+// M5 — the default safety buffer the automatic approval engine applies
+// on top of every existing commitment's return/due date before treating
+// a copy as provably free for a new request. Overridable per-library via
+// LibrarySettings.autoApprovalBufferDays; this is only the fallback
+// default a brand-new settings document is created with.
+export const DEFAULT_AUTO_APPROVAL_BUFFER_DAYS = 1;

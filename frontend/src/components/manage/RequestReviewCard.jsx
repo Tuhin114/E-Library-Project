@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Sparkles } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -41,6 +41,12 @@ const RequestReviewCard = ({ request, onApprove, onReject, onCollect, isActing }
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <RequestStatusBadge status={request.status} />
+              {request.autoApproved && (
+                <Badge variant="default" className="flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Auto-approved
+                </Badge>
+              )}
               <span className="text-xs text-muted-foreground">{request.referenceCode}</span>
             </div>
             <Link
@@ -110,6 +116,15 @@ const RequestReviewCard = ({ request, onApprove, onReject, onCollect, isActing }
             </p>
           </div>
         </div>
+
+        {isPending && request.autoApprovalNote && (
+          <div className="flex items-start gap-2 rounded-2xl border border-border bg-secondary/20 p-3 text-sm">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              Auto-approval couldn't confirm this one: {request.autoApprovalNote}
+            </p>
+          </div>
+        )}
 
         {conflictContext?.overlappingApprovedCount > 0 && (
           <div className="flex items-start gap-2 rounded-2xl border border-warning/40 bg-warning/10 p-3 text-sm">

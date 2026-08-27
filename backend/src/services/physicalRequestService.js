@@ -4,8 +4,11 @@ import Loan from "../models/Loan.js";
 import { ApiError } from "../utils/ApiError.js";
 import { REQUEST_STATUS } from "../constants/requestStatus.js";
 import { LOAN_STATUS } from "../constants/loanStatus.js";
+import { APPROVAL_MODE } from "../constants/approvalMode.js";
 import { getPaginationParams, buildPaginationMeta } from "../utils/paginate.js";
 import { COLLECTION_GRACE_DAYS } from "../constants/requestPolicy.js";
+import * as librarySettingsService from "./librarySettingsService.js";
+import * as autoApprovalService from "./autoApprovalService.js";
 
 const STUDENT_POPULATE = { path: "student", select: "name email role" };
 const BOOK_POPULATE = { path: "book", select: "title isbn coverImage physicalCopiesTotal physicalCopiesAvailable" };
@@ -110,6 +113,31 @@ export const createRequest = async (studentId, payload) => {
     requestedReturnDate,
     studentNote,
   });
+
+  // M5 — if the library is in automatic mode, immediately try to
+  // auto-approve the request that was just created. A request that
+  // can't be proven safe simply stays "pending" with an explanatory
+  // note attached — the engine never auto-rejects, it only ever says
+  // "yes, safely" or "not sure, ask a human" (see autoApprovalService).
+  const settings = await librarySettingsService.getSettings();
+  if (settings.approvalMode === APPROVAL_MODE.AUTOMATIC) {
+    const result = await autoApprovalService.evaluateAutoApproval(
+      bookId,
+      requestedCollectionDate,
+      requestedReturnDate,
+      settings.autoApprovalBufferDays,
+    );
+
+    if (result.approved) {
+      request.status = REQUEST_STATUS.APPROVED;
+      request.autoApproved = true;
+      request.decidedAt = new Date();
+      request.decisionReason = result.reason;
+    } else {
+      request.autoApprovalNote = result.reason;
+    }
+    await request.save();
+  }
 
   return request.populate(REQUEST_POPULATE);
 };

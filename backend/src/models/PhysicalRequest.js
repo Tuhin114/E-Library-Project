@@ -63,6 +63,22 @@ const physicalRequestSchema = new mongoose.Schema(
       maxlength: [300, "Reason cannot exceed 300 characters"],
       default: "",
     },
+    // M5 — set true when the automatic approval engine (not a librarian)
+    // approved this request; decidedBy stays null in that case, since
+    // no human made the call.
+    autoApproved: {
+      type: Boolean,
+      default: false,
+    },
+    // Populated only when automatic mode evaluated this request but
+    // couldn't prove it safe — gives a librarian reviewing the still-
+    // pending request the "why wasn't this auto-approved" context
+    // directly, instead of them having to re-derive it.
+    autoApprovalNote: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
   { timestamps: true },
 );

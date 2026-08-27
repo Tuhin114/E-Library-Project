@@ -97,6 +97,19 @@ export const findAvailableCopyForBook = (bookId) =>
     copyNumber: 1,
   });
 
+// M5 — "usable" means could still plausibly become available again on
+// its own (available/issued/reserved), as opposed to damaged/lost/
+// retired, which won't free up without a librarian stepping in. The
+// automatic approval engine uses this as its real capacity figure —
+// Book.physicalCopiesTotal (M1) still counts damaged/lost copies, which
+// would overstate how many copies could ever actually serve a future
+// request.
+export const getUsableCopyCount = (bookId) =>
+  BookCopy.countDocuments({
+    book: bookId,
+    status: { $nin: [COPY_STATUS.DAMAGED, COPY_STATUS.LOST, COPY_STATUS.RETIRED] },
+  });
+
 export const getInventorySummary = async (bookId) => {
   await assertBookExists(bookId);
 

@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { Calendar, Hash } from "lucide-react";
+import { Calendar, Hash, Sparkles } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import RequestStatusBadge from "./RequestStatusBadge";
 
 const formatDate = (value) =>
@@ -21,6 +22,12 @@ const RequestCard = ({ request, onCancel, isCancelling }) => {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <RequestStatusBadge status={request.status} />
+              {request.autoApproved && (
+                <Badge variant="default" className="flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Auto-approved
+                </Badge>
+              )}
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Hash className="h-3 w-3" />
                 {request.referenceCode}

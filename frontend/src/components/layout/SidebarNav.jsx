@@ -16,6 +16,7 @@ import {
   ClipboardList,
   CalendarClock,
   Receipt,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -206,6 +207,14 @@ const SidebarNav = ({ onNavigate }) => {
           >
             <Receipt className="h-4 w-4" />
             Fees
+          </NavLink>
+          <NavLink
+            to="/manage/settings"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <Settings className="h-4 w-4" />
+            Settings
           </NavLink>
           <NavLink
             to="/forum/reports"
