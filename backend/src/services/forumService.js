@@ -3,6 +3,8 @@ import ForumReply from "../models/ForumReply.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ROLES } from "../constants/roles.js";
 import { getPaginationParams, buildPaginationMeta } from "../utils/paginate.js";
+import { NOTIFICATION_CATEGORIES, NOTIFICATION_TYPES } from "../constants/notificationTypes.js";
+import * as notificationService from "./notificationService.js";
 
 const USER_POPULATE = { path: "user", select: "name avatar" };
 
@@ -71,6 +73,21 @@ export const createReply = async (threadId, userId, { message }) => {
   thread.replyCount += 1;
   thread.lastActivityAt = new Date();
   await thread.save();
+
+  // Never notify a user of their own reply — only the thread's
+  // original owner cares that "someone replied", and that someone
+  // could be the owner themselves.
+  if (thread.user.toString() !== userId.toString()) {
+    await notificationService.notify({
+      user: thread.user,
+      category: NOTIFICATION_CATEGORIES.COMMUNITY,
+      type: NOTIFICATION_TYPES.FORUM_REPLY,
+      title: "New reply to your thread",
+      message: `Someone replied to "${thread.title}".`,
+      link: `/forum/${thread._id}`,
+      relatedEntity: { kind: "ForumThread", id: thread._id },
+    });
+  }
 
   return reply.populate(USER_POPULATE);
 };

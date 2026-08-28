@@ -44,13 +44,17 @@ export const evaluateAutoApproval = async (
   if (overdueExists) {
     return {
       approved: false,
-      reason: "A loan for this book is currently overdue — auto-approval is paused until it's resolved",
+      reason:
+        "A loan for this book is currently overdue — auto-approval is paused until it's resolved",
     };
   }
 
   const usableCopies = await bookCopyService.getUsableCopyCount(bookId);
   if (usableCopies < 1) {
-    return { approved: false, reason: "No usable physical copies exist for this book" };
+    return {
+      approved: false,
+      reason: "No usable physical copies exist for this book",
+    };
   }
 
   const [activeLoans, approvedRequests] = await Promise.all([
@@ -74,11 +78,16 @@ export const evaluateAutoApproval = async (
   ];
 
   const overlapping = commitments.filter(
-    (commitment) => commitment.start <= requestedReturnDate && commitment.end >= requestedCollectionDate,
+    (commitment) =>
+      commitment.start <= requestedReturnDate &&
+      commitment.end >= requestedCollectionDate,
   );
 
   if (overlapping.length < usableCopies) {
-    return { approved: true, reason: "Sufficient capacity confirmed for the requested window" };
+    return {
+      approved: true,
+      reason: "Sufficient capacity confirmed for the requested window",
+    };
   }
 
   return {

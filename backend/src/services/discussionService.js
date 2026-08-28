@@ -4,6 +4,8 @@ import Book from "../models/Book.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ROLES } from "../constants/roles.js";
 import { getPaginationParams, buildPaginationMeta } from "../utils/paginate.js";
+import { NOTIFICATION_CATEGORIES, NOTIFICATION_TYPES } from "../constants/notificationTypes.js";
+import * as notificationService from "./notificationService.js";
 
 const USER_POPULATE = { path: "user", select: "name avatar" };
 
@@ -63,7 +65,7 @@ export const createDiscussion = async (bookId, userId, { message }) => {
 };
 
 export const createReply = async (discussionId, userId, { message }) => {
-  const discussion = await Discussion.exists({ _id: discussionId });
+  const discussion = await Discussion.findById(discussionId);
   if (!discussion) throw new ApiError(404, "Discussion not found");
 
   const reply = await DiscussionReply.create({
@@ -71,6 +73,18 @@ export const createReply = async (discussionId, userId, { message }) => {
     user: userId,
     message,
   });
+
+  if (discussion.user.toString() !== userId.toString()) {
+    await notificationService.notify({
+      user: discussion.user,
+      category: NOTIFICATION_CATEGORIES.COMMUNITY,
+      type: NOTIFICATION_TYPES.DISCUSSION_REPLY,
+      title: "New reply to your discussion",
+      message: "Someone replied to your discussion post on a book you commented on.",
+      link: `/books/${discussion.book}`,
+      relatedEntity: { kind: "Discussion", id: discussion._id },
+    });
+  }
 
   return reply.populate(USER_POPULATE);
 };

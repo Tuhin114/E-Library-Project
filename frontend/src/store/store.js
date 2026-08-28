@@ -14,6 +14,7 @@ import requestsReducer from "./slices/requestsSlice";
 import loansReducer from "./slices/loansSlice";
 import feesReducer from "./slices/feesSlice";
 import settingsReducer from "./slices/settingsSlice";
+import notificationsReducer from "./slices/notificationsSlice";
 /**
  * Central Redux store.
  * Feature slices are registered in the `reducer` map as they are built.
@@ -35,6 +36,7 @@ export const store = configureStore({
     loans: loansReducer,
     fees: feesReducer,
     settings: settingsReducer,
+    notifications: notificationsReducer,
   },
   devTools: import.meta.env.MODE !== "production",
 });

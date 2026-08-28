@@ -27,6 +27,7 @@ import physicalRequestRoutes from "./routes/physicalRequestRoutes.js";
 import loanRoutes from "./routes/loanRoutes.js";
 import feeRoutes from "./routes/feeRoutes.js";
 import librarySettingsRoutes from "./routes/librarySettingsRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 const app = express();
 
@@ -93,6 +94,7 @@ app.use("/api/requests", physicalRequestRoutes);
 app.use("/api/loans", loanRoutes);
 app.use("/api/fees", feeRoutes);
 app.use("/api/settings", librarySettingsRoutes);
+app.use("/api/me", notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {

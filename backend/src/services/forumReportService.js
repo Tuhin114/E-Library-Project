@@ -3,6 +3,8 @@ import ForumReply from "../models/ForumReply.js";
 import ForumReport from "../models/ForumReport.js";
 import { ApiError } from "../utils/ApiError.js";
 import { REPORT_TARGET_TYPES, REPORT_STATUS } from "../constants/reportReasons.js";
+import { NOTIFICATION_CATEGORIES, NOTIFICATION_TYPES } from "../constants/notificationTypes.js";
+import * as notificationService from "./notificationService.js";
 
 const TARGET_MODELS = {
   [REPORT_TARGET_TYPES.THREAD]: ForumThread,
@@ -79,6 +81,16 @@ export const resolveReport = async (reportId) => {
   report.status = REPORT_STATUS.RESOLVED;
   report.resolvedAt = new Date();
   await report.save();
+
+  await notificationService.notify({
+    user: report.reportedBy,
+    category: NOTIFICATION_CATEGORIES.COMMUNITY,
+    type: NOTIFICATION_TYPES.REPORT_RESOLVED,
+    title: "Your report was resolved",
+    message: "A librarian has reviewed and resolved the content you reported.",
+    link: "/forum",
+    relatedEntity: { kind: "ForumReport", id: report._id },
+  });
 
   return report;
 };

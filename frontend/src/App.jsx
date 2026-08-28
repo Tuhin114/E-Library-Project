@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "@/routes/AppRoutes";
 import { initializeSession } from "@/store/slices/authSlice";
 import { useAuth } from "@/hooks/useAuth";
+import { useSocket } from "@/hooks/useSocket";
 import { Toaster } from "@/components/common/Toaster";
 
 function App() {
@@ -14,6 +15,8 @@ function App() {
   useEffect(() => {
     dispatch(initializeSession());
   }, [dispatch]);
+
+  useSocket();
 
   if (isInitializing) {
     return (

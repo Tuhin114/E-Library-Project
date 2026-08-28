@@ -45,3 +45,34 @@ export const sendPasswordResetEmail = async (user, resetUrl) => {
     `,
   });
 };
+
+/**
+ * Generic notification email — used by notificationService.notify()
+ * for every category/type rather than each event having its own
+ * template. Same SMTP-not-configured console fallback as the
+ * password-reset email above, so notification delivery never blocks
+ * on local dev setup either.
+ */
+export const sendNotificationEmail = async (user, { title, message, link }) => {
+  if (!isEmailConfigured) {
+    console.log(
+      `[emailService] SMTP not configured — notification email for ${user.email}: ${title}`,
+    );
+    return;
+  }
+
+  const linkHtml = link
+    ? `<p><a href="${env.clientUrl}${link}">View in E-Library</a></p>`
+    : "";
+
+  await transporter.sendMail({
+    from: env.email.from,
+    to: user.email,
+    subject: title,
+    html: `
+      <p>Hi ${user.name},</p>
+      <p>${message}</p>
+      ${linkHtml}
+    `,
+  });
+};

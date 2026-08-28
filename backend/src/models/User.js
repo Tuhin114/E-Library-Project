@@ -47,6 +47,25 @@ const userSchema = new mongoose.Schema(
       maxlength: [300, "Bio cannot exceed 300 characters"],
       default: "",
     },
+    // Category-level only (not per-type) — three categories x two
+    // channels is the right granularity for a v1; per-type toggles
+    // would be real over-engineering. `community.email` defaults off
+    // since forum/discussion replies are frequent and low-stakes
+    // compared to circulation/account events.
+    notificationPreferences: {
+      circulation: {
+        inApp: { type: Boolean, default: true },
+        email: { type: Boolean, default: true },
+      },
+      community: {
+        inApp: { type: Boolean, default: true },
+        email: { type: Boolean, default: false },
+      },
+      account: {
+        inApp: { type: Boolean, default: true },
+        email: { type: Boolean, default: true },
+      },
+    },
     passwordChangedAt: {
       type: Date,
       select: false,

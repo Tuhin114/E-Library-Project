@@ -7,14 +7,49 @@ import { LOAN_STATUS } from "../constants/loanStatus.js";
 import { APPROVAL_MODE } from "../constants/approvalMode.js";
 import { getPaginationParams, buildPaginationMeta } from "../utils/paginate.js";
 import { COLLECTION_GRACE_DAYS } from "../constants/requestPolicy.js";
+import {
+  NOTIFICATION_CATEGORIES,
+  NOTIFICATION_TYPES,
+} from "../constants/notificationTypes.js";
 import * as librarySettingsService from "./librarySettingsService.js";
 import * as autoApprovalService from "./autoApprovalService.js";
+import * as notificationService from "./notificationService.js";
 
-const STUDENT_POPULATE = { path: "student", select: "name email role" };
-const BOOK_POPULATE = { path: "book", select: "title isbn coverImage physicalCopiesTotal physicalCopiesAvailable" };
-const DECIDER_POPULATE = { path: "decidedBy", select: "name email" };
+const STUDENT_POPULATE = {
+  path: "student",
+  select: "name email role notificationPreferences",
+};
+
+const BOOK_POPULATE = {
+  path: "book",
+  select: "title isbn coverImage physicalCopiesTotal physicalCopiesAvailable",
+};
+
+const DECIDER_POPULATE = {
+  path: "decidedBy",
+  select: "name email",
+};
 
 const REQUEST_POPULATE = [STUDENT_POPULATE, BOOK_POPULATE, DECIDER_POPULATE];
+
+const notifyRequestApproved = async (request) => {
+  const populated = await request.populate(REQUEST_POPULATE);
+
+  await notificationService.notify({
+    user: populated.student,
+    category: NOTIFICATION_CATEGORIES.CIRCULATION,
+    type: NOTIFICATION_TYPES.REQUEST_APPROVED,
+    title: "Your request was approved",
+    message: `Your request for "${populated.book.title}" was approved. Collect it by the agreed date.`,
+    link: `/me/requests/${populated._id}`,
+    relatedEntity: {
+      kind: "PhysicalRequest",
+      id: populated._id,
+    },
+  });
+
+  return populated;
+};
 
 const assertBookExists = async (bookId) => {
   const book = await Book.findById(bookId);
@@ -56,7 +91,12 @@ export const expireStaleApprovals = async () => {
 // if left unfixed: a book returned weeks ago would still block every
 // future overlapping request forever, because the *request* itself
 // never changes out of "collected" even after the *loan* is returned.
-const findOverlappingRequests = async (bookId, collectionDate, returnDate, { statuses, excludeId } = {}) => {
+const findOverlappingRequests = async (
+  bookId,
+  collectionDate,
+  returnDate,
+  { statuses, excludeId } = {},
+) => {
   const requests = await PhysicalRequest.find({
     book: bookId,
     ...(excludeId && { _id: { $ne: excludeId } }),
@@ -81,24 +121,48 @@ const findOverlappingRequests = async (bookId, collectionDate, returnDate, { sta
   const stillActive = new Set(activeLoanRequestIds.map(String));
 
   return requests.filter(
-    (r) => r.status !== REQUEST_STATUS.COLLECTED || stillActive.has(r._id.toString()),
+    (r) =>
+      r.status !== REQUEST_STATUS.COLLECTED ||
+      stillActive.has(r._id.toString()),
   );
 };
 
 export const createRequest = async (studentId, payload) => {
-  const { book: bookId, requestedCollectionDate, requestedReturnDate, studentNote } = payload;
+  const {
+    book: bookId,
+    requestedCollectionDate,
+    requestedReturnDate,
+    studentNote,
+  } = payload;
 
   await expireStaleApprovals();
 
   const book = await assertBookExists(bookId);
+
   if (book.physicalCopiesTotal < 1) {
-    throw new ApiError(400, "This book has no physical copies configured for request");
+    throw new ApiError(
+      400,
+      "This book has no physical copies configured for request",
+    );
   }
 
-  const duplicate = await findOverlappingRequests(bookId, requestedCollectionDate, requestedReturnDate, {
-    statuses: [REQUEST_STATUS.PENDING, REQUEST_STATUS.APPROVED, REQUEST_STATUS.COLLECTED],
-  });
-  const ownDuplicate = duplicate.find((r) => r.student._id.toString() === studentId.toString());
+  const duplicate = await findOverlappingRequests(
+    bookId,
+    requestedCollectionDate,
+    requestedReturnDate,
+    {
+      statuses: [
+        REQUEST_STATUS.PENDING,
+        REQUEST_STATUS.APPROVED,
+        REQUEST_STATUS.COLLECTED,
+      ],
+    },
+  );
+
+  const ownDuplicate = duplicate.find(
+    (r) => r.student._id.toString() === studentId.toString(),
+  );
+
   if (ownDuplicate) {
     throw new ApiError(
       409,
@@ -114,12 +178,11 @@ export const createRequest = async (studentId, payload) => {
     studentNote,
   });
 
-  // M5 — if the library is in automatic mode, immediately try to
-  // auto-approve the request that was just created. A request that
-  // can't be proven safe simply stays "pending" with an explanatory
-  // note attached — the engine never auto-rejects, it only ever says
-  // "yes, safely" or "not sure, ask a human" (see autoApprovalService).
+  // M5 — automatic approval.
+  // The engine only auto-approves when it can prove the request is safe.
+  // Otherwise the request remains pending with an explanatory note.
   const settings = await librarySettingsService.getSettings();
+
   if (settings.approvalMode === APPROVAL_MODE.AUTOMATIC) {
     const result = await autoApprovalService.evaluateAutoApproval(
       bookId,
@@ -133,9 +196,15 @@ export const createRequest = async (studentId, payload) => {
       request.autoApproved = true;
       request.decidedAt = new Date();
       request.decisionReason = result.reason;
-    } else {
-      request.autoApprovalNote = result.reason;
+
+      await request.save();
+
+      // Automatic approval must notify the student exactly like
+      // manual librarian approval.
+      return notifyRequestApproved(request);
     }
+
+    request.autoApprovalNote = result.reason;
     await request.save();
   }
 
@@ -218,7 +287,10 @@ export const listRequestsForLibrarian = async (query) => {
 
   const enriched = await Promise.all(requests.map(attachReviewContext));
 
-  return { requests: enriched, pagination: buildPaginationMeta({ page, limit, totalItems }) };
+  return {
+    requests: enriched,
+    pagination: buildPaginationMeta({ page, limit, totalItems }),
+  };
 };
 
 export const listRequestsForStudent = async (studentId, { status } = {}) => {
@@ -231,7 +303,8 @@ export const listRequestsForStudent = async (studentId, { status } = {}) => {
 };
 
 const assertRequestExists = async (requestId) => {
-  const request = await PhysicalRequest.findById(requestId).populate(REQUEST_POPULATE);
+  const request =
+    await PhysicalRequest.findById(requestId).populate(REQUEST_POPULATE);
   if (!request) throw new ApiError(404, "Request not found");
   return request;
 };
@@ -252,23 +325,31 @@ export const getRequestById = async (requestId, requester) => {
 
 export const approveRequest = async (requestId, librarian, note) => {
   const request = await assertRequestExists(requestId);
+
   if (request.status !== REQUEST_STATUS.PENDING) {
-    throw new ApiError(409, `Cannot approve a request that is already ${request.status}`);
+    throw new ApiError(
+      409,
+      `Cannot approve a request that is already ${request.status}`,
+    );
   }
 
   request.status = REQUEST_STATUS.APPROVED;
   request.decidedBy = librarian._id;
   request.decidedAt = new Date();
   request.decisionReason = note || "";
+
   await request.save();
 
-  return request.populate(REQUEST_POPULATE);
+  return notifyRequestApproved(request);
 };
 
 export const rejectRequest = async (requestId, librarian, reason) => {
   const request = await assertRequestExists(requestId);
   if (request.status !== REQUEST_STATUS.PENDING) {
-    throw new ApiError(409, `Cannot reject a request that is already ${request.status}`);
+    throw new ApiError(
+      409,
+      `Cannot reject a request that is already ${request.status}`,
+    );
   }
 
   request.status = REQUEST_STATUS.REJECTED;
@@ -277,7 +358,19 @@ export const rejectRequest = async (requestId, librarian, reason) => {
   request.decisionReason = reason;
   await request.save();
 
-  return request.populate(REQUEST_POPULATE);
+  const populated = await request.populate(REQUEST_POPULATE);
+
+  await notificationService.notify({
+    user: populated.student,
+    category: NOTIFICATION_CATEGORIES.CIRCULATION,
+    type: NOTIFICATION_TYPES.REQUEST_REJECTED,
+    title: "Your request was rejected",
+    message: `Your request for "${populated.book.title}" was rejected${reason ? `: ${reason}` : "."}`,
+    link: `/me/requests/${populated._id}`,
+    relatedEntity: { kind: "PhysicalRequest", id: populated._id },
+  });
+
+  return populated;
 };
 
 export const cancelRequest = async (requestId, studentId) => {
@@ -286,8 +379,13 @@ export const cancelRequest = async (requestId, studentId) => {
   if (request.student._id.toString() !== studentId.toString()) {
     throw new ApiError(403, "You can only cancel your own request");
   }
-  if (![REQUEST_STATUS.PENDING, REQUEST_STATUS.APPROVED].includes(request.status)) {
-    throw new ApiError(409, `Cannot cancel a request that is already ${request.status}`);
+  if (
+    ![REQUEST_STATUS.PENDING, REQUEST_STATUS.APPROVED].includes(request.status)
+  ) {
+    throw new ApiError(
+      409,
+      `Cannot cancel a request that is already ${request.status}`,
+    );
   }
 
   request.status = REQUEST_STATUS.CANCELLED;

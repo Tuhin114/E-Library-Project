@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import AvatarUpload from "@/components/profile/AvatarUpload";
 import ProfileForm from "@/components/forms/ProfileForm";
 import SavedSearchList from "@/components/profile/SavedSearchList";
+import NotificationPreferences from "@/components/notifications/NotificationPreferences";
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -74,6 +75,15 @@ const Profile = () => {
           </CardHeader>
           <CardContent>
             <SavedSearchList searches={savedSearches} />
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Notification Preferences</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <NotificationPreferences />
           </CardContent>
         </Card>
       </div>

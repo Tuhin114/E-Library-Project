@@ -10,6 +10,7 @@ import { useAuth } from "../../hooks/useAuth";
 import ThemeToggle from "../common/ThemeToggle";
 import MobileDrawer from "../common/MobileDrawer";
 import SidebarNav from "./SidebarNav";
+import NotificationBell from "../notifications/NotificationBell";
 
 /**
  * Top navigation bar. Brand, current user, theme toggle, logout — and,
@@ -63,6 +64,8 @@ const Navbar = () => {
           </Link>
 
           <ThemeToggle />
+
+          <NotificationBell />
 
           <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
             <LogOut className="h-4 w-4" />
