@@ -43,8 +43,11 @@
     --success: 142 45% 32%;
     --success-foreground: 40 20% 98%;
 
-    --warning: 38 92% 38%;
-    --warning-foreground: 40 20% 98%;
+    /* Muted chartreuse warning — keeps warnings in the same
+       yellow-green family as the primary accent instead of introducing
+       an unrelated orange tone. */
+    --warning: 56 68% 40%;
+    --warning-foreground: 0 0% 10%;
 
     --border: 30 15% 88%;
     --input: 30 15% 88%;
@@ -86,8 +89,8 @@
     --success: 131 31% 55%;
     --success-foreground: 0 0% 10%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 20 20% 10%;
+    --warning: 56 72% 62%;
+    --warning-foreground: 0 0% 10%;
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
