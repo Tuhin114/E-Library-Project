@@ -19,3 +19,12 @@ export const returnLoan = asyncHandler(async (req, res) => {
   const result = await loanService.returnLoan(req.params.id, req.user, req.body);
   res.status(200).json(new ApiResponse(200, "Loan returned successfully", result));
 });
+
+// M2 (Phase 7) — extends the loan's due date per LibrarySettings.
+// Rejection reasons (overdue, max renewals hit, active waitlist) come
+// back as the ApiError's own message, same as every other domain
+// error in this codebase — no special response shape needed.
+export const renewLoan = asyncHandler(async (req, res) => {
+  const loan = await loanService.renewLoan(req.params.id, req.user);
+  res.status(200).json(new ApiResponse(200, "Loan renewed successfully", loan));
+});

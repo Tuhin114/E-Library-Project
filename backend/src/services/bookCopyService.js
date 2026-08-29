@@ -133,12 +133,26 @@ export const updateCopy = async (copyId, payload) => {
   const copy = await BookCopy.findById(copyId);
   if (!copy) throw new ApiError(404, "Copy not found");
 
+  const previousStatus = copy.status;
+
   Object.entries(payload).forEach(([key, value]) => {
     if (value !== undefined) copy[key] = value;
   });
 
   await copy.save();
   await recalculateBookCopyCounts(copy.book);
+
+  // M2 (Phase 7) — the single choke point every "a copy became
+  // available" event passes through, whether that's a return being
+  // processed, a waitlist hold being released, or a librarian manually
+  // flipping a copy's status here in the inventory panel. Dynamic
+  // import breaks the otherwise-circular dependency: waitlistService
+  // itself calls back into updateCopy() to reserve the copy it
+  // promotes for the next waiter.
+  if (previousStatus !== COPY_STATUS.AVAILABLE && copy.status === COPY_STATUS.AVAILABLE) {
+    const { promoteNextWaiter } = await import("./waitlistService.js");
+    await promoteNextWaiter(copy.book);
+  }
 
   return copy;
 };

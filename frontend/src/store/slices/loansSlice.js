@@ -58,6 +58,26 @@ export const returnLoan = createAsyncThunk(
   },
 );
 
+// M2 (Phase 7) — renews a loan. Always re-fetches "my loans" afterward
+// (success or failure) rather than patching the single loan in place,
+// since a successful renewal changes renewalEligibility for other
+// active loans of the same book too (if this was the last spot before
+// hitting some shared constraint) — simplest to just refetch the list.
+export const renewLoan = createAsyncThunk(
+  "loans/renew",
+  async (loanId, { dispatch, rejectWithValue }) => {
+    try {
+      const loan = await loanService.renewLoan(loanId);
+      toast.success(`Renewed — now due ${new Date(loan.dueDate).toLocaleDateString()}`);
+      dispatch(fetchMyLoans());
+      return loan;
+    } catch (error) {
+      toast.error(error.message);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
 const loansSlice = createSlice({
   name: "loans",
   initialState,
@@ -94,6 +114,16 @@ const loansSlice = createSlice({
         state.actionPendingId = null;
       })
       .addCase(returnLoan.rejected, (state) => {
+        state.actionPendingId = null;
+      })
+
+      .addCase(renewLoan.pending, (state, action) => {
+        state.actionPendingId = action.meta.arg;
+      })
+      .addCase(renewLoan.fulfilled, (state) => {
+        state.actionPendingId = null;
+      })
+      .addCase(renewLoan.rejected, (state) => {
         state.actionPendingId = null;
       });
   },

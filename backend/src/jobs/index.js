@@ -1,4 +1,5 @@
 import { startLoanDueReminderJob } from "./loanDueReminderJob.js";
+import { startWaitlistExpiryJob } from "./waitlistExpiryJob.js";
 
 /**
  * Starts every scheduled job. Called once from server.js, after the
@@ -13,4 +14,5 @@ import { startLoanDueReminderJob } from "./loanDueReminderJob.js";
  */
 export const startJobs = () => {
   startLoanDueReminderJob();
+  startWaitlistExpiryJob();
 };

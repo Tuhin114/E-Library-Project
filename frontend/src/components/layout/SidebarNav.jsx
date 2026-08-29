@@ -17,6 +17,7 @@ import {
   CalendarClock,
   Receipt,
   Settings,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -133,6 +134,16 @@ const SidebarNav = ({ onNavigate }) => {
           >
             <Receipt className="h-4 w-4" />
             My Fees
+          </NavLink>
+        )}
+        {!isLibrarian && (
+          <NavLink
+            to="/waitlist"
+            className={navLinkClasses}
+            onClick={handleClick}
+          >
+            <Clock className="h-4 w-4" />
+            My Waitlist
           </NavLink>
         )}
       </nav>

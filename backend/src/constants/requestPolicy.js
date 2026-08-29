@@ -17,3 +17,10 @@ export const COLLECTION_GRACE_DAYS = 3;
 // LibrarySettings.autoApprovalBufferDays; this is only the fallback
 // default a brand-new settings document is created with.
 export const DEFAULT_AUTO_APPROVAL_BUFFER_DAYS = 1;
+
+// M2 (Phase 7) — fallback defaults for a brand-new LibrarySettings
+// document; all three are overridable per-library via the settings
+// endpoint (see librarySettingsValidator.js).
+export const DEFAULT_MAX_RENEWALS = 2;
+export const DEFAULT_RENEWAL_EXTENSION_DAYS = 7;
+export const DEFAULT_WAITLIST_CLAIM_WINDOW_HOURS = 48;

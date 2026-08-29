@@ -49,3 +49,12 @@ export const returnLoan = async (loanId, payload) => {
     );
   }
 };
+
+export const renewLoan = async (loanId) => {
+  try {
+    const { data } = await loanApi.renewLoan(loanId);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not renew this loan. Please try again."));
+  }
+};

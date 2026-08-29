@@ -32,4 +32,14 @@ router.patch(
   loanController.returnLoan,
 );
 
+// M2 (Phase 7) — no role restriction: ownership (or librarian) is
+// checked in loanService.renewLoan, same pattern GET /:id already
+// uses. No request body needed — every renewal input (extension
+// length, max count) comes from LibrarySettings, not the caller.
+router.patch(
+  "/:id/renew",
+  validateParams(loanIdParamSchema),
+  loanController.renewLoan,
+);
+
 export default router;

@@ -79,6 +79,18 @@ const physicalRequestSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    // M2 (Phase 7) — set only when this request was created by
+    // waitlistService.claimWaitlistEntry(): the specific BookCopy that
+    // was already reserved for this user before the request existed.
+    // loanService.collectRequest honors this over the usual "find any
+    // available copy" logic, since this exact copy is the one promised.
+    // Released back to `available` if the request is ever cancelled or
+    // left to expire uncollected — see physicalRequestService.
+    reservedCopy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BookCopy",
+      default: null,
+    },
   },
   { timestamps: true },
 );

@@ -5,8 +5,15 @@ import { ApiError } from "../utils/ApiError.js";
 import { REQUEST_STATUS } from "../constants/requestStatus.js";
 import { LOAN_STATUS } from "../constants/loanStatus.js";
 import { COPY_STATUS, COPY_CONDITION } from "../constants/copyStatus.js";
+import {
+  NOTIFICATION_CATEGORIES,
+  NOTIFICATION_TYPES,
+} from "../constants/notificationTypes.js";
 import * as bookCopyService from "./bookCopyService.js";
 import * as feeService from "./feeService.js";
+import * as librarySettingsService from "./librarySettingsService.js";
+import * as waitlistService from "./waitlistService.js";
+import * as notificationService from "./notificationService.js";
 import { expireStaleApprovals } from "./physicalRequestService.js";
 
 const LOAN_POPULATE = [
@@ -22,7 +29,8 @@ const LOAN_POPULATE = [
 // background job to flip it or a stale value between reads; computing
 // it fresh avoids both.
 const attachComputed = (loan) => {
-  const isOverdue = loan.status === LOAN_STATUS.ACTIVE && new Date(loan.dueDate) < new Date();
+  const isOverdue =
+    loan.status === LOAN_STATUS.ACTIVE && new Date(loan.dueDate) < new Date();
   const daysOverdue = isOverdue
     ? Math.ceil((new Date() - new Date(loan.dueDate)) / (1000 * 60 * 60 * 24))
     : 0;
@@ -46,11 +54,33 @@ export const collectRequest = async (requestId, copyId) => {
   }
 
   let copy;
-  if (copyId) {
+  if (request.reservedCopy) {
+    // M2 (Phase 7) — this request came from a waitlist claim: the copy
+    // was already reserved for this exact student, so it's honored
+    // over any copyId the librarian might pass and over the usual
+    // "find any available copy" fallback. A RESERVED-but-not-for-this-
+    // request copy is never picked up by this path, since it's found
+    // by id from the request itself, not by status query.
+    copy = await BookCopy.findById(request.reservedCopy);
+    if (!copy)
+      throw new ApiError(
+        404,
+        "The copy reserved for this request no longer exists",
+      );
+    if (copy.status !== COPY_STATUS.RESERVED) {
+      throw new ApiError(
+        409,
+        "The copy reserved for this request is no longer reserved",
+      );
+    }
+  } else if (copyId) {
     copy = await BookCopy.findById(copyId);
     if (!copy) throw new ApiError(404, "Copy not found");
     if (copy.book.toString() !== request.book.toString()) {
-      throw new ApiError(400, "This copy does not belong to the requested book");
+      throw new ApiError(
+        400,
+        "This copy does not belong to the requested book",
+      );
     }
     if (copy.status !== COPY_STATUS.AVAILABLE) {
       throw new ApiError(409, "This copy is not currently available");
@@ -87,13 +117,71 @@ export const collectRequest = async (requestId, copyId) => {
   return attachComputed(populated.toObject());
 };
 
+// M2 (Phase 7) — pure eligibility check, shared between the read paths
+// (so the frontend can grey out/explain a disabled Renew button before
+// the user even tries) and renewLoan itself (which re-derives this
+// fresh at mutation time rather than trusting whatever eligibility was
+// last read — see renewLoan for why).
+const computeRenewalEligibility = (loan, { settings, booksWithWaitlist }) => {
+  if (loan.status !== LOAN_STATUS.ACTIVE) {
+    return { canRenew: false, reason: "This loan is not active." };
+  }
+  if (loan.isOverdue) {
+    return {
+      canRenew: false,
+      reason: "This loan is overdue — return or settle it before renewing.",
+    };
+  }
+  if (booksWithWaitlist.has(loan.book._id.toString())) {
+    return {
+      canRenew: false,
+      reason: "Another reader is waiting for this book.",
+    };
+  }
+
+  if (loan.renewalCount >= settings.maxRenewals) {
+    return {
+      canRenew: false,
+      reason: `Already renewed the maximum of ${settings.maxRenewals} time${settings.maxRenewals === 1 ? "" : "s"}.`,
+    };
+  }
+  return { canRenew: true, reason: null };
+};
+
 export const listLoansForStudent = async (studentId, { status } = {}) => {
-  const loans = await Loan.find({ student: studentId, ...(status && { status }) })
+  const loans = await Loan.find({
+    student: studentId,
+    ...(status && { status }),
+  })
     .populate(LOAN_POPULATE)
     .sort({ collectedAt: -1 })
     .lean();
 
-  return loans.map(attachComputed);
+  const computed = loans.map(attachComputed);
+
+  const activeLoans = computed.filter(
+    (loan) => loan.status === LOAN_STATUS.ACTIVE,
+  );
+  if (activeLoans.length === 0) return computed;
+
+  const [settings, booksWithWaitlist] = await Promise.all([
+    librarySettingsService.getSettings(),
+    waitlistService.getBookIdsWithActiveWaitlist(
+      activeLoans.map((loan) => loan.book._id),
+    ),
+  ]);
+
+  return computed.map((loan) =>
+    loan.status === LOAN_STATUS.ACTIVE
+      ? {
+          ...loan,
+          renewalEligibility: computeRenewalEligibility(loan, {
+            settings,
+            booksWithWaitlist,
+          }),
+        }
+      : loan,
+  );
 };
 
 // overdueOnly implies status=active (an already-returned loan can never
@@ -123,7 +211,24 @@ export const getLoanById = async (loanId, requester) => {
     throw new ApiError(403, "You do not have access to this loan");
   }
 
-  return attachComputed(loan);
+  const computed = attachComputed(loan);
+  if (computed.status !== LOAN_STATUS.ACTIVE) return computed;
+
+  const [settings, hasWaitlist] = await Promise.all([
+    librarySettingsService.getSettings(),
+    waitlistService.hasActiveWaitlist(computed.book._id),
+  ]);
+  const booksWithWaitlist = new Set(
+    hasWaitlist ? [computed.book._id.toString()] : [],
+  );
+
+  return {
+    ...computed,
+    renewalEligibility: computeRenewalEligibility(computed, {
+      settings,
+      booksWithWaitlist,
+    }),
+  };
 };
 
 // M4 — the return step. A copy returned in "poor" condition doesn't go
@@ -135,7 +240,10 @@ export const returnLoan = async (loanId, librarian, { condition, notes }) => {
   const loan = await Loan.findById(loanId);
   if (!loan) throw new ApiError(404, "Loan not found");
   if (loan.status !== LOAN_STATUS.ACTIVE) {
-    throw new ApiError(409, `Cannot return a loan that is already ${loan.status}`);
+    throw new ApiError(
+      409,
+      `Cannot return a loan that is already ${loan.status}`,
+    );
   }
 
   const now = new Date();
@@ -151,7 +259,9 @@ export const returnLoan = async (loanId, librarian, { condition, notes }) => {
   await loan.save();
 
   const nextCopyStatus =
-    condition === COPY_CONDITION.POOR ? COPY_STATUS.DAMAGED : COPY_STATUS.AVAILABLE;
+    condition === COPY_CONDITION.POOR
+      ? COPY_STATUS.DAMAGED
+      : COPY_STATUS.AVAILABLE;
   await bookCopyService.updateCopy(loan.copy, {
     status: nextCopyStatus,
     condition,
@@ -170,4 +280,75 @@ export const returnLoan = async (loanId, librarian, { condition, notes }) => {
 
   const populated = await loan.populate(LOAN_POPULATE);
   return { loan: attachComputed(populated.toObject()), fee };
+};
+
+// M2 (Phase 7) — extends dueDate by LibrarySettings.renewalExtensionDays,
+// bounded by maxRenewals and blocked outright if the loan is overdue or
+// if anyone is actively waiting for this book. Every rejection reason
+// mirrors computeRenewalEligibility exactly, but is re-derived fresh
+// here rather than trusting a previously-read renewalEligibility —
+// time has necessarily passed since that was computed (the loan could
+// have gone overdue, or someone could have joined the waitlist, in the
+// interim), so the mutation itself must never rely on stale eligibility.
+export const renewLoan = async (loanId, requester) => {
+  const loan = await Loan.findById(loanId).populate(LOAN_POPULATE);
+  if (!loan) throw new ApiError(404, "Loan not found");
+
+  const isOwner = loan.student._id.toString() === requester._id.toString();
+  if (!isOwner && requester.role !== "librarian") {
+    throw new ApiError(403, "You do not have access to this loan");
+  }
+
+  if (loan.status !== LOAN_STATUS.ACTIVE) {
+    throw new ApiError(409, `Cannot renew a loan that is ${loan.status}`);
+  }
+
+  const now = new Date();
+  if (now > loan.dueDate) {
+    throw new ApiError(
+      409,
+      "This loan is overdue — return or settle it before renewing",
+    );
+  }
+
+  const settings = await librarySettingsService.getSettings();
+
+  const hasWaitlist = await waitlistService.hasActiveWaitlist(loan.book._id);
+
+  if (hasWaitlist) {
+    throw new ApiError(
+      409,
+      "Another reader is waiting for this book — it can't be renewed",
+    );
+  }
+
+  if (loan.renewalCount >= settings.maxRenewals) {
+    throw new ApiError(
+      409,
+      `This loan has already been renewed the maximum number of times (${settings.maxRenewals})`,
+    );
+  }
+
+  const previousDueDate = loan.dueDate;
+  const newDueDate = new Date(
+    loan.dueDate.getTime() +
+      settings.renewalExtensionDays * 24 * 60 * 60 * 1000,
+  );
+
+  loan.dueDate = newDueDate;
+  loan.renewalCount += 1;
+  loan.renewalHistory.push({ previousDueDate, newDueDate, renewedAt: now });
+  await loan.save();
+
+  await notificationService.notify({
+    user: loan.student,
+    category: NOTIFICATION_CATEGORIES.CIRCULATION,
+    type: NOTIFICATION_TYPES.LOAN_RENEWED,
+    title: "Loan renewed",
+    message: `"${loan.book.title}" is now due back on ${newDueDate.toLocaleDateString()}.`,
+    link: "/loans",
+    relatedEntity: { kind: "Loan", id: loan._id },
+  });
+
+  return attachComputed(loan.toObject());
 };

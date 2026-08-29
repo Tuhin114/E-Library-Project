@@ -5,6 +5,7 @@ import * as activityService from "../services/activityService.js";
 import * as physicalRequestService from "../services/physicalRequestService.js";
 import * as loanService from "../services/loanService.js";
 import * as feeService from "../services/feeService.js";
+import * as waitlistService from "../services/waitlistService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -91,4 +92,13 @@ export const getMyLoans = asyncHandler(async (req, res) => {
 export const getMyFees = asyncHandler(async (req, res) => {
   const fees = await feeService.listFeesForStudent(req.user._id, req.query);
   res.status(200).json(new ApiResponse(200, "Fees fetched successfully", fees));
+});
+
+// M2 (Phase 7) — same delegation pattern, this time for the student's
+// own waitlist entries across every book.
+export const getMyWaitlist = asyncHandler(async (req, res) => {
+  const entries = await waitlistService.listForUser(req.user._id);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Your waitlist entries fetched successfully", entries));
 });

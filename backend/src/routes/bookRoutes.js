@@ -35,6 +35,7 @@ import {
   addCopiesSchema,
   copyQuerySchema,
 } from "../validators/bookCopyValidator.js";
+import * as waitlistController from "../controllers/waitlistController.js";
 import { ROLES } from "../constants/roles.js";
 
 const router = Router();
@@ -158,6 +159,21 @@ router.get(
   authorize(ROLES.LIBRARIAN),
   validateParams(bookIdParamSchema),
   bookCopyController.getInventorySummary,
+);
+
+// Waitlist — join is any authenticated role (student/faculty); the
+// queue-for-a-book view is librarian only, same split every other
+// book-scoped mutation-vs-visibility pair here already uses.
+router.post(
+  "/:id/waitlist",
+  validateParams(bookIdParamSchema),
+  waitlistController.joinWaitlist,
+);
+router.get(
+  "/:id/waitlist",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(bookIdParamSchema),
+  waitlistController.getWaitlistForBook,
 );
 
 export default router;

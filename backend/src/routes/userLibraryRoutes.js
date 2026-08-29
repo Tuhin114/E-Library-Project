@@ -52,4 +52,6 @@ router.get(
   userLibraryController.getMyFees,
 );
 
+router.get("/waitlist", userLibraryController.getMyWaitlist);
+
 export default router;

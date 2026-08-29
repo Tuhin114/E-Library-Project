@@ -18,6 +18,7 @@ import ReviewList from "../../components/reviews/ReviewList";
 import DiscussionList from "../../components/discussions/DiscussionList";
 import ShareButton from "../../components/common/ShareButton";
 import RequestForm from "../../components/requests/RequestForm";
+import WaitlistButton from "../../components/waitlist/WaitlistButton";
 import { useDocumentMeta } from "../../hooks/useDocumentMeta";
 import { useAuth } from "../../hooks/useAuth";
 import PageContainer from "../../components/layout/PageContainer";
@@ -156,6 +157,9 @@ const BookDetails = () => {
                 Request Physical Copy
               </Button>
             )}
+            {user?.role !== "librarian" &&
+              book.physicalCopiesTotal > 0 &&
+              book.physicalCopiesAvailable === 0 && <WaitlistButton bookId={book._id} />}
           </div>
 
           {book.description && (

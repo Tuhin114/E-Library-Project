@@ -13,7 +13,7 @@ const formatDate = (value) =>
     day: "numeric",
   });
 
-const LoanCard = ({ loan, onReturn, isReturning }) => {
+const LoanCard = ({ loan, onReturn, isReturning, onRenew, isRenewing }) => {
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
 
   const handleConfirmReturn = (payload) => {
@@ -71,21 +71,48 @@ const LoanCard = ({ loan, onReturn, isReturning }) => {
               ) : (
                 <span>Returned {formatDate(loan.returnedAt)}</span>
               )}
+              {loan.renewalCount > 0 && (
+                <span>Renewed {loan.renewalCount}x</span>
+              )}
             </div>
+
+            {/* M2 (Phase 7) — shown whenever the loan carries a
+                renewalEligibility (attached server-side only for active
+                loans, see loanService.listLoansForStudent), so the
+                reason a blocked Renew button is disabled is visible
+                up front rather than only surfacing after a failed click. */}
+            {onRenew && loan.renewalEligibility && !loan.renewalEligibility.canRenew && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {loan.renewalEligibility.reason}
+              </p>
+            )}
           </div>
 
-          {loan.status === "active" && onReturn && (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="shrink-0"
-              onClick={() => setIsReturnDialogOpen(true)}
-              disabled={isReturning}
-            >
-              Process Return
-            </Button>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {loan.status === "active" && onRenew && (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => onRenew(loan._id)}
+                disabled={isRenewing || (loan.renewalEligibility && !loan.renewalEligibility.canRenew)}
+              >
+                {isRenewing ? "Renewing..." : "Renew"}
+              </Button>
+            )}
+
+            {loan.status === "active" && onReturn && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setIsReturnDialogOpen(true)}
+                disabled={isReturning}
+              >
+                Process Return
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
 

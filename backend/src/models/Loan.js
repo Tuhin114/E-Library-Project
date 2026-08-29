@@ -66,6 +66,22 @@ const loanSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    // M2 (Phase 7) — renewal history. renewalCount drives the
+    // maxRenewals check in loanService.renewLoan; renewalHistory is
+    // kept purely as an audit trail (not read by any current business
+    // logic), same spirit as decisionReason on PhysicalRequest.
+    renewalCount: {
+      type: Number,
+      default: 0,
+    },
+    renewalHistory: [
+      {
+        _id: false,
+        previousDueDate: { type: Date, required: true },
+        newDueDate: { type: Date, required: true },
+        renewedAt: { type: Date, required: true },
+      },
+    ],
   },
   { timestamps: true },
 );

@@ -19,6 +19,9 @@ export const NOTIFICATION_TYPES = Object.freeze({
   DISCUSSION_REPLY: "discussion_reply",
   REPORT_RESOLVED: "report_resolved",
   LOAN_DUE_SOON: "loan_due_soon",
+  WAITLIST_READY: "waitlist_ready",
+  WAITLIST_EXPIRED: "waitlist_expired",
+  LOAN_RENEWED: "loan_renewed",
 });
 
 export const DELIVERY_CHANNELS = Object.freeze({

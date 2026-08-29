@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { REQUEST_STATUS } from "../constants/requestStatus.js";
 import { LOAN_STATUS } from "../constants/loanStatus.js";
 import { APPROVAL_MODE } from "../constants/approvalMode.js";
+import { COPY_STATUS } from "../constants/copyStatus.js";
 import { getPaginationParams, buildPaginationMeta } from "../utils/paginate.js";
 import { COLLECTION_GRACE_DAYS } from "../constants/requestPolicy.js";
 import {
@@ -14,6 +15,7 @@ import {
 import * as librarySettingsService from "./librarySettingsService.js";
 import * as autoApprovalService from "./autoApprovalService.js";
 import * as notificationService from "./notificationService.js";
+import * as bookCopyService from "./bookCopyService.js";
 
 const STUDENT_POPULATE = {
   path: "student",
@@ -57,25 +59,47 @@ const assertBookExists = async (bookId) => {
   return book;
 };
 
-// M3 — lazy expiry. There's no background job scheduler in this app, so
-// rather than a cron sweep, every read path below calls this first: any
+// M3 — lazy expiry. Every read path below calls this first: any
 // "approved" request whose collection window (requestedCollectionDate +
 // COLLECTION_GRACE_DAYS) has already passed without ever being collected
 // flips to "expired" in a single bulk update. $expr + $add lets Mongo
 // compare a computed per-document deadline against "now" without pulling
-// documents into application code first.
+// documents into application code first. M1 (Phase 7) added a real
+// cron scheduler to this app, but this path is deliberately left as
+// lazy on-read rather than migrated to a scheduled sweep — a separate
+// follow-up, not part of M2.
 export const expireStaleApprovals = async () => {
   const graceMs = COLLECTION_GRACE_DAYS * 24 * 60 * 60 * 1000;
-
-  await PhysicalRequest.updateMany(
-    {
-      status: REQUEST_STATUS.APPROVED,
-      $expr: {
-        $lt: [{ $add: ["$requestedCollectionDate", graceMs] }, new Date()],
-      },
+  const cutoffFilter = {
+    status: REQUEST_STATUS.APPROVED,
+    $expr: {
+      $lt: [{ $add: ["$requestedCollectionDate", graceMs] }, new Date()],
     },
-    { $set: { status: REQUEST_STATUS.EXPIRED } },
+  };
+
+  // M2 (Phase 7) — a request created via waitlistService.claimWaitlistEntry
+  // holds a specific reservedCopy. A bulk updateMany can flip every
+  // matching request's status in one round trip, but it can't also
+  // release each one's copy back to AVAILABLE — that has to happen
+  // per-document, and has to happen first, since releasing the copy is
+  // what cascades to the next waiter (see bookCopyService.updateCopy's
+  // promotion hook).
+  const staleClaimed = await PhysicalRequest.find({
+    ...cutoffFilter,
+    reservedCopy: { $ne: null },
+  }).select("reservedCopy");
+
+  await Promise.all(
+    staleClaimed.map((request) =>
+      bookCopyService.updateCopy(request.reservedCopy, {
+        status: COPY_STATUS.AVAILABLE,
+      }),
+    ),
   );
+
+  await PhysicalRequest.updateMany(cutoffFilter, {
+    $set: { status: REQUEST_STATUS.EXPIRED },
+  });
 };
 
 // Windows overlap when one starts before the other ends, in both
@@ -390,6 +414,16 @@ export const cancelRequest = async (requestId, studentId) => {
 
   request.status = REQUEST_STATUS.CANCELLED;
   await request.save();
+
+  // M2 (Phase 7) — a waitlist-claimed request holds a copy specifically
+  // reserved for this student. Cancelling it has to release that copy
+  // back, or it stays stuck in `reserved` forever, invisible and
+  // unborrowable by anyone.
+  if (request.reservedCopy) {
+    await bookCopyService.updateCopy(request.reservedCopy, {
+      status: COPY_STATUS.AVAILABLE,
+    });
+  }
 
   return request.populate(REQUEST_POPULATE);
 };
