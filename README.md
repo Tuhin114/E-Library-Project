@@ -28,8 +28,6 @@ Built with the **MERN** stack (MongoDB · Express · React · Node.js)
 
 **E-Library** is a role-based digital library management system that lets an institution catalog books, let readers browse/search/discover them, read PDF and EPUB titles directly in the browser, track their reading progress, and participate in a community layer of reviews, discussions, and forums — all wrapped in a minimalist, dark-themed UI.
 
-The project is built incrementally in **phases**, each shipped as a set of self-contained milestones with its own Postman test suite, so the codebase grows without breaking what already works.
-
 > 📌 See the [Roadmap & Project Status](#-roadmap--project-status) section for a detailed, honest breakdown of what's done, what's deferred, and what's next.
 
 ---
