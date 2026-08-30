@@ -1,6 +1,7 @@
 import * as catalogAnalyticsService from "./catalogAnalyticsService.js";
 import * as engagementAnalyticsService from "./engagementAnalyticsService.js";
 import * as moderationAnalyticsService from "./moderationAnalyticsService.js";
+import * as circulationAnalyticsService from "./circulationAnalyticsService.js";
 import { toCsv } from "../utils/toCsv.js";
 import { ApiError } from "../utils/ApiError.js";
 
@@ -65,6 +66,15 @@ const REASON_COLUMNS = [
   { key: "count", label: "Count" },
 ];
 
+// Shared by every Phase 8 M1 { label, count } dataset (request funnel,
+// loan status, copy status) — same shape REASON_COLUMNS uses for
+// moderation, just a header that fits a status/state label instead of
+// a report reason.
+const STATUS_COLUMNS = [
+  { key: "label", label: "Status" },
+  { key: "count", label: "Count" },
+];
+
 /**
  * Each dataset maps to: which array on the parent analytics response to
  * export, a row mapper (identity if the row shape is already flat), and
@@ -106,6 +116,21 @@ const MODERATION_DATASETS = {
   reportsByReason: { columns: REASON_COLUMNS, mapRow: (row) => row },
   reportsFiledOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
   reportsResolvedOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
+};
+
+// inventoryUtilization reuses BOOK_METRIC_COLUMNS/mapBookRow as-is —
+// it's the same { title, authors, category, metricLabel, metricValue }
+// shape catalog's top-books datasets already export, just sourced from
+// circulationAnalyticsService instead. approvalMix/avgDaysToCollection/
+// avgLoanDurationDays aren't listed here on purpose: they're single
+// numbers/objects, not arrays, so — same as engagement's totalUsers/
+// activeUserCount — there's nothing tabular to export.
+const CIRCULATION_DATASETS = {
+  requestFunnel: { columns: STATUS_COLUMNS, mapRow: (row) => row },
+  requestsOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
+  loanStatusBreakdown: { columns: STATUS_COLUMNS, mapRow: (row) => row },
+  copyStatusBreakdown: { columns: STATUS_COLUMNS, mapRow: (row) => row },
+  inventoryUtilization: { columns: BOOK_METRIC_COLUMNS, mapRow: mapBookRow },
 };
 
 const buildExport = async ({ getAnalytics, datasetMap, dataset, query, filenamePrefix }) => {
@@ -155,6 +180,16 @@ export const buildModerationExport = (dataset, query) =>
     filenamePrefix: "moderation-analytics",
   });
 
+export const buildCirculationExport = (dataset, query) =>
+  buildExport({
+    getAnalytics: circulationAnalyticsService.getCirculationAnalytics,
+    datasetMap: CIRCULATION_DATASETS,
+    dataset,
+    query,
+    filenamePrefix: "circulation-analytics",
+  });
+
 export const CATALOG_EXPORT_DATASETS = Object.keys(CATALOG_DATASETS);
 export const ENGAGEMENT_EXPORT_DATASETS = Object.keys(ENGAGEMENT_DATASETS);
 export const MODERATION_EXPORT_DATASETS = Object.keys(MODERATION_DATASETS);
+export const CIRCULATION_EXPORT_DATASETS = Object.keys(CIRCULATION_DATASETS);

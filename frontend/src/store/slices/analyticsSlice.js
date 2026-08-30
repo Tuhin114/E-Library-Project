@@ -14,6 +14,8 @@ const initialState = {
   engagementStatus: "idle",
   moderation: null,
   moderationStatus: "idle",
+  circulation: null,
+  circulationStatus: "idle",
 };
 
 export const fetchCatalogAnalytics = createAsyncThunk(
@@ -43,6 +45,17 @@ export const fetchModerationAnalytics = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       return await analyticsService.getModerationAnalytics(params);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const fetchCirculationAnalytics = createAsyncThunk(
+  "analytics/fetchCirculationAnalytics",
+  async (params, { rejectWithValue }) => {
+    try {
+      return await analyticsService.getCirculationAnalytics(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -87,6 +100,17 @@ const analyticsSlice = createSlice({
       .addCase(fetchModerationAnalytics.rejected, (state, action) => {
         state.moderationStatus = "failed";
         toast.error(action.payload || "Failed to load moderation analytics");
+      })
+      .addCase(fetchCirculationAnalytics.pending, (state) => {
+        state.circulationStatus = "loading";
+      })
+      .addCase(fetchCirculationAnalytics.fulfilled, (state, action) => {
+        state.circulationStatus = "succeeded";
+        state.circulation = action.payload;
+      })
+      .addCase(fetchCirculationAnalytics.rejected, (state, action) => {
+        state.circulationStatus = "failed";
+        toast.error(action.payload || "Failed to load circulation analytics");
       });
   },
 });

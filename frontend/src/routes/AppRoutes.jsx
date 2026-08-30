@@ -36,12 +36,12 @@ import ForumReports from "../pages/forum/ForumReports";
 import CatalogAnalytics from "../pages/analytics/CatalogAnalytics";
 import EngagementAnalytics from "../pages/analytics/EngagementAnalytics";
 import ModerationAnalytics from "../pages/analytics/ModerationAnalytics";
+import Circulation from "../pages/analytics/Circulation";
 import AnalyticsDashboard from "../pages/analytics/AnalyticsDashboard";
 import MyRequests from "../pages/requests/MyRequests";
 import ManageRequests from "../pages/manage/ManageRequests";
 import MyLoans from "../pages/loans/MyLoans";
 import ManageLoans from "../pages/manage/ManageLoans";
-import MyWaitlist from "../pages/waitlist/MyWaitlist";
 import MyFees from "../pages/fees/MyFees";
 import ManageFees from "../pages/manage/ManageFees";
 import LibrarySettings from "../pages/manage/LibrarySettings";
@@ -158,7 +158,6 @@ export default function AppRoutes() {
           <Route path="/requests" element={<MyRequests />} />
           <Route path="/loans" element={<MyLoans />} />
           <Route path="/fees" element={<MyFees />} />
-          <Route path="/waitlist" element={<MyWaitlist />} />
 
           {/* Change password */}
           <Route path="/change-password" element={<ChangePassword />} />
@@ -183,6 +182,7 @@ export default function AppRoutes() {
             <Route path="/analytics/catalog" element={<CatalogAnalytics />} />
             <Route path="/analytics/engagement" element={<EngagementAnalytics />} />
             <Route path="/analytics/moderation" element={<ModerationAnalytics />} />
+            <Route path="/analytics/circulation" element={<Circulation />} />
             <Route path="/manage/requests" element={<ManageRequests />} />
             <Route path="/manage/loans" element={<ManageLoans />} />
             <Route path="/manage/fees" element={<ManageFees />} />

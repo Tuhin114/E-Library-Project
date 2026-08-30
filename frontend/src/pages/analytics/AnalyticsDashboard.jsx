@@ -5,11 +5,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CatalogAnalyticsSection from "@/components/analytics/sections/CatalogAnalyticsSection";
 import EngagementAnalyticsSection from "@/components/analytics/sections/EngagementAnalyticsSection";
 import ModerationAnalyticsSection from "@/components/analytics/sections/ModerationAnalyticsSection";
+import CirculationAnalyticsSection from "@/components/analytics/sections/CirculationAnalyticsSection";
 
 const PRIMARY_TABS = [
   { value: "catalog", label: "Catalog" },
   { value: "engagement", label: "Engagement" },
   { value: "moderation", label: "Moderation" },
+  { value: "circulation", label: "Circulation" },
 ];
 
 const CATALOG_VIEWS = [
@@ -104,6 +106,14 @@ const AnalyticsDashboard = () => {
 
         <TabsContent value="moderation">
           <ModerationAnalyticsSection
+            renderRangeControl={(rangeControl) => (
+              <div className="mb-4 flex justify-end">{rangeControl}</div>
+            )}
+          />
+        </TabsContent>
+
+        <TabsContent value="circulation">
+          <CirculationAnalyticsSection
             renderRangeControl={(rangeControl) => (
               <div className="mb-4 flex justify-end">{rangeControl}</div>
             )}
