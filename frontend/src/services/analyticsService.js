@@ -56,6 +56,17 @@ export const getFinancialAnalytics = async (params = {}) => {
   }
 };
 
+export const getAutomationAnalytics = async (params = {}) => {
+  try {
+    const { data } = await analyticsApi.fetchAutomationAnalytics(params);
+    return data.data;
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not load automation analytics."),
+    );
+  }
+};
+
 export const exportCatalogAnalytics = async (dataset, params = {}) => {
   try {
     const response = await analyticsApi.exportCatalogAnalytics(dataset, params);
@@ -164,6 +175,29 @@ export const exportFinancialAnalytics = async (dataset, params = {}) => {
   } catch (error) {
     throw new Error(
       getErrorMessage(error, "Could not export financial analytics."),
+    );
+  }
+};
+
+export const exportAutomationAnalytics = async (dataset, params = {}) => {
+  try {
+    const response = await analyticsApi.exportAutomationAnalytics(
+      dataset,
+      params,
+    );
+
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ||
+      `automation-${dataset}.csv`;
+
+    return {
+      blob: response.data,
+      filename,
+    };
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not export automation analytics."),
     );
   }
 };

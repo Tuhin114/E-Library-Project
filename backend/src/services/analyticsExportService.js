@@ -3,6 +3,7 @@ import * as engagementAnalyticsService from "./engagementAnalyticsService.js";
 import * as moderationAnalyticsService from "./moderationAnalyticsService.js";
 import * as circulationAnalyticsService from "./circulationAnalyticsService.js";
 import * as financialAnalyticsService from "./financialAnalyticsService.js";
+import * as automationAnalyticsService from "./automationAnalyticsService.js";
 import { toCsv } from "../utils/toCsv.js";
 import { ApiError } from "../utils/ApiError.js";
 
@@ -236,6 +237,30 @@ const FINANCIAL_DATASETS = {
   topFeePayers: { columns: PAYER_COLUMNS, mapRow: mapPayerRow },
 };
 
+// Phase 8 M4 — approvalEngineBreakdown/waitlistFunnel are both
+// { label, count } document-count pairs, same shape as STATUS_COLUMNS.
+// notificationsSentByCategory needs its own header since "category"
+// (circulation/community/account) isn't a status; its read-rate sibling
+// needs a further separate one since that `count` is a percentage, not
+// a document count — same reasoning AMOUNT_STATUS_COLUMNS split off
+// from STATUS_COLUMNS for currency.
+const CATEGORY_COLUMNS = [
+  { key: "label", label: "Category" },
+  { key: "count", label: "Sent" },
+];
+
+const CATEGORY_RATE_COLUMNS = [
+  { key: "label", label: "Category" },
+  { key: "count", label: "Read Rate (%)" },
+];
+
+const AUTOMATION_DATASETS = {
+  approvalEngineBreakdown: { columns: STATUS_COLUMNS, mapRow: (row) => row },
+  waitlistFunnel: { columns: STATUS_COLUMNS, mapRow: (row) => row },
+  notificationsSentByCategory: { columns: CATEGORY_COLUMNS, mapRow: (row) => row },
+  notificationReadRateByCategory: { columns: CATEGORY_RATE_COLUMNS, mapRow: (row) => row },
+};
+
 const buildExport = async ({ getAnalytics, datasetMap, dataset, query, filenamePrefix }) => {
   const config = datasetMap[dataset];
   if (!config) {
@@ -301,8 +326,18 @@ export const buildFinancialExport = (dataset, query) =>
     filenamePrefix: "financial-analytics",
   });
 
+export const buildAutomationExport = (dataset, query) =>
+  buildExport({
+    getAnalytics: automationAnalyticsService.getAutomationAnalytics,
+    datasetMap: AUTOMATION_DATASETS,
+    dataset,
+    query,
+    filenamePrefix: "automation-analytics",
+  });
+
 export const CATALOG_EXPORT_DATASETS = Object.keys(CATALOG_DATASETS);
 export const ENGAGEMENT_EXPORT_DATASETS = Object.keys(ENGAGEMENT_DATASETS);
 export const MODERATION_EXPORT_DATASETS = Object.keys(MODERATION_DATASETS);
 export const CIRCULATION_EXPORT_DATASETS = Object.keys(CIRCULATION_DATASETS);
 export const FINANCIAL_EXPORT_DATASETS = Object.keys(FINANCIAL_DATASETS);
+export const AUTOMATION_EXPORT_DATASETS = Object.keys(AUTOMATION_DATASETS);

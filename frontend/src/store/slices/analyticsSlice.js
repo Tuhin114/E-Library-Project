@@ -18,6 +18,8 @@ const initialState = {
   circulationStatus: "idle",
   financial: null,
   financialStatus: "idle",
+  automation: null,
+  automationStatus: "idle",
 };
 
 export const fetchCatalogAnalytics = createAsyncThunk(
@@ -69,6 +71,17 @@ export const fetchFinancialAnalytics = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       return await analyticsService.getFinancialAnalytics(params);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const fetchAutomationAnalytics = createAsyncThunk(
+  "analytics/fetchAutomationAnalytics",
+  async (params, { rejectWithValue }) => {
+    try {
+      return await analyticsService.getAutomationAnalytics(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -135,6 +148,17 @@ const analyticsSlice = createSlice({
       .addCase(fetchFinancialAnalytics.rejected, (state, action) => {
         state.financialStatus = "failed";
         toast.error(action.payload || "Failed to load financial analytics");
+      })
+      .addCase(fetchAutomationAnalytics.pending, (state) => {
+        state.automationStatus = "loading";
+      })
+      .addCase(fetchAutomationAnalytics.fulfilled, (state, action) => {
+        state.automationStatus = "succeeded";
+        state.automation = action.payload;
+      })
+      .addCase(fetchAutomationAnalytics.rejected, (state, action) => {
+        state.automationStatus = "failed";
+        toast.error(action.payload || "Failed to load automation analytics");
       });
   },
 });

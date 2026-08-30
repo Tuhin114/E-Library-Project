@@ -9,11 +9,13 @@ import {
   moderationAnalyticsQuerySchema,
   circulationAnalyticsQuerySchema,
   financialAnalyticsQuerySchema,
+  automationAnalyticsQuerySchema,
   catalogExportQuerySchema,
   engagementExportQuerySchema,
   moderationExportQuerySchema,
   circulationExportQuerySchema,
   financialExportQuerySchema,
+  automationExportQuerySchema,
 } from "../validators/analyticsValidator.js";
 import { ROLES } from "../constants/roles.js";
 
@@ -54,6 +56,12 @@ router.get(
   analyticsController.getFinancialAnalytics,
 );
 
+router.get(
+  "/automation",
+  validateQuery(automationAnalyticsQuerySchema),
+  analyticsController.getAutomationAnalytics,
+);
+
 // Export routes are separate from their JSON counterparts (rather than
 // a shared route with an ?format=csv flag) so validateQuery's schema —
 // which requires `dataset` — only applies where a dataset actually
@@ -86,6 +94,12 @@ router.get(
   "/financial/export",
   validateQuery(financialExportQuerySchema),
   analyticsController.exportFinancialAnalytics,
+);
+
+router.get(
+  "/automation/export",
+  validateQuery(automationExportQuerySchema),
+  analyticsController.exportAutomationAnalytics,
 );
 
 export default router;

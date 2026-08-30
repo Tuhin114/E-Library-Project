@@ -7,6 +7,7 @@ import EngagementAnalyticsSection from "@/components/analytics/sections/Engageme
 import ModerationAnalyticsSection from "@/components/analytics/sections/ModerationAnalyticsSection";
 import CirculationAnalyticsSection from "@/components/analytics/sections/CirculationAnalyticsSection";
 import FinancialAnalyticsSection from "@/components/analytics/sections/FinancialAnalyticsSection";
+import AutomationAnalyticsSection from "@/components/analytics/sections/AutomationAnalyticsSection";
 
 const PRIMARY_TABS = [
   { value: "catalog", label: "Catalog" },
@@ -14,6 +15,7 @@ const PRIMARY_TABS = [
   { value: "moderation", label: "Moderation" },
   { value: "circulation", label: "Circulation" },
   { value: "financial", label: "Financial" },
+  { value: "automation", label: "Automation" },
 ];
 
 const CATALOG_VIEWS = [
@@ -124,6 +126,14 @@ const AnalyticsDashboard = () => {
 
         <TabsContent value="financial">
           <FinancialAnalyticsSection
+            renderRangeControl={(rangeControl) => (
+              <div className="mb-4 flex justify-end">{rangeControl}</div>
+            )}
+          />
+        </TabsContent>
+
+        <TabsContent value="automation">
+          <AutomationAnalyticsSection
             renderRangeControl={(rangeControl) => (
               <div className="mb-4 flex justify-end">{rangeControl}</div>
             )}
