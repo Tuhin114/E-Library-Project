@@ -1,6 +1,15 @@
 export const FEE_STATUS = {
+  // M3 (Phase 7) — a damage/lost fee lands here first: a librarian
+  // hasn't confirmed the amount yet, so it doesn't count against the
+  // student and they aren't notified until it's finalized. A late fee
+  // is deterministic (days overdue x rate) and skips this state
+  // entirely, going straight to OUTSTANDING as it always has.
+  PENDING_REVIEW: "pending_review",
   OUTSTANDING: "outstanding",
   PAID: "paid",
+  // M3 (Phase 7) — a librarian can waive a fee (with a required reason)
+  // from either PENDING_REVIEW or OUTSTANDING; terminal, same as PAID.
+  WAIVED: "waived",
 };
 
 export const FEE_STATUS_VALUES = Object.values(FEE_STATUS);

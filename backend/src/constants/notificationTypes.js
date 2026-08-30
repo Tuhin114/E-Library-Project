@@ -22,6 +22,8 @@ export const NOTIFICATION_TYPES = Object.freeze({
   WAITLIST_READY: "waitlist_ready",
   WAITLIST_EXPIRED: "waitlist_expired",
   LOAN_RENEWED: "loan_renewed",
+  FEE_CHARGED: "fee_charged",
+  FEE_WAIVED: "fee_waived",
 });
 
 export const DELIVERY_CHANNELS = Object.freeze({

@@ -5,6 +5,7 @@ import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import ReturnDialog from "../manage/ReturnDialog";
+import ReportLostDialog from "../manage/ReportLostDialog";
 
 const formatDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -13,12 +14,26 @@ const formatDate = (value) =>
     day: "numeric",
   });
 
-const LoanCard = ({ loan, onReturn, isReturning, onRenew, isRenewing }) => {
+const LoanCard = ({
+  loan,
+  onReturn,
+  isReturning,
+  onRenew,
+  isRenewing,
+  onReportLost,
+  isReportingLost,
+}) => {
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
+  const [isReportLostDialogOpen, setIsReportLostDialogOpen] = useState(false);
 
   const handleConfirmReturn = (payload) => {
     onReturn(loan._id, payload);
     setIsReturnDialogOpen(false);
+  };
+
+  const handleConfirmReportLost = (payload) => {
+    onReportLost(loan._id, payload);
+    setIsReportLostDialogOpen(false);
   };
 
   return (
@@ -27,7 +42,16 @@ const LoanCard = ({ loan, onReturn, isReturning, onRenew, isRenewing }) => {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={loan.status === "active" ? "default" : "secondary"} className="capitalize">
+              <Badge
+                variant={
+                  loan.status === "active"
+                    ? "default"
+                    : loan.status === "lost"
+                      ? "destructive"
+                      : "secondary"
+                }
+                className="capitalize"
+              >
                 {loan.status}
               </Badge>
               {loan.isOverdue && (
@@ -68,6 +92,8 @@ const LoanCard = ({ loan, onReturn, isReturning, onRenew, isRenewing }) => {
                 <span className={loan.isOverdue ? "font-medium text-destructive" : ""}>
                   Due {formatDate(loan.dueDate)}
                 </span>
+              ) : loan.status === "lost" ? (
+                <span>Reported lost {formatDate(loan.lostReportedAt)}</span>
               ) : (
                 <span>Returned {formatDate(loan.returnedAt)}</span>
               )}
@@ -112,6 +138,19 @@ const LoanCard = ({ loan, onReturn, isReturning, onRenew, isRenewing }) => {
                 Process Return
               </Button>
             )}
+
+            {loan.status === "active" && onReportLost && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setIsReportLostDialogOpen(true)}
+                disabled={isReportingLost}
+              >
+                Report Lost
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
@@ -121,6 +160,13 @@ const LoanCard = ({ loan, onReturn, isReturning, onRenew, isRenewing }) => {
         onOpenChange={setIsReturnDialogOpen}
         onConfirm={handleConfirmReturn}
         isLoading={isReturning}
+      />
+
+      <ReportLostDialog
+        open={isReportLostDialogOpen}
+        onOpenChange={setIsReportLostDialogOpen}
+        onConfirm={handleConfirmReportLost}
+        isLoading={isReportingLost}
       />
     </Card>
   );

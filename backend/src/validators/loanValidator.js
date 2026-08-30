@@ -23,3 +23,8 @@ export const returnLoanSchema = z.object({
   }),
   notes: z.string().trim().max(300, "Notes cannot exceed 300 characters").optional(),
 });
+
+// M3 (Phase 7)
+export const reportLostSchema = z.object({
+  notes: z.string().trim().max(300, "Notes cannot exceed 300 characters").optional(),
+});

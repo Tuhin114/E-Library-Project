@@ -62,6 +62,9 @@ const bookBodyBase = {
   visibility: z.enum(["public", "restricted"]).optional(),
 
   status: z.enum(["draft", "published", "archived"]).optional(),
+
+  // M3 (Phase 7)
+  replacementCost: z.coerce.number().min(0).max(5000).optional(),
 };
 
 /**

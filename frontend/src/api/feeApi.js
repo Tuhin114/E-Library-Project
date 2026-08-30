@@ -7,3 +7,8 @@ export const fetchFeeQueue = (params = {}) => axiosInstance.get("/fees", { param
 export const fetchFeeById = (id) => axiosInstance.get(`/fees/${id}`);
 
 export const payFee = (id) => axiosInstance.patch(`/fees/${id}/pay`);
+
+export const finalizeFee = (id, payload = {}) =>
+  axiosInstance.patch(`/fees/${id}/finalize`, payload);
+
+export const waiveFee = (id, payload) => axiosInstance.patch(`/fees/${id}/waive`, payload);

@@ -6,6 +6,7 @@ import {
   DEFAULT_RENEWAL_EXTENSION_DAYS,
   DEFAULT_WAITLIST_CLAIM_WINDOW_HOURS,
 } from "../constants/requestPolicy.js";
+import { DEFAULT_REPLACEMENT_COST } from "../constants/feePolicy.js";
 
 // Deliberately singleton — there is exactly one library, so exactly one
 // settings document. Enforced in librarySettingsService (find-or-create
@@ -49,6 +50,15 @@ const librarySettingsSchema = new mongoose.Schema(
       default: DEFAULT_WAITLIST_CLAIM_WINDOW_HOURS,
       min: 1,
       max: 168,
+    },
+    // M3 (Phase 7) — fallback replacement-cost figure used to prefill a
+    // damage/lost fee when the specific book has no Book.replacementCost
+    // of its own set.
+    defaultReplacementCost: {
+      type: Number,
+      default: DEFAULT_REPLACEMENT_COST,
+      min: 0,
+      max: 500,
     },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,

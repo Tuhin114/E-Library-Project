@@ -9,6 +9,8 @@ export const updateSettingsSchema = z
     maxRenewals: z.coerce.number().int().min(0).max(5).optional(),
     renewalExtensionDays: z.coerce.number().int().min(1).max(30).optional(),
     waitlistClaimWindowHours: z.coerce.number().int().min(1).max(168).optional(),
+    // M3 (Phase 7)
+    defaultReplacementCost: z.coerce.number().min(0).max(500).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided",

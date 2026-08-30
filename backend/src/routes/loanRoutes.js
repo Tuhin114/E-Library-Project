@@ -5,7 +5,12 @@ import { authorize } from "../middleware/authorize.js";
 import { validateParams } from "../middleware/validateParams.js";
 import { validateQuery } from "../middleware/validateQuery.js";
 import { validateRequest } from "../middleware/validateRequest.js";
-import { loanIdParamSchema, loanQuerySchema, returnLoanSchema } from "../validators/loanValidator.js";
+import {
+  loanIdParamSchema,
+  loanQuerySchema,
+  returnLoanSchema,
+  reportLostSchema,
+} from "../validators/loanValidator.js";
 import { ROLES } from "../constants/roles.js";
 
 const router = Router();
@@ -40,6 +45,24 @@ router.patch(
   "/:id/renew",
   validateParams(loanIdParamSchema),
   loanController.renewLoan,
+);
+
+// M3 (Phase 7) — librarian-only, same as return: reporting a loan lost
+// is a staff-initiated action, never something a student self-reports
+// through this endpoint.
+router.patch(
+  "/:id/report-lost",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(loanIdParamSchema),
+  validateRequest(reportLostSchema),
+  loanController.reportLoanLost,
+);
+
+router.patch(
+  "/:id/test-due-date",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(loanIdParamSchema),
+  loanController.setLoanDueDateForTesting,
 );
 
 export default router;

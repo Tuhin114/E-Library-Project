@@ -38,3 +38,21 @@ export const payFee = async (id) => {
     );
   }
 };
+
+export const finalizeFee = async (id, payload) => {
+  try {
+    const { data } = await feeApi.finalizeFee(id, payload);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not finalize this fee. Please try again."));
+  }
+};
+
+export const waiveFee = async (id, payload) => {
+  try {
+    const { data } = await feeApi.waiveFee(id, payload);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not waive this fee. Please try again."));
+  }
+};

@@ -141,6 +141,15 @@ const bookSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    // M3 (Phase 7) — optional per-book override for what a damage/lost
+    // fee's amount is prefilled with. Falls back to
+    // LibrarySettings.defaultReplacementCost when unset, computed in
+    // feeService, not duplicated here.
+    replacementCost: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
   },
   { timestamps: true },
 );

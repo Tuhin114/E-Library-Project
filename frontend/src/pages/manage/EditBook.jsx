@@ -29,6 +29,7 @@ const toFormValues = (book) => ({
   edition: book.edition || "",
   publicationYear: book.publicationYear,
   numberOfPages: book.numberOfPages,
+  replacementCost: book.replacementCost ?? undefined,
   category: book.category?._id || "",
   authors: (book.authors || []).map((author) => author._id),
   publisher: book.publisher?._id || "",

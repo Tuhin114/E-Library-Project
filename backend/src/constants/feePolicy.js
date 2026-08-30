@@ -10,3 +10,8 @@ export const DAILY_LATE_FEE_RATE = 0.5;
 // handling (a genuinely different fee — replacement cost, not a per-day
 // rate) is out of scope for M4; see M6 in the milestone plan.
 export const MAX_LATE_FEE = 15;
+
+// M3 (Phase 7) — fallback used to prefill a damage/lost fee's amount
+// when the specific book has no Book.replacementCost of its own set.
+// Overridable per-library via LibrarySettings.defaultReplacementCost.
+export const DEFAULT_REPLACEMENT_COST = 25;

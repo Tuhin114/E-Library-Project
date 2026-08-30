@@ -67,6 +67,7 @@ const BookForm = ({
       edition: "",
       publicationYear: undefined,
       numberOfPages: undefined,
+      replacementCost: undefined,
       category: "",
       authors: [],
       publisher: "",
@@ -168,6 +169,23 @@ const BookForm = ({
           {errors.numberOfPages && (
             <p className="text-sm text-destructive">
               {errors.numberOfPages.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="replacementCost">Replacement Cost ($)</Label>
+          <Input
+            id="replacementCost"
+            type="number"
+            step="0.01"
+            placeholder="Falls back to library default if left blank"
+            error={!!errors.replacementCost}
+            {...register("replacementCost")}
+          />
+          {errors.replacementCost && (
+            <p className="text-sm text-destructive">
+              {errors.replacementCost.message}
             </p>
           )}
         </div>

@@ -22,6 +22,9 @@ export const bookSchema = z.object({
     .max(currentYear, 'Publication year cannot be in the future')
     .optional(),
   numberOfPages: z.coerce.number().int().min(1, 'Number of pages must be at least 1').optional(),
+  // M3 (Phase 7) — prefills a damage/lost fee's amount; falls back to
+  // the library's own default when left unset.
+  replacementCost: z.coerce.number().min(0, 'Must be 0 or more').max(5000).optional(),
   category: z.string({ required_error: 'Category is required' }).min(1, 'Category is required'),
   authors: z.array(z.string()).min(1, 'Select at least one author'),
   publisher: z.string({ required_error: 'Publisher is required' }).min(1, 'Publisher is required'),

@@ -262,21 +262,28 @@ const getStudentHistorySummary = async (studentId) => {
 // here, since M3 has no other loan-creation path) — this is the honest
 // limit of what M2/M3 can see, not an oversight.
 const attachReviewContext = async (request) => {
+  const bookId = request.book?._id;
+  const studentId = request.student?._id;
+
   const [overlapping, studentHistory] = await Promise.all([
-    findOverlappingRequests(
-      request.book._id,
-      request.requestedCollectionDate,
-      request.requestedReturnDate,
-      {
-        statuses: [REQUEST_STATUS.APPROVED, REQUEST_STATUS.COLLECTED],
-        excludeId: request._id,
-      },
-    ),
-    getStudentHistorySummary(request.student._id),
+    bookId
+      ? findOverlappingRequests(
+          bookId,
+          request.requestedCollectionDate,
+          request.requestedReturnDate,
+          {
+            statuses: [REQUEST_STATUS.APPROVED, REQUEST_STATUS.COLLECTED],
+            excludeId: request._id,
+          },
+        )
+      : [],
+
+    studentId ? getStudentHistorySummary(studentId) : null,
   ]);
 
   return {
     ...request,
+
     conflictContext: {
       overlappingApprovedCount: overlapping.length,
       overlappingApprovedRequests: overlapping.map((r) => ({
@@ -287,7 +294,15 @@ const attachReviewContext = async (request) => {
         requestedReturnDate: r.requestedReturnDate,
       })),
     },
-    studentHistory,
+
+    studentHistory: studentHistory || {
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      cancelled: 0,
+      collected: 0,
+      expired: 0,
+    },
   };
 };
 

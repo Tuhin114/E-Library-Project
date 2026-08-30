@@ -66,6 +66,18 @@ const loanSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    // M3 (Phase 7) — set by loanService.reportLoanLost(). A lost loan
+    // has returnedAt/returnCondition/returnProcessedBy left null — it
+    // was never returned, so those fields would be misleading if set.
+    lostReportedAt: {
+      type: Date,
+      default: null,
+    },
+    lostReportedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     // M2 (Phase 7) — renewal history. renewalCount drives the
     // maxRenewals check in loanService.renewLoan; renewalHistory is
     // kept purely as an audit trail (not read by any current business

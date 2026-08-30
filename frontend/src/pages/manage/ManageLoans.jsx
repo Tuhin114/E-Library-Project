@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BookOpen } from "lucide-react";
-import { fetchLoanQueue, returnLoan } from "../../store/slices/loansSlice";
+import { fetchLoanQueue, returnLoan, reportLoanLost } from "../../store/slices/loansSlice";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import {
@@ -19,6 +19,8 @@ const STATUS_OPTIONS = [
   { value: "active", label: "Active" },
   { value: "overdue", label: "Overdue" },
   { value: "returned", label: "Returned" },
+  // M3 (Phase 7)
+  { value: "lost", label: "Lost" },
 ];
 
 const paramsForStatus = (status) => {
@@ -73,6 +75,8 @@ const ManageLoans = () => {
               loan={loan}
               onReturn={(id, payload) => dispatch(returnLoan({ id, ...payload }))}
               isReturning={actionPendingId === loan._id}
+              onReportLost={(id, payload) => dispatch(reportLoanLost({ id, ...payload }))}
+              isReportingLost={actionPendingId === loan._id}
             />
           ))}
         </div>

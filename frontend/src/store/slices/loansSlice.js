@@ -46,9 +46,32 @@ export const returnLoan = createAsyncThunk(
       const result = await loanService.returnLoan(id, { condition, notes });
       if (result.fee) {
         toast.success(`Returned late — a $${result.fee.amount.toFixed(2)} fee was created`);
+      } else if (result.damageFee) {
+        // M3 (Phase 7) — a damage fee is created PENDING_REVIEW, not
+        // OUTSTANDING, so the toast can't state an amount yet the way
+        // the late-fee branch does — the librarian hasn't confirmed one.
+        toast.success("Returned damaged — a fee is pending review on the Fees page");
       } else {
         toast.success("Return recorded — returned on time");
       }
+      dispatch(fetchLoanQueue(getState().loans.lastQueueParams));
+      return result;
+    } catch (error) {
+      toast.error(error.message);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+// M3 (Phase 7) — closes out a loan as lost and generates a
+// PENDING_REVIEW replacement fee, same shape as returnLoan's own
+// damage-fee branch.
+export const reportLoanLost = createAsyncThunk(
+  "loans/reportLost",
+  async ({ id, notes }, { dispatch, getState, rejectWithValue }) => {
+    try {
+      const result = await loanService.reportLoanLost(id, { notes });
+      toast.success("Reported lost — a fee is pending review on the Fees page");
       dispatch(fetchLoanQueue(getState().loans.lastQueueParams));
       return result;
     } catch (error) {
@@ -124,6 +147,16 @@ const loansSlice = createSlice({
         state.actionPendingId = null;
       })
       .addCase(renewLoan.rejected, (state) => {
+        state.actionPendingId = null;
+      })
+
+      .addCase(reportLoanLost.pending, (state, action) => {
+        state.actionPendingId = action.meta.arg.id;
+      })
+      .addCase(reportLoanLost.fulfilled, (state) => {
+        state.actionPendingId = null;
+      })
+      .addCase(reportLoanLost.rejected, (state) => {
         state.actionPendingId = null;
       });
   },

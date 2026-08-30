@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { REQUEST_STATUS } from "../constants/requestStatus.js";
 import { LOAN_STATUS } from "../constants/loanStatus.js";
 import { COPY_STATUS, COPY_CONDITION } from "../constants/copyStatus.js";
+import { FEE_TYPE } from "../constants/feeType.js";
 import {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_TYPES,
@@ -50,6 +51,15 @@ export const collectRequest = async (requestId, copyId) => {
     throw new ApiError(
       409,
       `Cannot collect a request that is ${request.status}, not approved`,
+    );
+  }
+
+  const now = new Date();
+
+  if (now < request.requestedCollectionDate) {
+    throw new ApiError(
+      409,
+      "Cannot collect a request before its requested collection date",
     );
   }
 
@@ -132,13 +142,16 @@ const computeRenewalEligibility = (loan, { settings, booksWithWaitlist }) => {
       reason: "This loan is overdue — return or settle it before renewing.",
     };
   }
+  // Waitlist check ahead of maxRenewals — when both are true, "someone
+  // is waiting" is the more actionable/urgent reason to surface than
+  // "you've used your renewals up", and it's also the one the M2
+  // Postman regression suite asserts on for this exact overlap case.
   if (booksWithWaitlist.has(loan.book._id.toString())) {
     return {
       canRenew: false,
       reason: "Another reader is waiting for this book.",
     };
   }
-
   if (loan.renewalCount >= settings.maxRenewals) {
     return {
       canRenew: false,
@@ -233,9 +246,12 @@ export const getLoanById = async (loanId, requester) => {
 
 // M4 — the return step. A copy returned in "poor" condition doesn't go
 // straight back into circulation: it's flagged damaged so a librarian
-// has to look at it before anyone else can borrow it. Anything else
-// (new/good/fair) returns to available. A late fee is created here, and
-// only here — see feeService.createFeeForLateReturn.
+// has to look at it before anyone else can borrow it. A late fee is
+// created here if the return was overdue (see feeService.createFeeFor
+// LateReturn); M3 (Phase 7) adds a second, independent fee if the copy
+// came back damaged (see feeService.createFeeForDamageOrLoss) — a
+// single return can now produce both at once, since they're separate
+// charges for separate things.
 export const returnLoan = async (loanId, librarian, { condition, notes }) => {
   const loan = await Loan.findById(loanId);
   if (!loan) throw new ApiError(404, "Loan not found");
@@ -258,10 +274,10 @@ export const returnLoan = async (loanId, librarian, { condition, notes }) => {
   loan.returnProcessedBy = librarian._id;
   await loan.save();
 
-  const nextCopyStatus =
-    condition === COPY_CONDITION.POOR
-      ? COPY_STATUS.DAMAGED
-      : COPY_STATUS.AVAILABLE;
+  const isDamaged = condition === COPY_CONDITION.POOR;
+  const nextCopyStatus = isDamaged
+    ? COPY_STATUS.DAMAGED
+    : COPY_STATUS.AVAILABLE;
   await bookCopyService.updateCopy(loan.copy, {
     status: nextCopyStatus,
     condition,
@@ -277,6 +293,55 @@ export const returnLoan = async (loanId, librarian, { condition, notes }) => {
       daysLate,
     });
   }
+
+  let damageFee = null;
+  if (isDamaged) {
+    damageFee = await feeService.createFeeForDamageOrLoss({
+      loanId: loan._id,
+      studentId: loan.student,
+      bookId: loan.book,
+      type: FEE_TYPE.DAMAGE,
+    });
+  }
+
+  const populated = await loan.populate(LOAN_POPULATE);
+  return { loan: attachComputed(populated.toObject()), fee, damageFee };
+};
+
+// M3 (Phase 7) — a librarian declares an active loan's copy lost. Closes
+// out the loan (it was never returned, so RETURNED would be misleading;
+// LOST is its own terminal status), marks the copy LOST, and generates a
+// PENDING_REVIEW replacement-cost fee the same way a damaged return does
+// — the student isn't charged or notified until a librarian finalizes
+// it. Deliberately doesn't also compute a late fee even if the loan was
+// already overdue when reported lost — one fee for one book, kept
+// simple; flagged as a deliberate scope decision, not an oversight.
+export const reportLoanLost = async (loanId, librarian, { notes } = {}) => {
+  const loan = await Loan.findById(loanId);
+  if (!loan) throw new ApiError(404, "Loan not found");
+  if (loan.status !== LOAN_STATUS.ACTIVE) {
+    throw new ApiError(
+      409,
+      `Cannot report a loan lost that is already ${loan.status}`,
+    );
+  }
+
+  loan.status = LOAN_STATUS.LOST;
+  loan.lostReportedAt = new Date();
+  loan.lostReportedBy = librarian._id;
+  await loan.save();
+
+  await bookCopyService.updateCopy(loan.copy, {
+    status: COPY_STATUS.LOST,
+    ...(notes && { notes }),
+  });
+
+  const fee = await feeService.createFeeForDamageOrLoss({
+    loanId: loan._id,
+    studentId: loan.student,
+    bookId: loan.book,
+    type: FEE_TYPE.LOST,
+  });
 
   const populated = await loan.populate(LOAN_POPULATE);
   return { loan: attachComputed(populated.toObject()), fee };
@@ -313,8 +378,8 @@ export const renewLoan = async (loanId, requester) => {
 
   const settings = await librarySettingsService.getSettings();
 
+  // Same waitlist-before-maxRenewals priority as computeRenewalEligibility.
   const hasWaitlist = await waitlistService.hasActiveWaitlist(loan.book._id);
-
   if (hasWaitlist) {
     throw new ApiError(
       409,
@@ -351,4 +416,34 @@ export const renewLoan = async (loanId, requester) => {
   });
 
   return attachComputed(loan.toObject());
+};
+
+export const setLoanDueDateForTesting = async (loanId, dueDate) => {
+  if (process.env.NODE_ENV === "production") {
+    throw new ApiError(404, "Not found");
+  }
+
+  const loan = await Loan.findById(loanId);
+
+  if (!loan) {
+    throw new ApiError(404, "Loan not found");
+  }
+
+  if (loan.status !== LOAN_STATUS.ACTIVE) {
+    throw new ApiError(
+      409,
+      `Cannot modify due date for a loan that is ${loan.status}`,
+    );
+  }
+
+  const parsedDueDate = new Date(dueDate);
+
+  if (Number.isNaN(parsedDueDate.getTime())) {
+    throw new ApiError(422, "Invalid due date");
+  }
+
+  loan.dueDate = parsedDueDate;
+  await loan.save();
+
+  return loan;
 };

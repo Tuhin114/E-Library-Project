@@ -13,3 +13,6 @@ export const returnLoan = (loanId, payload) =>
   axiosInstance.patch(`/loans/${loanId}/return`, payload);
 
 export const renewLoan = (loanId) => axiosInstance.patch(`/loans/${loanId}/renew`);
+
+export const reportLoanLost = (loanId, payload = {}) =>
+  axiosInstance.patch(`/loans/${loanId}/report-lost`, payload);
