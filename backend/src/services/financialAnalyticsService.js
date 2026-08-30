@@ -3,6 +3,7 @@ import Book from "../models/Book.js";
 import User from "../models/User.js";
 import { serializeBook } from "../utils/sanitizeBook.js";
 import { FEE_STATUS, FEE_STATUS_VALUES, PAYMENT_METHOD_VALUES } from "../constants/feeStatus.js";
+import { FEE_TYPE_VALUES } from "../constants/feeType.js";
 
 const RANGE_TO_DAYS = { "7d": 7, "30d": 30, "90d": 90, all: null };
 const DEFAULT_RANGE = "30d";
@@ -47,6 +48,15 @@ const dailySums = async (Model, dateField, sumField, since, extraMatch = {}) => 
 // loanStatusBreakdown/copyStatusBreakdown — "how much is currently
 // outstanding" is a real-time operational figure, not a "how much became
 // outstanding in the last 30 days" one.
+// Follow-up (Phase 7 M3 shipped): FEE_STATUS gained `pending_review` and
+// `waived` after this was first written. feeCountByStatus/
+// feeAmountByStatus already zero-fill against FEE_STATUS_VALUES, so both
+// picked up the new buckets automatically. collectionRate deliberately
+// stays paid ÷ (paid + outstanding), excluding both new statuses on
+// purpose: a pending_review fee isn't a confirmed charge yet (nothing to
+// have "collected" against), and a waived fee was never going to be
+// collected by design — folding either in would understate a librarian's
+// actual collection performance on real, standing charges.
 const getFeeStatusBreakdown = async () => {
   const rows = await Fee.aggregate([
     { $group: { _id: "$status", count: { $sum: 1 }, amount: { $sum: "$amount" } } },
@@ -70,13 +80,27 @@ const getFeeStatusBreakdown = async () => {
   return { feeCountByStatus, feeAmountByStatus, collectionRate };
 };
 
+// Real-time, same reasoning as getFeeStatusBreakdown — "what's driving
+// the fees right now" is a snapshot question. Added once FEE_TYPE
+// (late/damage/lost) existed; a late-fee-only library would just show a
+// single bar here, which is a correct answer, not a broken one.
+const getFeeAmountByType = async () => {
+  const rows = await Fee.aggregate([
+    { $group: { _id: "$type", amount: { $sum: "$amount" } } },
+  ]);
+  const byType = Object.fromEntries(rows.map((row) => [row._id, row.amount]));
+  return FEE_TYPE_VALUES.map((type) => ({ label: type, count: round2(byType[type] || 0) }));
+};
+
 const getRevenueOverTime = (since) =>
   dailySums(Fee, "paidAt", "amount", since, { status: FEE_STATUS.PAID });
 
 // Lateness/amount at the moment a fee is generated — scoped to when the
 // fee was created (i.e. when the late return happened), not when it was
 // eventually paid, since a fee's daysLate/amount never changes after
-// creation (see feeService.createFeeForLateReturn).
+// creation (see feeService.createFeeForLateReturn). daysLate is null on
+// damage/lost fees; $avg silently ignores nulls, so this already
+// averages only over late fees without needing a $match on type.
 const getAvgDaysLate = async (since) => {
   const [result] = await Fee.aggregate([
     { $match: dateMatch("createdAt", since) },
@@ -191,6 +215,7 @@ export const getFinancialAnalytics = async ({
 
   const [
     { feeCountByStatus, feeAmountByStatus, collectionRate },
+    feeAmountByType,
     revenueOverTime,
     avgDaysLate,
     avgFeeAmount,
@@ -199,6 +224,7 @@ export const getFinancialAnalytics = async ({
     topFeePayers,
   ] = await Promise.all([
     getFeeStatusBreakdown(),
+    getFeeAmountByType(),
     getRevenueOverTime(since),
     getAvgDaysLate(since),
     getAvgFeeAmount(since),
@@ -212,6 +238,7 @@ export const getFinancialAnalytics = async ({
     since,
     feeCountByStatus,
     feeAmountByStatus,
+    feeAmountByType,
     collectionRate,
     revenueOverTime,
     avgDaysLate,

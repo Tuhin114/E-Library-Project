@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { DollarSign, PercentCircle, CalendarClock, Receipt } from "lucide-react";
+import { DollarSign, PercentCircle, CalendarClock, Receipt, Hourglass } from "lucide-react";
 import { fetchFinancialAnalytics } from "@/store/slices/analyticsSlice";
 import { exportFinancialAnalytics } from "@/services/analyticsService";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,9 +53,13 @@ const FinancialAnalyticsSection = ({ renderRangeControl }) => {
     <>
       {renderRangeControl?.(rangeControl)}
 
-      {/* Collection rate is deliberately real-time (not range-scoped) —
-          see financialAnalyticsService.getFeeStatusBreakdown. */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* Collection rate and pending-review count are deliberately
+          real-time (not range-scoped) — see
+          financialAnalyticsService.getFeeStatusBreakdown. Pending
+          review only exists once Phase 7 M3's damage/lost fee flow has
+          shipped; it simply reads 0 until a librarian marks a copy
+          damaged or lost at return. */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
@@ -68,6 +72,20 @@ const FinancialAnalyticsSection = ({ renderRangeControl }) => {
                 )}
               </p>
               <p className="text-xs text-muted-foreground">Outstanding now</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-foreground">
+              <Hourglass className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="font-display text-lg font-bold leading-tight text-foreground">
+                {financial?.feeCountByStatus?.find((r) => r.label === "pending_review")?.count ?? "—"}
+              </p>
+              <p className="text-xs text-muted-foreground">Pending review</p>
             </div>
           </CardContent>
         </Card>
@@ -158,6 +176,26 @@ const FinancialAnalyticsSection = ({ renderRangeControl }) => {
         <Card className="p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">
+              Fees by Type
+            </h2>
+            <ExportButton
+              exportFn={exportFinancialAnalytics}
+              dataset="feeAmountByType"
+              params={{ range }}
+              label="Fees by Type"
+            />
+          </div>
+          <LabeledBarList
+            rows={financial?.feeAmountByType}
+            isLoading={isLoading}
+            emptyText="No fees have been charged yet."
+            formatValue={formatCurrencyValue}
+          />
+        </Card>
+
+        <Card className="p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">
               Payment Method Split
             </h2>
             <ExportButton
@@ -175,7 +213,9 @@ const FinancialAnalyticsSection = ({ renderRangeControl }) => {
             formatValue={formatCurrencyValue}
           />
         </Card>
+      </div>
 
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">
@@ -196,26 +236,26 @@ const FinancialAnalyticsSection = ({ renderRangeControl }) => {
             metricSuffix="in fees"
           />
         </Card>
-      </div>
 
-      <Card className="p-4">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">
-            Top Fee-Generating Students
-          </h2>
-          <ExportButton
-            exportFn={exportFinancialAnalytics}
-            dataset="topFeePayers"
-            params={{ range }}
-            label="Top Fee-Generating Students"
+        <Card className="p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">
+              Top Fee-Generating Students
+            </h2>
+            <ExportButton
+              exportFn={exportFinancialAnalytics}
+              dataset="topFeePayers"
+              params={{ range }}
+              label="Top Fee-Generating Students"
+            />
+          </div>
+          <TopFeePayersList
+            payers={financial?.topFeePayers}
+            isLoading={isLoading}
+            emptyText="No fees charged to a student in this period."
           />
-        </div>
-        <TopFeePayersList
-          payers={financial?.topFeePayers}
-          isLoading={isLoading}
-          emptyText="No fees charged to a student in this period."
-        />
-      </Card>
+        </Card>
+      </div>
     </>
   );
 };

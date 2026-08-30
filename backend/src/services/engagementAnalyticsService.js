@@ -6,6 +6,11 @@ import ForumThread from "../models/ForumThread.js";
 import ForumReply from "../models/ForumReply.js";
 import RecentlyViewed from "../models/RecentlyViewed.js";
 import ReadingProgress from "../models/ReadingProgress.js";
+import Loan from "../models/Loan.js";
+import Fee from "../models/Fee.js";
+import { LOAN_STATUS } from "../constants/loanStatus.js";
+import { FEE_STATUS } from "../constants/feeStatus.js";
+import { ROLES } from "../constants/roles.js";
 
 const RANGE_TO_DAYS = { "7d": 7, "30d": 30, "90d": 90, all: null };
 const DEFAULT_RANGE = "30d";
@@ -179,6 +184,165 @@ const getTopContributors = async (since, limit) => {
     .filter(Boolean);
 };
 
+// Phase 8 M3 — Borrower & Risk Analytics. Reads Loan/Fee, which nothing
+// in this file touched before now; kept in the *engagement* service
+// rather than a new one on purpose — "who's actually using the
+// library" is what this file already answers for community activity,
+// and borrowing is the same question for circulation. A librarian
+// reading "Engagement" shouldn't have to also check a separate
+// "Circulation" tab to find out who their most active students are.
+
+// Top N students by loans collected in the window, each with their own
+// on-time-return rate — the ranked list a librarian actually needs when
+// deciding who to trust with a longer loan or an auto-approval.
+// onTimeReturnRate is null (not 0) when a borrower has no *returned*
+// loans yet in range, since "0% on time" and "no data yet" are
+// different facts a librarian shouldn't confuse.
+const getTopBorrowers = async (since, limit) => {
+  const rows = await Loan.aggregate([
+    { $match: dateMatch("collectedAt", since) },
+    {
+      $group: {
+        _id: "$student",
+        loanCount: { $sum: 1 },
+        returnedCount: {
+          $sum: { $cond: [{ $eq: ["$status", LOAN_STATUS.RETURNED] }, 1, 0] },
+        },
+        onTimeCount: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $eq: ["$status", LOAN_STATUS.RETURNED] },
+                  { $lte: ["$returnedAt", "$dueDate"] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+      },
+    },
+    { $sort: { loanCount: -1 } },
+    { $limit: limit },
+  ]);
+
+  if (rows.length === 0) return [];
+
+  const users = await User.find({ _id: { $in: rows.map((row) => row._id) } })
+    .select(CONTRIBUTOR_SELECT)
+    .lean();
+  const usersById = new Map(users.map((user) => [user._id.toString(), user]));
+
+  return rows
+    .map((row) => {
+      const user = usersById.get(row._id.toString());
+      if (!user) return null; // account deleted since the loan was recorded
+      return {
+        user: { _id: user._id, name: user.name, avatar: user.avatar, role: user.role },
+        loanCount: row.loanCount,
+        onTimeReturnRate:
+          row.returnedCount > 0 ? Math.round((row.onTimeCount / row.returnedCount) * 100) : null,
+      };
+    })
+    .filter(Boolean);
+};
+
+// Library-wide on-time-return rate, scoped to returns that happened in
+// the window (not to when the loan was collected — a loan collected
+// before the range but returned within it is what "recent return
+// behavior" means). Deliberately a single number rather than a
+// per-student figure: getTopBorrowers already gives the per-student
+// breakdown for the students who matter most; duplicating it here for
+// every borrower would just be the same data restated.
+const getOnTimeReturnRate = async (since) => {
+  const [result] = await Loan.aggregate([
+    { $match: { status: LOAN_STATUS.RETURNED, ...dateMatch("returnedAt", since) } },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        onTime: { $sum: { $cond: [{ $lte: ["$returnedAt", "$dueDate"] }, 1, 0] } },
+      },
+    },
+  ]);
+  return result ? Math.round((result.onTime / result.total) * 100) : null;
+};
+
+// Deliberately real-time, not range-scoped — same reasoning as every
+// other "right now" figure in this analytics suite (circulationAnalyticsService's
+// loanStatusBreakdown, financialAnalyticsService's feeCountByStatus):
+// "who currently owes money" is a snapshot a librarian needs as of this
+// moment, not "who generated a fee in the last 30 days." Scoped to
+// OUTSTANDING only — same definition M2's collectionRate uses — since a
+// PENDING_REVIEW fee isn't a confirmed charge yet and a WAIVED one was
+// deliberately forgiven; neither represents money actually owed.
+const getAtRiskStudents = async (limit) => {
+  const rows = await Fee.aggregate([
+    { $match: { status: FEE_STATUS.OUTSTANDING } },
+    {
+      $group: {
+        _id: "$student",
+        outstandingAmount: { $sum: "$amount" },
+        outstandingFeeCount: { $sum: 1 },
+      },
+    },
+    { $sort: { outstandingAmount: -1 } },
+    { $limit: limit },
+  ]);
+
+  if (rows.length === 0) return [];
+
+  const users = await User.find({ _id: { $in: rows.map((row) => row._id) } })
+    .select(CONTRIBUTOR_SELECT)
+    .lean();
+  const usersById = new Map(users.map((user) => [user._id.toString(), user]));
+
+  return rows
+    .map((row) => {
+      const user = usersById.get(row._id.toString());
+      if (!user) return null; // account deleted since the fee was recorded
+      return {
+        user: { _id: user._id, name: user.name, avatar: user.avatar, role: user.role },
+        outstandingAmount: Math.round(row.outstandingAmount * 100) / 100,
+        outstandingFeeCount: row.outstandingFeeCount,
+      };
+    })
+    .filter(Boolean);
+};
+
+// Histogram of "how many loans did each borrower collect in this
+// window" — 0 / 1-2 / 3-5 / 6+. The 0 bucket is everyone eligible to
+// borrow (student or faculty — librarians don't borrow against their
+// own catalog) who collected nothing in-range, computed as
+// totalBorrowerEligible minus the distinct set who show up in the loan
+// aggregation at all.
+const getBorrowingFrequencyDistribution = async (since) => {
+  const [rows, totalBorrowerEligible] = await Promise.all([
+    Loan.aggregate([
+      { $match: dateMatch("collectedAt", since) },
+      { $group: { _id: "$student", loanCount: { $sum: 1 } } },
+    ]),
+    User.countDocuments({ role: { $ne: ROLES.LIBRARIAN } }),
+  ]);
+
+  const buckets = { "0": 0, "1-2": 0, "3-5": 0, "6+": 0 };
+  for (const row of rows) {
+    if (row.loanCount <= 2) buckets["1-2"] += 1;
+    else if (row.loanCount <= 5) buckets["3-5"] += 1;
+    else buckets["6+"] += 1;
+  }
+  buckets["0"] = Math.max(totalBorrowerEligible - rows.length, 0);
+
+  return [
+    { label: "0", count: buckets["0"] },
+    { label: "1-2", count: buckets["1-2"] },
+    { label: "3-5", count: buckets["3-5"] },
+    { label: "6+", count: buckets["6+"] },
+  ];
+};
+
 export const getEngagementAnalytics = async ({
   range = DEFAULT_RANGE,
   limit = DEFAULT_TOP_N,
@@ -192,6 +356,10 @@ export const getEngagementAnalytics = async ({
     reviewsOverTime,
     communityPostsOverTime,
     topContributors,
+    topBorrowers,
+    onTimeReturnRate,
+    atRiskStudents,
+    borrowingFrequencyDistribution,
   ] = await Promise.all([
     User.countDocuments({}),
     getActiveUserCount(since),
@@ -199,6 +367,10 @@ export const getEngagementAnalytics = async ({
     getReviewsOverTime(since),
     getCommunityPostsOverTime(since),
     getTopContributors(since, limit),
+    getTopBorrowers(since, limit),
+    getOnTimeReturnRate(since),
+    getAtRiskStudents(limit),
+    getBorrowingFrequencyDistribution(since),
   ]);
 
   return {
@@ -210,5 +382,9 @@ export const getEngagementAnalytics = async ({
     reviewsOverTime,
     communityPostsOverTime,
     topContributors,
+    topBorrowers,
+    onTimeReturnRate,
+    atRiskStudents,
+    borrowingFrequencyDistribution,
   };
 };

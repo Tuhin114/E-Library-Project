@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Users, UserCheck, Trophy } from "lucide-react";
+import { Users, UserCheck, Trophy, BadgeCheck, BookMarked, AlertOctagon } from "lucide-react";
 import { fetchEngagementAnalytics } from "@/store/slices/analyticsSlice";
 import { exportEngagementAnalytics } from "@/services/analyticsService";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import TimeSeriesChart from "@/components/analytics/TimeSeriesChart";
 import TopContributorsList from "@/components/analytics/TopContributorsList";
+import TopBorrowersList from "@/components/analytics/TopBorrowersList";
+import TopFeePayersList from "@/components/analytics/TopFeePayersList";
+import LabeledBarList from "@/components/analytics/LabeledBarList";
 import ExportButton from "@/components/analytics/ExportButton";
 
 const RANGE_OPTIONS = [
@@ -53,7 +56,7 @@ const EngagementAnalyticsSection = ({ renderRangeControl }) => {
     <>
       {renderRangeControl?.(rangeControl)}
 
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-foreground">
@@ -83,6 +86,23 @@ const EngagementAnalyticsSection = ({ renderRangeControl }) => {
                   (viewed or read a book — not a login count)
                 </span>
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Phase 8 M3 — library-wide on-time-return rate. Scoped to
+            returns in this period; see
+            engagementAnalyticsService.getOnTimeReturnRate. */}
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-foreground">
+              <BadgeCheck className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <p className="font-display text-lg font-bold leading-tight text-foreground">
+                {engagement?.onTimeReturnRate != null ? `${engagement.onTimeReturnRate}%` : "—"}
+              </p>
+              <p className="text-xs text-muted-foreground">On-time return rate</p>
             </div>
           </CardContent>
         </Card>
@@ -158,6 +178,90 @@ const EngagementAnalyticsSection = ({ renderRangeControl }) => {
           contributors={engagement?.topContributors}
           isLoading={isLoading}
           emptyText="No reviews, discussions, or forum posts in this period."
+        />
+      </Card>
+
+      {/* Phase 8 M3 — Borrower & Risk Analytics. Lives in this section
+          rather than a separate tab: "who's actually using the library"
+          is the same question this file already answers for community
+          activity, just asked about circulation instead. */}
+      <div className="mb-6 mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card className="p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <BookMarked className="h-4 w-4 text-primary" />
+              <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">
+                Top Borrowers
+              </h2>
+            </div>
+            <ExportButton
+              exportFn={exportEngagementAnalytics}
+              dataset="topBorrowers"
+              params={{ range }}
+              label="Top Borrowers"
+            />
+          </div>
+          <TopBorrowersList
+            borrowers={engagement?.topBorrowers}
+            isLoading={isLoading}
+            emptyText="No loans collected in this period."
+          />
+        </Card>
+
+        <Card className="p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <AlertOctagon className="h-4 w-4 text-destructive" />
+              <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">
+                At-Risk Students
+              </h2>
+            </div>
+            <ExportButton
+              exportFn={exportEngagementAnalytics}
+              dataset="atRiskStudents"
+              params={{ range }}
+              label="At-Risk Students"
+            />
+          </div>
+          {/* Reuses TopFeePayersList as-is: an at-risk entry's fees are
+              all outstanding by definition (see
+              engagementAnalyticsService.getAtRiskStudents), so mapping
+              outstandingAmount into both totalAmount and
+              outstandingAmount is accurate, not a hack — the component's
+              existing "outstanding" highlight fits this list natively. */}
+          <TopFeePayersList
+            payers={engagement?.atRiskStudents?.map((entry) => ({
+              user: entry.user,
+              totalAmount: entry.outstandingAmount,
+              outstandingAmount: entry.outstandingAmount,
+              feeCount: entry.outstandingFeeCount,
+            }))}
+            isLoading={isLoading}
+            emptyText="No students currently have an outstanding fee."
+          />
+        </Card>
+      </div>
+
+      <Card className="p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <BookMarked className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">
+              Borrowing Frequency
+            </h2>
+          </div>
+          <ExportButton
+            exportFn={exportEngagementAnalytics}
+            dataset="borrowingFrequencyDistribution"
+            params={{ range }}
+            label="Borrowing Frequency"
+          />
+        </div>
+        <LabeledBarList
+          rows={engagement?.borrowingFrequencyDistribution}
+          isLoading={isLoading}
+          emptyText="No borrowing-eligible accounts yet."
+          formatLabel={(row) => `${row.label} loans`}
         />
       </Card>
     </>

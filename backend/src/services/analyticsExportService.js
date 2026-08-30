@@ -62,6 +62,40 @@ const mapContributorRow = (entry) => ({
   ...entry.breakdown,
 });
 
+// Phase 8 M3 — top borrowers by loan count, with each student's own
+// on-time-return rate alongside.
+const BORROWER_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "role", label: "Role" },
+  { key: "loanCount", label: "Loan Count" },
+  { key: "onTimeReturnRate", label: "On-Time Return Rate (%)" },
+];
+
+const mapBorrowerRow = (entry) => ({
+  name: entry.user.name,
+  role: entry.user.role,
+  loanCount: entry.loanCount,
+  onTimeReturnRate: entry.onTimeReturnRate ?? "",
+});
+
+// Phase 8 M3 — at-risk students (outstanding fees). Deliberately
+// missing a "totalAmount" column PAYER_COLUMNS has — this dataset is
+// scoped to OUTSTANDING only (see engagementAnalyticsService.getAtRiskStudents),
+// so "outstanding" and "total" would be the same number here.
+const RISK_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "role", label: "Role" },
+  { key: "outstandingAmount", label: "Outstanding Amount" },
+  { key: "outstandingFeeCount", label: "Outstanding Fee Count" },
+];
+
+const mapRiskRow = (entry) => ({
+  name: entry.user.name,
+  role: entry.user.role,
+  outstandingAmount: entry.outstandingAmount,
+  outstandingFeeCount: entry.outstandingFeeCount,
+});
+
 // Mirrors CONTRIBUTOR_COLUMNS' shape but for fee amounts instead of a
 // contribution-type breakdown — kept as its own column set rather than
 // reused since the underlying fields (totalAmount/outstandingAmount/
@@ -96,6 +130,14 @@ const STATUS_COLUMNS = [
   { key: "count", label: "Count" },
 ];
 
+// Phase 8 M3 — borrowingFrequencyDistribution buckets, same { label,
+// count } shape, "Loans" header since the label here is a range like
+// "3-5", not a status.
+const FREQUENCY_COLUMNS = [
+  { key: "label", label: "Loans" },
+  { key: "count", label: "Students" },
+];
+
 // feeAmountByStatus and paymentMethodSplit are also { label, count }
 // pairs, but `count` there is a dollar sum, not a document count — a
 // separate header set so the CSV column name doesn't lie about what's
@@ -107,6 +149,13 @@ const AMOUNT_STATUS_COLUMNS = [
 
 const METHOD_COLUMNS = [
   { key: "label", label: "Method" },
+  { key: "count", label: "Amount" },
+];
+
+// Phase 8 M2 follow-up (Phase 7 M3's FEE_TYPE) — same { label, count }
+// shape, own header since "late"/"damage"/"lost" isn't a status either.
+const TYPE_COLUMNS = [
+  { key: "label", label: "Type" },
   { key: "count", label: "Amount" },
 ];
 
@@ -140,11 +189,17 @@ const CATALOG_DATASETS = {
   },
 };
 
+// topBorrowers/atRiskStudents/borrowingFrequencyDistribution are Phase 8
+// M3 additions. onTimeReturnRate isn't listed — single number, not an
+// array, same reason totalUsers/activeUserCount aren't exportable.
 const ENGAGEMENT_DATASETS = {
   signupsOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
   reviewsOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
   communityPostsOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
   topContributors: { columns: CONTRIBUTOR_COLUMNS, mapRow: mapContributorRow },
+  topBorrowers: { columns: BORROWER_COLUMNS, mapRow: mapBorrowerRow },
+  atRiskStudents: { columns: RISK_COLUMNS, mapRow: mapRiskRow },
+  borrowingFrequencyDistribution: { columns: FREQUENCY_COLUMNS, mapRow: (row) => row },
 };
 
 const MODERATION_DATASETS = {
@@ -174,6 +229,7 @@ const CIRCULATION_DATASETS = {
 const FINANCIAL_DATASETS = {
   feeCountByStatus: { columns: STATUS_COLUMNS, mapRow: (row) => row },
   feeAmountByStatus: { columns: AMOUNT_STATUS_COLUMNS, mapRow: (row) => row },
+  feeAmountByType: { columns: TYPE_COLUMNS, mapRow: (row) => row },
   revenueOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
   paymentMethodSplit: { columns: METHOD_COLUMNS, mapRow: (row) => row },
   topFeeGeneratingBooks: { columns: BOOK_METRIC_COLUMNS, mapRow: mapBookRow },

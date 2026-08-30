@@ -118,20 +118,26 @@ const getAvgLoanDurationDays = async (since) => {
 
 // Deliberately NOT range-scoped — "how many loans are overdue right
 // now" is a real-time operational figure, same as loanService's
-// overdueOnly dashboard filter. Applying a date range here would answer
-// a different, less useful question ("how many became overdue in the
-// last 30 days").
+// overdueOnly dashboard filter. Applying a date range to it would
+// answer a different, less useful question ("how many became overdue in
+// the last 30 days").
+// Follow-up (Phase 7 M3 shipped): LOAN_STATUS gained `lost`
+// (loanService.reportLoanLost) after this was first written — added as
+// its own bucket rather than folded into `returned`, since a lost loan
+// was never returned.
 const getLoanStatusBreakdown = async () => {
   const now = new Date();
-  const [active, overdue, returned] = await Promise.all([
+  const [active, overdue, returned, lost] = await Promise.all([
     Loan.countDocuments({ status: LOAN_STATUS.ACTIVE, dueDate: { $gte: now } }),
     Loan.countDocuments({ status: LOAN_STATUS.ACTIVE, dueDate: { $lt: now } }),
     Loan.countDocuments({ status: LOAN_STATUS.RETURNED }),
+    Loan.countDocuments({ status: LOAN_STATUS.LOST }),
   ]);
   return [
     { label: "active", count: active },
     { label: "overdue", count: overdue },
     { label: "returned", count: returned },
+    { label: "lost", count: lost },
   ];
 };
 
