@@ -37,6 +37,7 @@ import CatalogAnalytics from "../pages/analytics/CatalogAnalytics";
 import EngagementAnalytics from "../pages/analytics/EngagementAnalytics";
 import ModerationAnalytics from "../pages/analytics/ModerationAnalytics";
 import Circulation from "../pages/analytics/Circulation";
+import Financial from "../pages/analytics/Financial";
 import AnalyticsDashboard from "../pages/analytics/AnalyticsDashboard";
 import MyRequests from "../pages/requests/MyRequests";
 import ManageRequests from "../pages/manage/ManageRequests";
@@ -183,6 +184,7 @@ export default function AppRoutes() {
             <Route path="/analytics/engagement" element={<EngagementAnalytics />} />
             <Route path="/analytics/moderation" element={<ModerationAnalytics />} />
             <Route path="/analytics/circulation" element={<Circulation />} />
+            <Route path="/analytics/financial" element={<Financial />} />
             <Route path="/manage/requests" element={<ManageRequests />} />
             <Route path="/manage/loans" element={<ManageLoans />} />
             <Route path="/manage/fees" element={<ManageFees />} />

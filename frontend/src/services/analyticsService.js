@@ -45,6 +45,17 @@ export const getCirculationAnalytics = async (params = {}) => {
   }
 };
 
+export const getFinancialAnalytics = async (params = {}) => {
+  try {
+    const { data } = await analyticsApi.fetchFinancialAnalytics(params);
+    return data.data;
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not load financial analytics."),
+    );
+  }
+};
+
 export const exportCatalogAnalytics = async (dataset, params = {}) => {
   try {
     const response = await analyticsApi.exportCatalogAnalytics(dataset, params);
@@ -130,6 +141,29 @@ export const exportCirculationAnalytics = async (dataset, params = {}) => {
   } catch (error) {
     throw new Error(
       getErrorMessage(error, "Could not export circulation analytics."),
+    );
+  }
+};
+
+export const exportFinancialAnalytics = async (dataset, params = {}) => {
+  try {
+    const response = await analyticsApi.exportFinancialAnalytics(
+      dataset,
+      params,
+    );
+
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ||
+      `financial-${dataset}.csv`;
+
+    return {
+      blob: response.data,
+      filename,
+    };
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not export financial analytics."),
     );
   }
 };

@@ -2,6 +2,7 @@ import * as catalogAnalyticsService from "../services/catalogAnalyticsService.js
 import * as engagementAnalyticsService from "../services/engagementAnalyticsService.js";
 import * as moderationAnalyticsService from "../services/moderationAnalyticsService.js";
 import * as circulationAnalyticsService from "../services/circulationAnalyticsService.js";
+import * as financialAnalyticsService from "../services/financialAnalyticsService.js";
 import * as analyticsExportService from "../services/analyticsExportService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -32,6 +33,13 @@ export const getCirculationAnalytics = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, "Circulation analytics fetched successfully", analytics));
+});
+
+export const getFinancialAnalytics = asyncHandler(async (req, res) => {
+  const analytics = await financialAnalyticsService.getFinancialAnalytics(req.query);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Financial analytics fetched successfully", analytics));
 });
 
 // CSV export handlers send raw text, not the ApiResponse{success,message,data}
@@ -66,5 +74,11 @@ export const exportModerationAnalytics = asyncHandler(async (req, res) => {
 export const exportCirculationAnalytics = asyncHandler(async (req, res) => {
   const { dataset, ...query } = req.query;
   const result = await analyticsExportService.buildCirculationExport(dataset, query);
+  sendCsv(res, result);
+});
+
+export const exportFinancialAnalytics = asyncHandler(async (req, res) => {
+  const { dataset, ...query } = req.query;
+  const result = await analyticsExportService.buildFinancialExport(dataset, query);
   sendCsv(res, result);
 });

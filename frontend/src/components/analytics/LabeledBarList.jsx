@@ -7,7 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
  * component doesn't quite fit. Kept the same visual language (hand-rolled
  * bars, no charting library) rather than introducing a third pattern.
  */
-const LabeledBarList = ({ rows, isLoading, emptyText, formatLabel = (row) => row.label }) => {
+const LabeledBarList = ({
+  rows,
+  isLoading,
+  emptyText,
+  formatLabel = (row) => row.label,
+  formatValue = (row) => row.count,
+}) => {
   if (isLoading) {
     return (
       <div className="space-y-2.5">
@@ -43,8 +49,8 @@ const LabeledBarList = ({ rows, isLoading, emptyText, formatLabel = (row) => row
                 style={{ width: `${widthPct}%` }}
               />
             </div>
-            <span className="w-8 shrink-0 text-right font-display text-xs font-bold text-foreground">
-              {row.count}
+            <span className="w-14 shrink-0 text-right font-display text-xs font-bold text-foreground">
+              {formatValue(row)}
             </span>
           </div>
         );

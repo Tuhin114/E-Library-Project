@@ -2,6 +2,7 @@ import * as catalogAnalyticsService from "./catalogAnalyticsService.js";
 import * as engagementAnalyticsService from "./engagementAnalyticsService.js";
 import * as moderationAnalyticsService from "./moderationAnalyticsService.js";
 import * as circulationAnalyticsService from "./circulationAnalyticsService.js";
+import * as financialAnalyticsService from "./financialAnalyticsService.js";
 import { toCsv } from "../utils/toCsv.js";
 import { ApiError } from "../utils/ApiError.js";
 
@@ -61,6 +62,26 @@ const mapContributorRow = (entry) => ({
   ...entry.breakdown,
 });
 
+// Mirrors CONTRIBUTOR_COLUMNS' shape but for fee amounts instead of a
+// contribution-type breakdown — kept as its own column set rather than
+// reused since the underlying fields (totalAmount/outstandingAmount/
+// feeCount vs a per-type breakdown) don't overlap.
+const PAYER_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "role", label: "Role" },
+  { key: "totalAmount", label: "Total Amount" },
+  { key: "outstandingAmount", label: "Outstanding Amount" },
+  { key: "feeCount", label: "Fee Count" },
+];
+
+const mapPayerRow = (entry) => ({
+  name: entry.user.name,
+  role: entry.user.role,
+  totalAmount: entry.totalAmount,
+  outstandingAmount: entry.outstandingAmount,
+  feeCount: entry.feeCount,
+});
+
 const REASON_COLUMNS = [
   { key: "reason", label: "Reason" },
   { key: "count", label: "Count" },
@@ -73,6 +94,20 @@ const REASON_COLUMNS = [
 const STATUS_COLUMNS = [
   { key: "label", label: "Status" },
   { key: "count", label: "Count" },
+];
+
+// feeAmountByStatus and paymentMethodSplit are also { label, count }
+// pairs, but `count` there is a dollar sum, not a document count — a
+// separate header set so the CSV column name doesn't lie about what's
+// in it.
+const AMOUNT_STATUS_COLUMNS = [
+  { key: "label", label: "Status" },
+  { key: "count", label: "Amount" },
+];
+
+const METHOD_COLUMNS = [
+  { key: "label", label: "Method" },
+  { key: "count", label: "Amount" },
 ];
 
 /**
@@ -133,6 +168,18 @@ const CIRCULATION_DATASETS = {
   inventoryUtilization: { columns: BOOK_METRIC_COLUMNS, mapRow: mapBookRow },
 };
 
+// collectionRate/avgDaysLate/avgFeeAmount aren't listed — single
+// numbers, not arrays, same reason engagement's totalUsers and
+// circulation's approvalMix aren't exportable either.
+const FINANCIAL_DATASETS = {
+  feeCountByStatus: { columns: STATUS_COLUMNS, mapRow: (row) => row },
+  feeAmountByStatus: { columns: AMOUNT_STATUS_COLUMNS, mapRow: (row) => row },
+  revenueOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
+  paymentMethodSplit: { columns: METHOD_COLUMNS, mapRow: (row) => row },
+  topFeeGeneratingBooks: { columns: BOOK_METRIC_COLUMNS, mapRow: mapBookRow },
+  topFeePayers: { columns: PAYER_COLUMNS, mapRow: mapPayerRow },
+};
+
 const buildExport = async ({ getAnalytics, datasetMap, dataset, query, filenamePrefix }) => {
   const config = datasetMap[dataset];
   if (!config) {
@@ -189,7 +236,17 @@ export const buildCirculationExport = (dataset, query) =>
     filenamePrefix: "circulation-analytics",
   });
 
+export const buildFinancialExport = (dataset, query) =>
+  buildExport({
+    getAnalytics: financialAnalyticsService.getFinancialAnalytics,
+    datasetMap: FINANCIAL_DATASETS,
+    dataset,
+    query,
+    filenamePrefix: "financial-analytics",
+  });
+
 export const CATALOG_EXPORT_DATASETS = Object.keys(CATALOG_DATASETS);
 export const ENGAGEMENT_EXPORT_DATASETS = Object.keys(ENGAGEMENT_DATASETS);
 export const MODERATION_EXPORT_DATASETS = Object.keys(MODERATION_DATASETS);
 export const CIRCULATION_EXPORT_DATASETS = Object.keys(CIRCULATION_DATASETS);
+export const FINANCIAL_EXPORT_DATASETS = Object.keys(FINANCIAL_DATASETS);

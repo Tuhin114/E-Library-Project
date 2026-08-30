@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  * exactly this ("12 favorites" under the title) but a full cover-grid
  * card is more real estate than a top-10 ranked list needs.
  */
-const AnalyticsBookList = ({ books, isLoading, emptyText, metricSuffix }) => {
+const AnalyticsBookList = ({ books, isLoading, emptyText, metricPrefix, metricSuffix }) => {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -61,6 +61,7 @@ const AnalyticsBookList = ({ books, isLoading, emptyText, metricSuffix }) => {
             </div>
 
             <span className="shrink-0 whitespace-nowrap font-display text-sm font-bold text-foreground">
+              {metricPrefix}
               {typeof book.metricValue === "number" && !Number.isInteger(book.metricValue)
                 ? book.metricValue.toFixed(1)
                 : book.metricValue}

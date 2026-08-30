@@ -14,6 +14,9 @@ export const fetchModerationAnalytics = (params = {}) =>
 export const fetchCirculationAnalytics = (params = {}) =>
   axiosInstance.get(`${BASE_URL}/circulation`, { params });
 
+export const fetchFinancialAnalytics = (params = {}) =>
+  axiosInstance.get(`${BASE_URL}/financial`, { params });
+
 export const exportCatalogAnalytics = (dataset, params = {}) =>
   axiosInstance.get(`${BASE_URL}/catalog/export`, {
     params: { dataset, ...params },
@@ -34,6 +37,12 @@ export const exportModerationAnalytics = (dataset, params = {}) =>
 
 export const exportCirculationAnalytics = (dataset, params = {}) =>
   axiosInstance.get(`${BASE_URL}/circulation/export`, {
+    params: { dataset, ...params },
+    responseType: "blob",
+  });
+
+export const exportFinancialAnalytics = (dataset, params = {}) =>
+  axiosInstance.get(`${BASE_URL}/financial/export`, {
     params: { dataset, ...params },
     responseType: "blob",
   });
