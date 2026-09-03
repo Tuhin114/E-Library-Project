@@ -29,6 +29,7 @@ import feeRoutes from "./routes/feeRoutes.js";
 import librarySettingsRoutes from "./routes/librarySettingsRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import waitlistRoutes from "./routes/waitlistRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 const app = express();
 
@@ -43,6 +44,12 @@ app.use(helmet());
 
 // Cross-origin resource sharing
 app.use(cors(corsOptions));
+
+// Phase 9 M2 — Razorpay's webhook signature is an HMAC over the exact
+// raw bytes it sent, so this route needs the unparsed body. Mounted
+// ahead of the global express.json() below, scoped to this one path
+// only, so every other route still gets a normally-parsed JSON body.
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 
 // Body & cookie parsing
 app.use(express.json());
@@ -97,6 +104,7 @@ app.use("/api/fees", feeRoutes);
 app.use("/api/settings", librarySettingsRoutes);
 app.use("/api/me", notificationRoutes);
 app.use("/api/waitlist", waitlistRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // 404 handler
 app.use((req, res) => {

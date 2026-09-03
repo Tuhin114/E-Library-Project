@@ -38,6 +38,17 @@ export const env = {
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
 
+  // Phase 9 M2 — Razorpay test mode only. Not in requiredEnvVars: a
+  // fresh clone should still boot and run every non-payment feature
+  // without these set. paymentService.createCheckoutSession throws a
+  // clean ApiError itself if keyId/keySecret are missing when actually
+  // called.
+  razorpay: {
+    keyId: process.env.RAZORPAY_KEY_ID || "",
+    keySecret: process.env.RAZORPAY_KEY_SECRET || "",
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || "",
+  },
+
   // Optional: if left unset, emailService falls back to logging the
   // password reset link to the console instead of sending a real
   // email — keeps local development unblocked without SMTP setup.

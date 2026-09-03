@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Receipt } from "lucide-react";
-import { fetchMyFees, payFee } from "../../store/slices/feesSlice";
+import { fetchMyFees, checkoutFee } from "../../store/slices/feesSlice";
 import PageContainer from "../../components/layout/PageContainer";
 import PageHeader from "../../components/layout/PageHeader";
 import { Skeleton } from "../../components/ui/skeleton";
@@ -34,7 +34,7 @@ const MyFees = () => {
             <FeeCard
               key={fee._id}
               fee={fee}
-              onPay={(id) => dispatch(payFee(id))}
+              onPay={(id) => dispatch(checkoutFee(id))}
               isPaying={actionPendingId === fee._id}
             />
           ))}

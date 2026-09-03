@@ -92,6 +92,26 @@ export const waiveFee = createAsyncThunk(
   },
 );
 
+// Phase 9 M2 — replaces payFee for the student self-serve path.
+// Creates a real Razorpay (test mode) payment link and redirects the
+// browser to it. Nothing about the fee changes here — the redux state
+// isn't re-fetched, because the fee is still outstanding until the
+// webhook confirms payment; the student lands back on /payments/callback
+// afterward, which is what re-checks the fee.
+export const checkoutFee = createAsyncThunk(
+  "fees/checkout",
+  async (id, { rejectWithValue }) => {
+    try {
+      const session = await feeService.checkoutFee(id);
+      window.location.href = session.url;
+      return session;
+    } catch (error) {
+      toast.error(error.message);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
 const feesSlice = createSlice({
   name: "fees",
   initialState,
@@ -128,6 +148,16 @@ const feesSlice = createSlice({
         state.actionPendingId = null;
       })
       .addCase(payFee.rejected, (state) => {
+        state.actionPendingId = null;
+      })
+
+      .addCase(checkoutFee.pending, (state, action) => {
+        state.actionPendingId = action.meta.arg;
+      })
+      .addCase(checkoutFee.fulfilled, (state) => {
+        state.actionPendingId = null;
+      })
+      .addCase(checkoutFee.rejected, (state) => {
         state.actionPendingId = null;
       })
 

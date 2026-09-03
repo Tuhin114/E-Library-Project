@@ -27,10 +27,32 @@ router.get(
   feeController.downloadFeeReceipt,
 );
 
-// Owner-vs-librarian access (and which payment method gets recorded) is
-// resolved inside feeService.payFee, not here — same ownership-based
-// pattern already used for GET /requests/:id and GET /loans/:id.
-router.patch("/:id/pay", validateParams(feeIdParamSchema), feeController.payFee);
+// Phase 9 M2 — deliberate breaking change: before this milestone,
+// PATCH /:id/pay was reachable by either the owning student or a
+// librarian, and instantly flipped the fee to PAID either way. That
+// instant-flip-by-the-student path is exactly what a genuine payment
+// gateway replaces — a student paying their own fee now goes through
+// POST /:id/checkout (below) and only becomes PAID once the webhook
+// confirms the sandboxed payment actually completed. This route stays,
+// unchanged in behavior, for the one case it was always meant for: a
+// librarian recording a real in-person payment at the desk, which has
+// no gateway involved by design.
+router.patch(
+  "/:id/pay",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(feeIdParamSchema),
+  feeController.payFee,
+);
+
+// Phase 9 M2 — student/faculty only, the self-serve checkout path.
+// Ownership is checked inside paymentService, same pattern used
+// elsewhere in this app.
+router.post(
+  "/:id/checkout",
+  authorize(ROLES.STUDENT, ROLES.FACULTY),
+  validateParams(feeIdParamSchema),
+  feeController.checkoutFee,
+);
 
 // M3 (Phase 7) — both librarian-only: confirming/adjusting a
 // PENDING_REVIEW fee's amount, and waiving a fee outright.

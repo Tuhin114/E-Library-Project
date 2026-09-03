@@ -24,6 +24,7 @@ export const NOTIFICATION_TYPES = Object.freeze({
   LOAN_RENEWED: "loan_renewed",
   FEE_CHARGED: "fee_charged",
   FEE_WAIVED: "fee_waived",
+  FEE_PAID: "fee_paid",
 });
 
 export const DELIVERY_CHANNELS = Object.freeze({

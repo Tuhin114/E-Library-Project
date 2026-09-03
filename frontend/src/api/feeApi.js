@@ -15,3 +15,5 @@ export const waiveFee = (id, payload) => axiosInstance.patch(`/fees/${id}/waive`
 
 export const fetchFeeReceipt = (id) =>
   axiosInstance.get(`/fees/${id}/receipt`, { responseType: "blob" });
+
+export const checkoutFee = (id) => axiosInstance.post(`/fees/${id}/checkout`);

@@ -100,17 +100,15 @@ export const getFeeById = async (feeId, requester) => {
   return fee;
 };
 
-// The payment method is derived from who's calling, never trusted from
-// the request body — a librarian paying on a student's behalf is always
-// "in_person"; the student paying their own fee is always "online".
-// This keeps the audit trail (paidBy + paymentMethod) honest by
-// construction rather than by convention.
+// Phase 9 M2 — narrowed to librarian-only. The student-self-pay branch
+// this used to have is what POST /fees/:id/checkout + the Razorpay
+// webhook (paymentService.handleWebhookEvent) replace. This function
+// now models exactly one action: a librarian recording an in-person
+// payment at the desk, which never touches the gateway.
 export const payFee = async (feeId, payer) => {
   const fee = await assertFeeExists(feeId);
 
-  const isOwner = fee.student._id.toString() === payer._id.toString();
-  const isLibrarian = payer.role === "librarian";
-  if (!isOwner && !isLibrarian) {
+  if (payer.role !== "librarian") {
     throw new ApiError(403, "You do not have access to this fee");
   }
   if (fee.status !== FEE_STATUS.OUTSTANDING) {
@@ -119,8 +117,39 @@ export const payFee = async (feeId, payer) => {
 
   fee.status = FEE_STATUS.PAID;
   fee.paidAt = new Date();
-  fee.paymentMethod = isLibrarian ? PAYMENT_METHOD.IN_PERSON : PAYMENT_METHOD.ONLINE;
+  fee.paymentMethod = PAYMENT_METHOD.IN_PERSON;
   fee.paidBy = payer._id;
+  await fee.save();
+
+  return fee.populate(FEE_POPULATE);
+};
+
+// Phase 9 M2 — the counterpart payFee no longer covers: marks a fee
+// PAID from the Razorpay webhook once the sandboxed payment link is
+// actually paid. Kept separate from payFee rather than reused with a
+// flag, since payFee's role check and IN_PERSON assumption don't apply
+// here.
+export const markFeePaidFromWebhook = async (feeId, { paidBy = null } = {}) => {
+  const fee = await assertFeeExists(feeId);
+
+  if (fee.status === FEE_STATUS.PAID) {
+    // Idempotency guard — Razorpay can and will redeliver the same
+    // webhook event more than once. Returning the already-paid fee
+    // instead of throwing keeps a redelivered event a harmless no-op.
+    return fee.populate(FEE_POPULATE);
+  }
+
+  if (fee.status !== FEE_STATUS.OUTSTANDING) {
+    throw new ApiError(
+      409,
+      `Cannot mark a fee paid from a webhook when it is ${fee.status}, not outstanding`,
+    );
+  }
+
+  fee.status = FEE_STATUS.PAID;
+  fee.paidAt = new Date();
+  fee.paymentMethod = PAYMENT_METHOD.ONLINE;
+  fee.paidBy = paidBy || fee.student;
   await fee.save();
 
   return fee.populate(FEE_POPULATE);

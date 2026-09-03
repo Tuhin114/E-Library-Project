@@ -118,21 +118,13 @@ const SidebarNav = ({ onNavigate }) => {
           </NavLink>
         )}
         {!isLibrarian && (
-          <NavLink
-            to="/loans"
-            className={navLinkClasses}
-            onClick={handleClick}
-          >
+          <NavLink to="/loans" className={navLinkClasses} onClick={handleClick}>
             <CalendarClock className="h-4 w-4" />
             My Loans
           </NavLink>
         )}
         {!isLibrarian && (
-          <NavLink
-            to="/fees"
-            className={navLinkClasses}
-            onClick={handleClick}
-          >
+          <NavLink to="/fees" className={navLinkClasses} onClick={handleClick}>
             <Receipt className="h-4 w-4" />
             My Fees
           </NavLink>
@@ -151,7 +143,11 @@ const SidebarNav = ({ onNavigate }) => {
 
       <nav className="mt-8 space-y-1">
         <p className={sectionLabelClasses}>Account</p>
-        <NavLink to="/activity" className={navLinkClasses} onClick={handleClick}>
+        <NavLink
+          to="/activity"
+          className={navLinkClasses}
+          onClick={handleClick}
+        >
           <LayoutDashboard className="h-4 w-4" />
           Activity
         </NavLink>
@@ -198,6 +194,7 @@ const SidebarNav = ({ onNavigate }) => {
           </NavLink>
           <NavLink
             to="/manage/requests"
+            end
             className={navLinkClasses}
             onClick={handleClick}
           >

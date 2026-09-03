@@ -1,5 +1,6 @@
 import * as feeService from "../services/feeService.js";
 import * as receiptService from "../services/receiptService.js";
+import * as paymentService from "../services/paymentService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -34,4 +35,14 @@ export const downloadFeeReceipt = asyncHandler(async (req, res) => {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
   res.send(pdfBuffer);
+});
+
+// Phase 9 M2 — the student-initiated self-serve path. Creates a real
+// Razorpay (test mode) payment link and hands the frontend the URL to
+// redirect to. Nothing about the Fee itself changes here — it only
+// moves to PAID once the webhook confirms the sandboxed payment
+// actually completed.
+export const checkoutFee = asyncHandler(async (req, res) => {
+  const session = await paymentService.createCheckoutSession(req.params.id, req.user);
+  res.status(200).json(new ApiResponse(200, "Checkout session created", session));
 });

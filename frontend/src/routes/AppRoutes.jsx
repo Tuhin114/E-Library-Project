@@ -47,6 +47,7 @@ import MyLoans from "../pages/loans/MyLoans";
 import ManageLoans from "../pages/manage/ManageLoans";
 import MyWaitlist from "../pages/waitlist/MyWaitlist";
 import MyFees from "../pages/fees/MyFees";
+import PaymentCallback from "../pages/payments/PaymentCallback";
 import ManageFees from "../pages/manage/ManageFees";
 import LibrarySettings from "../pages/manage/LibrarySettings";
 
@@ -162,6 +163,7 @@ export default function AppRoutes() {
           <Route path="/requests" element={<MyRequests />} />
           <Route path="/loans" element={<MyLoans />} />
           <Route path="/fees" element={<MyFees />} />
+          <Route path="/payments/callback" element={<PaymentCallback />} />
           <Route path="/waitlist" element={<MyWaitlist />} />
 
           {/* Change password */}

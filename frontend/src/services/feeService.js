@@ -68,3 +68,12 @@ export const getFeeReceipt = async (id) => {
     throw new Error(getErrorMessage(error, "Could not download this receipt."));
   }
 };
+
+export const checkoutFee = async (id) => {
+  try {
+    const { data } = await feeApi.checkoutFee(id);
+    return data.data; // { paymentLinkId, url }
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not start checkout. Please try again."));
+  }
+};
