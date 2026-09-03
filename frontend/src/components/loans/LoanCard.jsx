@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, Copy } from "lucide-react";
+import { Calendar, Copy, Download, Loader2 } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import ReturnDialog from "../manage/ReturnDialog";
 import ReportLostDialog from "../manage/ReportLostDialog";
+import { getLoanReceipt } from "../../services/loanService";
+import { downloadBlob } from "../../lib/downloadBlob";
+import { toast } from "../../hooks/useToast";
 
 const formatDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -25,6 +28,21 @@ const LoanCard = ({
 }) => {
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [isReportLostDialogOpen, setIsReportLostDialogOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const canDownloadReceipt = ["active", "returned", "lost"].includes(loan.status);
+
+  const handleDownloadReceipt = async () => {
+    setIsDownloading(true);
+    try {
+      const { blob, filename } = await getLoanReceipt(loan._id);
+      downloadBlob(blob, filename);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleConfirmReturn = (payload) => {
     onReturn(loan._id, payload);
@@ -149,6 +167,23 @@ const LoanCard = ({
                 disabled={isReportingLost}
               >
                 Report Lost
+              </Button>
+            )}
+
+            {canDownloadReceipt && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleDownloadReceipt}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Receipt
               </Button>
             )}
           </div>

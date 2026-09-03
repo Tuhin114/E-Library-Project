@@ -12,3 +12,6 @@ export const finalizeFee = (id, payload = {}) =>
   axiosInstance.patch(`/fees/${id}/finalize`, payload);
 
 export const waiveFee = (id, payload) => axiosInstance.patch(`/fees/${id}/waive`, payload);
+
+export const fetchFeeReceipt = (id) =>
+  axiosInstance.get(`/fees/${id}/receipt`, { responseType: "blob" });

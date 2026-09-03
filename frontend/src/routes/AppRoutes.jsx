@@ -42,6 +42,7 @@ import Automation from "../pages/analytics/Automation";
 import AnalyticsDashboard from "../pages/analytics/AnalyticsDashboard";
 import MyRequests from "../pages/requests/MyRequests";
 import ManageRequests from "../pages/manage/ManageRequests";
+import RequestLookup from "../pages/manage/RequestLookup";
 import MyLoans from "../pages/loans/MyLoans";
 import ManageLoans from "../pages/manage/ManageLoans";
 import MyWaitlist from "../pages/waitlist/MyWaitlist";
@@ -190,6 +191,7 @@ export default function AppRoutes() {
             <Route path="/analytics/financial" element={<Financial />} />
             <Route path="/analytics/automation" element={<Automation />} />
             <Route path="/manage/requests" element={<ManageRequests />} />
+            <Route path="/manage/requests/lookup" element={<RequestLookup />} />
             <Route path="/manage/loans" element={<ManageLoans />} />
             <Route path="/manage/fees" element={<ManageFees />} />
             <Route path="/manage/settings" element={<LibrarySettings />} />

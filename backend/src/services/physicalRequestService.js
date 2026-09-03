@@ -348,6 +348,18 @@ const assertRequestExists = async (requestId) => {
   return request;
 };
 
+export const getRequestByReferenceCode = async (referenceCode) => {
+  await expireStaleApprovals();
+
+  const request = await PhysicalRequest.findOne({ referenceCode })
+    .populate(REQUEST_POPULATE)
+    .lean();
+
+  if (!request) throw new ApiError(404, "No request found with that reference code");
+
+  return attachReviewContext(request);
+};
+
 export const getRequestById = async (requestId, requester) => {
   await expireStaleApprovals();
 

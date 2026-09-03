@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Hash } from "lucide-react";
+import { Hash, Download, Loader2 } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -9,6 +10,9 @@ import {
   FEE_TYPE_LABEL,
   PAYMENT_METHOD_LABEL,
 } from "../../constants/feeStatus";
+import { getFeeReceipt } from "../../services/feeService";
+import { downloadBlob } from "../../lib/downloadBlob";
+import { toast } from "../../hooks/useToast";
 
 const formatDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -17,7 +21,22 @@ const formatDate = (value) =>
     day: "numeric",
   });
 
-const FeeCard = ({ fee, onPay, isPaying, onFinalize, onWaive, isActing }) => (
+const FeeCard = ({ fee, onPay, isPaying, onFinalize, onWaive, isActing }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadReceipt = async () => {
+    setIsDownloading(true);
+    try {
+      const { blob, filename } = await getFeeReceipt(fee._id);
+      downloadBlob(blob, filename);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
   <Card className="p-4">
     <CardContent className="p-0">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -103,10 +122,28 @@ const FeeCard = ({ fee, onPay, isPaying, onFinalize, onWaive, isActing }) => (
               Waive
             </Button>
           )}
+
+          {fee.status === "paid" && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleDownloadReceipt}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              Receipt
+            </Button>
+          )}
         </div>
       </div>
     </CardContent>
   </Card>
-);
+  );
+};
 
 export default FeeCard;

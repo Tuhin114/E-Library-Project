@@ -1,5 +1,6 @@
 import * as physicalRequestService from "../services/physicalRequestService.js";
 import * as loanService from "../services/loanService.js";
+import * as receiptService from "../services/receiptService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -39,4 +40,16 @@ export const cancelRequest = asyncHandler(async (req, res) => {
 export const collectRequest = asyncHandler(async (req, res) => {
   const loan = await loanService.collectRequest(req.params.id, req.body.copyId);
   res.status(200).json(new ApiResponse(200, "Request collected — loan is now active", loan));
+});
+
+export const downloadRequestReceipt = asyncHandler(async (req, res) => {
+  const { pdfBuffer, filename } = await receiptService.generateRequestReceipt(req.params.id, req.user);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.send(pdfBuffer);
+});
+
+export const lookupRequestByReferenceCode = asyncHandler(async (req, res) => {
+  const request = await physicalRequestService.getRequestByReferenceCode(req.params.referenceCode);
+  res.status(200).json(new ApiResponse(200, "Request found", request));
 });

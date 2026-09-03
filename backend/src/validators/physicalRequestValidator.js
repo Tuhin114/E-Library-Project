@@ -16,6 +16,13 @@ export const requestIdParamSchema = z.object({
   id: objectIdSchema,
 });
 
+export const referenceCodeParamSchema = z.object({
+  referenceCode: z
+    .string()
+    .trim()
+    .regex(/^PR-[0-9A-F]{8}$/, "Reference code must look like PR-XXXXXXXX"),
+});
+
 export const createRequestSchema = z
   .object({
     book: objectIdSchema,

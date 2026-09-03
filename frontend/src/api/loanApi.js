@@ -16,3 +16,6 @@ export const renewLoan = (loanId) => axiosInstance.patch(`/loans/${loanId}/renew
 
 export const reportLoanLost = (loanId, payload = {}) =>
   axiosInstance.patch(`/loans/${loanId}/report-lost`, payload);
+
+export const fetchLoanReceipt = (loanId) =>
+  axiosInstance.get(`/loans/${loanId}/receipt`, { responseType: "blob" });

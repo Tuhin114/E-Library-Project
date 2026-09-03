@@ -1,4 +1,5 @@
 import * as feeService from "../services/feeService.js";
+import * as receiptService from "../services/receiptService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -26,4 +27,11 @@ export const finalizeFee = asyncHandler(async (req, res) => {
 export const waiveFee = asyncHandler(async (req, res) => {
   const fee = await feeService.waiveFee(req.params.id, req.user, req.body);
   res.status(200).json(new ApiResponse(200, "Fee waived successfully", fee));
+});
+
+export const downloadFeeReceipt = asyncHandler(async (req, res) => {
+  const { pdfBuffer, filename } = await receiptService.generateFeeReceipt(req.params.id, req.user);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.send(pdfBuffer);
 });

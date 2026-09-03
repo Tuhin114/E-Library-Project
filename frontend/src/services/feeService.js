@@ -56,3 +56,15 @@ export const waiveFee = async (id, payload) => {
     throw new Error(getErrorMessage(error, "Could not waive this fee. Please try again."));
   }
 };
+
+export const getFeeReceipt = async (id) => {
+  try {
+    const response = await feeApi.fetchFeeReceipt(id);
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] || `payment-receipt-${id}.pdf`;
+    return { blob: response.data, filename };
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not download this receipt."));
+  }
+};

@@ -71,3 +71,24 @@ export const cancelRequest = async (id) => {
     );
   }
 };
+
+export const getRequestReceipt = async (id) => {
+  try {
+    const response = await requestApi.fetchRequestReceipt(id);
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] || `request-receipt-${id}.pdf`;
+    return { blob: response.data, filename };
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not download this receipt."));
+  }
+};
+
+export const lookupRequestByReferenceCode = async (referenceCode) => {
+  try {
+    const { data } = await requestApi.lookupRequestByReferenceCode(referenceCode);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "No request found with that reference code."));
+  }
+};

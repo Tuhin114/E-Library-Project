@@ -21,6 +21,12 @@ router.get(
 
 router.get("/:id", validateParams(feeIdParamSchema), feeController.getFee);
 
+router.get(
+  "/:id/receipt",
+  validateParams(feeIdParamSchema),
+  feeController.downloadFeeReceipt,
+);
+
 // Owner-vs-librarian access (and which payment method gets recorded) is
 // resolved inside feeService.payFee, not here — same ownership-based
 // pattern already used for GET /requests/:id and GET /loans/:id.

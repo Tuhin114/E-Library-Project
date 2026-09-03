@@ -29,6 +29,12 @@ router.get(
 
 router.get("/:id", validateParams(loanIdParamSchema), loanController.getLoan);
 
+router.get(
+  "/:id/receipt",
+  validateParams(loanIdParamSchema),
+  loanController.downloadLoanReceipt,
+);
+
 router.patch(
   "/:id/return",
   authorize(ROLES.LIBRARIAN),

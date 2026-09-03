@@ -12,6 +12,7 @@ import {
   requestIdParamSchema,
   requestQuerySchema,
   collectRequestSchema,
+  referenceCodeParamSchema,
 } from "../validators/physicalRequestValidator.js";
 import { ROLES } from "../constants/roles.js";
 
@@ -36,9 +37,22 @@ router.get(
 );
 
 router.get(
+  "/lookup/:referenceCode",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(referenceCodeParamSchema),
+  physicalRequestController.lookupRequestByReferenceCode,
+);
+
+router.get(
   "/:id",
   validateParams(requestIdParamSchema),
   physicalRequestController.getRequest,
+);
+
+router.get(
+  "/:id/receipt",
+  validateParams(requestIdParamSchema),
+  physicalRequestController.downloadRequestReceipt,
 );
 
 router.patch(

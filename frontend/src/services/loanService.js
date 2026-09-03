@@ -69,3 +69,15 @@ export const reportLoanLost = async (loanId, payload) => {
     );
   }
 };
+
+export const getLoanReceipt = async (loanId) => {
+  try {
+    const response = await loanApi.fetchLoanReceipt(loanId);
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] || `loan-receipt-${loanId}.pdf`;
+    return { blob: response.data, filename };
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Could not download this receipt."));
+  }
+};

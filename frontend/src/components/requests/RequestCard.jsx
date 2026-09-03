@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, Hash, Sparkles } from "lucide-react";
+import { Calendar, Hash, Sparkles, Download, Loader2 } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import RequestStatusBadge from "./RequestStatusBadge";
+import { getRequestReceipt } from "../../services/requestService";
+import { downloadBlob } from "../../lib/downloadBlob";
+import { toast } from "../../hooks/useToast";
 
 const formatDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -14,6 +18,20 @@ const formatDate = (value) =>
 
 const RequestCard = ({ request, onCancel, isCancelling }) => {
   const canCancel = ["pending", "approved"].includes(request.status);
+  const canDownloadReceipt = ["approved", "collected"].includes(request.status);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadReceipt = async () => {
+    setIsDownloading(true);
+    try {
+      const { blob, filename } = await getRequestReceipt(request._id);
+      downloadBlob(blob, filename);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <Card className="p-4">
@@ -75,18 +93,38 @@ const RequestCard = ({ request, onCancel, isCancelling }) => {
             )}
           </div>
 
-          {canCancel && onCancel && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              onClick={() => onCancel(request._id)}
-              disabled={isCancelling}
-            >
-              {isCancelling ? "Cancelling..." : "Cancel"}
-            </Button>
-          )}
+          <div className="flex flex-wrap items-start gap-2">
+            {canCancel && onCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => onCancel(request._id)}
+                disabled={isCancelling}
+              >
+                {isCancelling ? "Cancelling..." : "Cancel"}
+              </Button>
+            )}
+
+            {canDownloadReceipt && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={handleDownloadReceipt}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Receipt
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

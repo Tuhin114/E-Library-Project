@@ -1,4 +1,5 @@
 import * as loanService from "../services/loanService.js";
+import * as receiptService from "../services/receiptService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -48,6 +49,13 @@ export const reportLoanLost = asyncHandler(async (req, res) => {
     req.body,
   );
   res.status(200).json(new ApiResponse(200, "Loan reported lost", result));
+});
+
+export const downloadLoanReceipt = asyncHandler(async (req, res) => {
+  const { pdfBuffer, filename } = await receiptService.generateLoanReceipt(req.params.id, req.user);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.send(pdfBuffer);
 });
 
 export const setLoanDueDateForTesting = asyncHandler(async (req, res) => {

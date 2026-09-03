@@ -17,3 +17,9 @@ export const rejectRequest = (id, payload) =>
   axiosInstance.patch(`/requests/${id}/reject`, payload);
 
 export const cancelRequest = (id) => axiosInstance.patch(`/requests/${id}/cancel`);
+
+export const fetchRequestReceipt = (id) =>
+  axiosInstance.get(`/requests/${id}/receipt`, { responseType: "blob" });
+
+export const lookupRequestByReferenceCode = (referenceCode) =>
+  axiosInstance.get(`/requests/lookup/${referenceCode}`);
