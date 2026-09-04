@@ -154,9 +154,6 @@ const bookSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Unique lookup.
-bookSchema.index({ isbn: 1 }, { unique: true });
-
 // Exact-match filter fields — every dropdown filter in FilterSidebar hits
 // one of these.
 bookSchema.index({ category: 1 });

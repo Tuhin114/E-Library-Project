@@ -55,6 +55,15 @@ export const uploadCoverImage = async (id, file) => {
   }
 };
 
+export const importCoverImageFromUrl = async (id, url) => {
+  try {
+    const { data } = await bookApi.importCoverImageFromUrl(id, url);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+};
+
 export const deleteCoverImage = async (id) => {
   try {
     const { data } = await bookApi.deleteCoverImage(id);
@@ -67,6 +76,15 @@ export const deleteCoverImage = async (id) => {
 export const uploadDigitalFile = async (id, type, file) => {
   try {
     const { data } = await bookApi.uploadDigitalFile(id, type, file);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+};
+
+export const importDigitalFileFromUrl = async (id, type, url) => {
+  try {
+    const { data } = await bookApi.importDigitalFileFromUrl(id, type, url);
     return data.data;
   } catch (error) {
     throw new Error(getErrorMessage(error));

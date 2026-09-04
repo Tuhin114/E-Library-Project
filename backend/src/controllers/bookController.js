@@ -49,6 +49,17 @@ export const uploadCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Cover image uploaded successfully", book));
 });
 
+export const importCoverImageFromUrl = asyncHandler(async (req, res) => {
+  const book = await bookService.importFileFromUrl(
+    req.params.id,
+    "cover",
+    req.body.url,
+  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Cover image fetched and uploaded successfully", book));
+});
+
 export const deleteCoverImage = asyncHandler(async (req, res) => {
   const book = await bookService.deleteCoverImage(req.params.id);
   res
@@ -69,6 +80,23 @@ export const uploadDigitalFile = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         `${req.params.type.toUpperCase()} uploaded successfully`,
+        book,
+      ),
+    );
+});
+
+export const importDigitalFileFromUrl = asyncHandler(async (req, res) => {
+  const book = await bookService.importFileFromUrl(
+    req.params.id,
+    req.params.type,
+    req.body.url,
+  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        `${req.params.type.toUpperCase()} fetched and uploaded successfully`,
         book,
       ),
     );

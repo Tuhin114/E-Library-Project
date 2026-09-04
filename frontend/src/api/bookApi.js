@@ -18,6 +18,9 @@ export const uploadCoverImage = (id, file) => {
   });
 };
 
+export const importCoverImageFromUrl = (id, url) =>
+  axiosInstance.post(`${BASE_URL}/${id}/cover/url`, { url });
+
 export const deleteCoverImage = (id) =>
   axiosInstance.delete(`${BASE_URL}/${id}/cover`);
 
@@ -28,6 +31,9 @@ export const uploadDigitalFile = (id, type, file) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+export const importDigitalFileFromUrl = (id, type, url) =>
+  axiosInstance.post(`${BASE_URL}/${id}/files/${type}/url`, { url });
 
 export const deleteDigitalFile = (id, type) =>
   axiosInstance.delete(`${BASE_URL}/${id}/files/${type}`);

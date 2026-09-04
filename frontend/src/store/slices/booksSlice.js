@@ -88,6 +88,20 @@ export const uploadCoverImage = createAsyncThunk(
   },
 );
 
+export const importCoverImageFromUrl = createAsyncThunk(
+  "books/importCoverImageFromUrl",
+  async ({ id, url }, { rejectWithValue }) => {
+    try {
+      const book = await bookService.importCoverImageFromUrl(id, url);
+      toast.success("Cover image fetched and uploaded successfully");
+      return book;
+    } catch (error) {
+      toast.error(error.message);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
 export const deleteCoverImage = createAsyncThunk(
   "books/deleteCoverImage",
   async (id, { rejectWithValue }) => {
@@ -108,6 +122,20 @@ export const uploadDigitalFile = createAsyncThunk(
     try {
       const book = await bookService.uploadDigitalFile(id, type, file);
       toast.success(`${type.toUpperCase()} uploaded successfully`);
+      return book;
+    } catch (error) {
+      toast.error(error.message);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const importDigitalFileFromUrl = createAsyncThunk(
+  "books/importDigitalFileFromUrl",
+  async ({ id, type, url }, { rejectWithValue }) => {
+    try {
+      const book = await bookService.importDigitalFileFromUrl(id, type, url);
+      toast.success(`${type.toUpperCase()} fetched and uploaded successfully`);
       return book;
     } catch (error) {
       toast.error(error.message);
@@ -185,10 +213,16 @@ const booksSlice = createSlice({
       .addCase(uploadCoverImage.fulfilled, (state, action) => {
         applyUpdatedBook(state, action.payload);
       })
+      .addCase(importCoverImageFromUrl.fulfilled, (state, action) => {
+        applyUpdatedBook(state, action.payload);
+      })
       .addCase(deleteCoverImage.fulfilled, (state, action) => {
         applyUpdatedBook(state, action.payload);
       })
       .addCase(uploadDigitalFile.fulfilled, (state, action) => {
+        applyUpdatedBook(state, action.payload);
+      })
+      .addCase(importDigitalFileFromUrl.fulfilled, (state, action) => {
         applyUpdatedBook(state, action.payload);
       })
       .addCase(deleteDigitalFile.fulfilled, (state, action) => {

@@ -20,6 +20,7 @@ import {
   bookCoverParamSchema,
   bookDigitalFileParamSchema,
   bookFileStreamQuerySchema,
+  remoteFileUrlSchema,
 } from "../validators/bookFileValidator.js";
 import {
   createReviewSchema,
@@ -37,8 +38,15 @@ import {
 } from "../validators/bookCopyValidator.js";
 import * as waitlistController from "../controllers/waitlistController.js";
 import { ROLES } from "../constants/roles.js";
+import { createRateLimiter } from "../middleware/rateLimiter.js";
 
 const router = Router();
+
+const remoteFileImportLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: "Too many remote file imports. Please try again later.",
+});
 
 router.use(authenticate);
 
@@ -78,6 +86,14 @@ router.post(
   uploadCoverMiddleware,
   bookController.uploadCoverImage,
 );
+router.post(
+  "/:id/cover/url",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(bookCoverParamSchema),
+  validateRequest(remoteFileUrlSchema),
+  remoteFileImportLimiter,
+  bookController.importCoverImageFromUrl,
+);
 router.delete(
   "/:id/cover",
   authorize(ROLES.LIBRARIAN),
@@ -90,6 +106,14 @@ router.post(
   validateParams(bookDigitalFileParamSchema),
   uploadDigitalFileMiddleware,
   bookController.uploadDigitalFile,
+);
+router.post(
+  "/:id/files/:type/url",
+  authorize(ROLES.LIBRARIAN),
+  validateParams(bookDigitalFileParamSchema),
+  validateRequest(remoteFileUrlSchema),
+  remoteFileImportLimiter,
+  bookController.importDigitalFileFromUrl,
 );
 router.delete(
   "/:id/files/:type",

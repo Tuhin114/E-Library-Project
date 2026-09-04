@@ -6,8 +6,10 @@ import {
   updateBook,
   clearSelectedBook,
   uploadCoverImage,
+  importCoverImageFromUrl,
   deleteCoverImage,
   uploadDigitalFile,
+  importDigitalFileFromUrl,
   deleteDigitalFile,
 } from "../../store/slices/booksSlice";
 import { toBookPayload } from "../../lib/validationSchemas/bookSchema";
@@ -73,6 +75,12 @@ const EditBook = () => {
     setUploadingField(null);
   };
 
+  const handleCoverUrlUpload = async (url) => {
+    setUploadingField("cover");
+    await dispatch(importCoverImageFromUrl({ id, url }));
+    setUploadingField(null);
+  };
+
   const handleCoverDelete = async () => {
     setUploadingField("cover");
     await dispatch(deleteCoverImage(id));
@@ -82,6 +90,12 @@ const EditBook = () => {
   const handleDigitalUpload = (type) => async (file) => {
     setUploadingField(type);
     await dispatch(uploadDigitalFile({ id, type, file }));
+    setUploadingField(null);
+  };
+
+  const handleDigitalUrlUpload = (type) => async (url) => {
+    setUploadingField(type);
+    await dispatch(importDigitalFileFromUrl({ id, type, url }));
     setUploadingField(null);
   };
 
@@ -136,8 +150,10 @@ const EditBook = () => {
             fileType="cover"
             currentFile={book.coverImage}
             onUpload={handleCoverUpload}
+            onUploadUrl={handleCoverUrlUpload}
             onDelete={handleCoverDelete}
             isProcessing={uploadingField === "cover"}
+            enableGlobalPaste
           />
 
           <FileDropzone
@@ -145,6 +161,7 @@ const EditBook = () => {
             fileType="pdf"
             currentFile={book.digitalFiles?.pdf}
             onUpload={handleDigitalUpload("pdf")}
+            onUploadUrl={handleDigitalUrlUpload("pdf")}
             onDelete={handleDigitalDelete("pdf")}
             isProcessing={uploadingField === "pdf"}
           />
@@ -154,6 +171,7 @@ const EditBook = () => {
             fileType="epub"
             currentFile={book.digitalFiles?.epub}
             onUpload={handleDigitalUpload("epub")}
+            onUploadUrl={handleDigitalUrlUpload("epub")}
             onDelete={handleDigitalDelete("epub")}
             isProcessing={uploadingField === "epub"}
           />
