@@ -102,6 +102,20 @@ export const deleteResourceFile = createAsyncThunk(
   },
 );
 
+export const reportResource = createAsyncThunk(
+  "resources/report",
+  async ({ id, payload }, { rejectWithValue }) => {
+    try {
+      const report = await resourceService.reportResource(id, payload);
+      toast.success("Thanks — a librarian will review this.");
+      return report;
+    } catch (error) {
+      toast.error(error.message);
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
 const applyUpdatedResource = (state, updatedResource) => {
   const index = state.items.findIndex((r) => r._id === updatedResource._id);
   if (index !== -1) state.items[index] = updatedResource;

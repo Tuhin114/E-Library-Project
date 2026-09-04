@@ -69,3 +69,26 @@ export const deleteResourceFile = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "File deleted successfully", resource));
 });
+
+// Streams file bytes directly — no ApiResponse envelope, since the
+// response body here is the file itself, not JSON.
+export const streamResourceFile = asyncHandler(async (req, res) => {
+  const download = req.query.download === "true";
+
+  const { stream, contentType, contentLength, filename } =
+    await resourceService.getResourceFileStream(req.params.id, req.user);
+
+  res.setHeader("Content-Type", contentType);
+  if (contentLength) res.setHeader("Content-Length", contentLength);
+  res.setHeader(
+    "Content-Disposition",
+    `${download ? "attachment" : "inline"}; filename="${filename}"`,
+  );
+
+  stream.on("error", () => {
+    if (!res.headersSent) res.status(502);
+    res.end();
+  });
+
+  stream.pipe(res);
+});

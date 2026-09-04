@@ -1,6 +1,7 @@
 import ForumThread from "../models/ForumThread.js";
 import ForumReply from "../models/ForumReply.js";
 import ForumReport from "../models/ForumReport.js";
+import Resource from "../models/Resource.js";
 import { ApiError } from "../utils/ApiError.js";
 import { REPORT_TARGET_TYPES, REPORT_STATUS } from "../constants/reportReasons.js";
 import { NOTIFICATION_CATEGORIES, NOTIFICATION_TYPES } from "../constants/notificationTypes.js";
@@ -9,6 +10,7 @@ import * as notificationService from "./notificationService.js";
 const TARGET_MODELS = {
   [REPORT_TARGET_TYPES.THREAD]: ForumThread,
   [REPORT_TARGET_TYPES.REPLY]: ForumReply,
+  [REPORT_TARGET_TYPES.RESOURCE]: Resource,
 };
 
 export const createReport = async (targetType, targetId, userId, { reason, details }) => {
@@ -33,8 +35,9 @@ export const createReport = async (targetType, targetId, userId, { reason, detai
 };
 
 // Reports are polymorphic (targetType decides ForumThread vs
-// ForumReply), so populate() can't resolve targetId directly — batch
-// one query per target type instead of populating per-report.
+// ForumReply vs, as of Phase 10 M2, Resource), so populate() can't
+// resolve targetId directly — batch one query per target type instead
+// of populating per-report.
 export const listOpenReports = async () => {
   const reports = await ForumReport.find({ status: REPORT_STATUS.OPEN })
     .sort({ createdAt: -1 })
@@ -47,17 +50,37 @@ export const listOpenReports = async () => {
   const replyIds = reports
     .filter((report) => report.targetType === REPORT_TARGET_TYPES.REPLY)
     .map((report) => report.targetId);
+  const resourceIds = reports
+    .filter((report) => report.targetType === REPORT_TARGET_TYPES.RESOURCE)
+    .map((report) => report.targetId);
 
-  const [threads, replies] = await Promise.all([
+  const [threads, replies, resources] = await Promise.all([
     ForumThread.find({ _id: { $in: threadIds } }, { title: 1 }).lean(),
     ForumReply.find({ _id: { $in: replyIds } }, { message: 1, thread: 1 }).lean(),
+    // Reports are librarian-only (forumReportRoutes), so this preview
+    // intentionally ignores Resource.visibility — a librarian
+    // reviewing the queue is allowed to see a reported private
+    // resource's title regardless.
+    Resource.find({ _id: { $in: resourceIds } }, { title: 1 }).lean(),
   ]);
 
   const threadPreviewById = new Map(threads.map((thread) => [thread._id.toString(), thread]));
   const replyPreviewById = new Map(replies.map((reply) => [reply._id.toString(), reply]));
+  const resourcePreviewById = new Map(
+    resources.map((resource) => [resource._id.toString(), resource]),
+  );
 
   return reports.map((report) => {
     const key = report.targetId.toString();
+
+    if (report.targetType === REPORT_TARGET_TYPES.RESOURCE) {
+      const preview = resourcePreviewById.get(key);
+      return {
+        ...report,
+        target: preview ? { title: preview.title, resourceId: preview._id } : null,
+      };
+    }
+
     const preview =
       report.targetType === REPORT_TARGET_TYPES.THREAD
         ? threadPreviewById.get(key)

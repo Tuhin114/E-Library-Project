@@ -24,6 +24,7 @@ import ManageBooks from "../pages/manage/ManageBooks";
 import CreateBook from "../pages/manage/CreateBook";
 import EditBook from "../pages/manage/EditBook";
 import BookReader from "../pages/reader/BookReader";
+import ResourceReader from "../pages/reader/ResourceReader";
 
 import Favorites from "../pages/favorites/Favorites";
 import RecentlyViewed from "../pages/library/RecentlyViewed";
@@ -142,6 +143,7 @@ export default function AppRoutes() {
         {/* Full-screen reader — deliberately outside MainLayout so the
             nav/sidebar chrome doesn't compete with the reading surface. */}
         <Route path="/books/:id/read" element={<BookReader />} />
+        <Route path="/resources/:id/read" element={<ResourceReader />} />
 
         <Route element={<MainLayout />}>
           {/* Dashboard */}

@@ -63,3 +63,38 @@ export const deleteResourceFile = async (id) => {
     throw new Error(getErrorMessage(error));
   }
 };
+
+// When responseType is "blob", a failed request's JSON error body
+// arrives as a Blob, not parsed JSON — same gotcha bookService.js's
+// getBlobErrorMessage exists to work around, so 403/404 messages
+// actually reach the UI instead of a generic Axios error.
+const getBlobErrorMessage = async (error) => {
+  const data = error?.response?.data;
+  if (data instanceof Blob && data.type === "application/json") {
+    try {
+      const parsed = JSON.parse(await data.text());
+      return parsed.message || getErrorMessage(error);
+    } catch {
+      return getErrorMessage(error);
+    }
+  }
+  return getErrorMessage(error);
+};
+
+export const getResourceFileBlob = async (id, options = {}) => {
+  try {
+    const { data } = await resourceApi.fetchResourceFile(id, options);
+    return data; // Blob
+  } catch (error) {
+    throw new Error(await getBlobErrorMessage(error));
+  }
+};
+
+export const reportResource = async (id, payload) => {
+  try {
+    const { data } = await resourceApi.reportResource(id, payload);
+    return data.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error));
+  }
+};

@@ -1,3 +1,4 @@
+import axios from "axios";
 import Resource from "../models/Resource.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ROLES } from "../constants/roles.js";
@@ -207,4 +208,38 @@ export const deleteResourceFile = async (id, user) => {
   resource.file = {};
   await resource.save();
   return serializeResource(await resource.populate(RESOURCE_POPULATE));
+};
+
+// Streams the PDF through the backend instead of ever handing the
+// client a direct Cloudinary URL, same reasoning as
+// bookService.getFileStream (Phase 3 M3). Unlike Book, there's no
+// separate "restricted" visibility tier gating download-vs-read —
+// once assertResourceReadable lets a request through at all (public,
+// own, or librarian), reading and downloading are the same
+// permission; `download` only changes the Content-Disposition header
+// the browser sees, not what's allowed.
+export const getResourceFileStream = async (id, user) => {
+  const resource = await Resource.findById(id).lean();
+  if (!resource) throw new ApiError(404, "Resource not found");
+
+  assertResourceReadable(resource, user);
+
+  const fileMeta = resource.file;
+  if (!fileMeta?.url) {
+    throw new ApiError(404, "No file available for this resource");
+  }
+
+  let response;
+  try {
+    response = await axios.get(fileMeta.url, { responseType: "stream" });
+  } catch (error) {
+    throw new ApiError(502, "Failed to retrieve the file. Please try again.");
+  }
+
+  return {
+    stream: response.data,
+    contentType: FILE_LIMITS.resource.allowedMimeTypes[0],
+    contentLength: response.headers["content-length"],
+    filename: fileMeta.originalName || `${resource.title}.pdf`,
+  };
 };

@@ -79,3 +79,10 @@ export const resourceQuerySchema = z.object({
 
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
+
+/**
+ * Validates GET /resources/:id/file/stream query parameters.
+ */
+export const resourceFileStreamQuerySchema = z.object({
+  download: z.enum(["true", "false"]).optional(),
+});

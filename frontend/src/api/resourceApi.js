@@ -23,3 +23,15 @@ export const uploadResourceFile = (id, file) => {
 
 export const deleteResourceFile = (id) =>
   axiosInstance.delete(`${BASE_URL}/${id}/file`);
+
+// Fetched as an authenticated blob, same reasoning bookApi.fetchBookFile
+// documents — react-pdf can't attach an Authorization header to a plain
+// network URL, so the caller turns this into an object URL instead.
+export const fetchResourceFile = (id, { download = false } = {}) =>
+  axiosInstance.get(`${BASE_URL}/${id}/file/stream`, {
+    params: { download: download ? "true" : "false" },
+    responseType: "blob",
+  });
+
+export const reportResource = (id, payload) =>
+  axiosInstance.post(`${BASE_URL}/${id}/report`, payload);

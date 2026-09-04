@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { FileText, Pencil, Trash2, Lock, Globe } from "lucide-react";
+import {
+  FileText,
+  Pencil,
+  Trash2,
+  Lock,
+  Globe,
+  BookOpenText,
+  Flag,
+} from "lucide-react";
 import {
   fetchResourceById,
   deleteResource,
@@ -14,6 +22,8 @@ import PageContainer from "../../components/layout/PageContainer";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
+import ReportResourceDialog from "../../components/resources/ReportResourceDialog";
+import ResourceDownloadButton from "../../components/resources/ResourceDownloadButton";
 import ErrorState from "../../components/common/ErrorState";
 import { Skeleton } from "../../components/ui/skeleton";
 
@@ -28,6 +38,7 @@ const ResourceDetails = () => {
     error,
   } = useSelector((state) => state.resources);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -127,30 +138,58 @@ const ResourceDetails = () => {
           </div>
         )}
 
-        <div className="rounded-2xl border border-dashed border-border p-6 text-sm text-muted-foreground">
-          {resource.file?.available
-            ? "A file is attached to this resource. Reading and downloading it comes in the next milestone."
-            : "No file has been attached to this resource yet."}
+        <div className="rounded-2xl border border-border bg-card p-6">
+          {resource.file?.available ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <Link to={`/resources/${id}/read`}>
+                <Button className="gap-2">
+                  <BookOpenText className="h-4 w-4" />
+                  Read Online
+                </Button>
+              </Link>
+              <ResourceDownloadButton
+                resourceId={id}
+                filename={`${resource.title}.pdf`}
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No file has been attached to this resource yet.
+            </p>
+          )}
         </div>
 
-        {canModify && (
-          <div className="flex gap-2">
-            <Link to={`/resources/${id}/edit`}>
-              <Button variant="outline" className="gap-2">
-                <Pencil className="h-4 w-4" />
-                Edit
+        <div className="flex flex-wrap gap-2">
+          {canModify && (
+            <>
+              <Link to={`/resources/${id}/edit`}>
+                <Button variant="outline" className="gap-2">
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+              <Button
+                variant="destructive"
+                className="gap-2"
+                onClick={() => setIsConfirmOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
               </Button>
-            </Link>
+            </>
+          )}
+
+          {!isOwner && (
             <Button
-              variant="destructive"
-              className="gap-2"
-              onClick={() => setIsConfirmOpen(true)}
+              variant="ghost"
+              className="gap-2 text-muted-foreground"
+              onClick={() => setIsReportOpen(true)}
             >
-              <Trash2 className="h-4 w-4" />
-              Delete
+              <Flag className="h-4 w-4" />
+              Report
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <ConfirmDialog
@@ -161,6 +200,12 @@ const ResourceDetails = () => {
         confirmLabel="Delete"
         isLoading={isDeleting}
         onConfirm={handleDelete}
+      />
+
+      <ReportResourceDialog
+        open={isReportOpen}
+        onOpenChange={setIsReportOpen}
+        resourceId={id}
       />
     </PageContainer>
   );

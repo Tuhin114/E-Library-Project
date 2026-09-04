@@ -15,6 +15,21 @@ import EmptyState from "@/components/common/EmptyState";
 const reasonLabel = (value) =>
   REPORT_REASON_OPTIONS.find((option) => option.value === value)?.label || value;
 
+// Resource-target reports carry `resourceId` instead of `threadId` in
+// their preview (see forumReportService.listOpenReports, Phase 10 M2)
+// — this is the one place that shape difference has to be handled.
+const buildViewLink = (report) => {
+  if (!report.target) return null;
+  return report.targetType === "resource"
+    ? `/resources/${report.target.resourceId}`
+    : `/forum/${report.target.threadId}`;
+};
+
+const previewText = (report) => {
+  if (!report.target) return "This content was already deleted.";
+  return report.target.title || report.target.message;
+};
+
 const ForumReports = () => {
   const dispatch = useDispatch();
   const { reports, reportsStatus } = useSelector((state) => state.forum);
@@ -48,9 +63,7 @@ const ForumReports = () => {
                     </Badge>
                   </div>
                   <p className="mt-2 line-clamp-2 text-sm text-foreground/90">
-                    {report.target
-                      ? report.target.title || report.target.message
-                      : "This content was already deleted."}
+                    {previewText(report)}
                   </p>
                   {report.details && (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -63,8 +76,8 @@ const ForumReports = () => {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
-                  {report.target && (
-                    <Link to={`/forum/${report.target.threadId}`}>
+                  {buildViewLink(report) && (
+                    <Link to={buildViewLink(report)}>
                       <Button type="button" variant="ghost" size="sm">
                         <ExternalLink className="mr-2 h-3.5 w-3.5" />
                         View
