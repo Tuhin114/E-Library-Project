@@ -19,6 +19,7 @@ import {
   Settings,
   Clock,
   Search,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -74,6 +75,14 @@ const SidebarNav = ({ onNavigate }) => {
         <NavLink to="/books" className={navLinkClasses} onClick={handleClick}>
           <BookOpen className="h-4 w-4" />
           Books
+        </NavLink>
+        <NavLink
+          to="/resources"
+          className={navLinkClasses}
+          onClick={handleClick}
+        >
+          <FileText className="h-4 w-4" />
+          Resources
         </NavLink>
         <NavLink to="/forum" className={navLinkClasses} onClick={handleClick}>
           <MessageSquare className="h-4 w-4" />

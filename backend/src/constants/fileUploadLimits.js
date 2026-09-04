@@ -28,6 +28,15 @@ export const FILE_LIMITS = {
     cloudinaryResourceType: "raw",
     cloudinaryFolder: "e-library/epubs",
   },
+  // Phase 10 M1 — e-journals, research papers and notes. PDF-only for
+  // now; kept as its own entry (not aliased to `pdf`) so it gets its
+  // own Cloudinary folder.
+  resource: {
+    maxSizeMB: 50,
+    allowedMimeTypes: ["application/pdf"],
+    cloudinaryResourceType: "raw",
+    cloudinaryFolder: "e-library/resources",
+  },
 };
 
 export const DIGITAL_FILE_TYPES = ["pdf", "epub"];

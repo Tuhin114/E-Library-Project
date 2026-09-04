@@ -30,6 +30,7 @@ import librarySettingsRoutes from "./routes/librarySettingsRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import waitlistRoutes from "./routes/waitlistRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import resourceRoutes from "./routes/resourceRoutes.js";
 
 const app = express();
 
@@ -105,6 +106,7 @@ app.use("/api/settings", librarySettingsRoutes);
 app.use("/api/me", notificationRoutes);
 app.use("/api/waitlist", waitlistRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/resources", resourceRoutes);
 
 // 404 handler
 app.use((req, res) => {

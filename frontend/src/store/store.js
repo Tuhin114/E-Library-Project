@@ -16,6 +16,7 @@ import feesReducer from "./slices/feesSlice";
 import settingsReducer from "./slices/settingsSlice";
 import notificationsReducer from "./slices/notificationsSlice";
 import waitlistReducer from "./slices/waitlistSlice";
+import resourcesReducer from "./slices/resourcesSlice";
 /**
  * Central Redux store.
  * Feature slices are registered in the `reducer` map as they are built.
@@ -39,6 +40,7 @@ export const store = configureStore({
     settings: settingsReducer,
     notifications: notificationsReducer,
     waitlist: waitlistReducer,
+    resources: resourcesReducer,
   },
   devTools: import.meta.env.MODE !== "production",
 });

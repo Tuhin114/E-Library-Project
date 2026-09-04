@@ -41,6 +41,13 @@ export const uploadCoverMiddleware = buildMulterInstance("cover");
 export const uploadAvatarMiddleware = buildMulterInstance("avatar");
 
 /**
+ * Resource files are always PDF (no dynamic :type param like the book
+ * digital-file route), so this can be built once at module load like
+ * the two above.
+ */
+export const uploadResourceFileMiddleware = buildMulterInstance("resource");
+
+/**
  * The PDF/EPUB upload route takes `:type` as a dynamic URL param, so the
  * correct multer instance (with the right mime/size rules) has to be
  * selected at request time rather than at module load.

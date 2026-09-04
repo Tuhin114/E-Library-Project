@@ -50,6 +50,10 @@ import MyFees from "../pages/fees/MyFees";
 import PaymentCallback from "../pages/payments/PaymentCallback";
 import ManageFees from "../pages/manage/ManageFees";
 import LibrarySettings from "../pages/manage/LibrarySettings";
+import Resources from "../pages/resources/Resources";
+import ResourceDetails from "../pages/resources/ResourceDetails";
+import UploadResource from "../pages/resources/UploadResource";
+import EditResource from "../pages/resources/EditResource";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -155,6 +159,13 @@ export default function AppRoutes() {
 
           <Route path="/books" element={<Books />} />
           <Route path="/books/:id" element={<BookDetails />} />
+
+          {/* Resources (Phase 10 M1) — any authenticated role can browse,
+              upload, and manage their own; not gated behind RoleRoute. */}
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/resources/new" element={<UploadResource />} />
+          <Route path="/resources/:id" element={<ResourceDetails />} />
+          <Route path="/resources/:id/edit" element={<EditResource />} />
 
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/recently-viewed" element={<RecentlyViewed />} />

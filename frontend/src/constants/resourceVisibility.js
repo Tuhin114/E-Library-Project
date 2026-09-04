@@ -1,0 +1,11 @@
+export const RESOURCE_VISIBILITY = {
+  PUBLIC: 'public',
+  PRIVATE: 'private',
+};
+
+export const RESOURCE_VISIBILITY_VALUES = Object.values(RESOURCE_VISIBILITY);
+
+export const RESOURCE_VISIBILITY_LABELS = {
+  [RESOURCE_VISIBILITY.PUBLIC]: 'Public',
+  [RESOURCE_VISIBILITY.PRIVATE]: 'Private',
+};

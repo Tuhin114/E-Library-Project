@@ -27,4 +27,9 @@ export const FILE_LIMITS = {
     allowedMimeTypes: ["application/epub+zip"],
     accept: ".epub",
   },
+  resource: {
+    maxSizeMB: 50,
+    allowedMimeTypes: ["application/pdf"],
+    accept: ".pdf",
+  },
 };
