@@ -1,5 +1,6 @@
 import axios from "axios";
 import Resource from "../models/Resource.js";
+import SavedListItem from "../models/SavedListItem.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ROLES } from "../constants/roles.js";
 import { RESOURCE_VISIBILITY } from "../constants/resourceVisibility.js";
@@ -20,18 +21,21 @@ const RESOURCE_POPULATE = { path: "uploadedBy", select: "name email role" };
 
 const isSameUser = (userId, otherId) => userId.toString() === otherId.toString();
 
-// A private resource is only readable by its owner or a librarian —
-// the single place this rule lives, reused by every read path
-// (direct-by-id fetch and, later, file streaming).
-const assertResourceReadable = (resource, user) => {
+// The single place the private/public rule lives — reused by every
+// read path (direct-by-id fetch, file streaming) and, as of Phase 10
+// M3, by savedListService when deciding whether a saved item is still
+// visible to the user who saved it.
+export const isResourceVisibleTo = (resource, user) => {
+  if (resource.visibility !== RESOURCE_VISIBILITY.PRIVATE) return true;
+
   const ownerId = resource.uploadedBy?._id || resource.uploadedBy;
   const isOwner = isSameUser(ownerId, user._id);
 
-  if (
-    resource.visibility === RESOURCE_VISIBILITY.PRIVATE &&
-    !isOwner &&
-    user.role !== ROLES.LIBRARIAN
-  ) {
+  return isOwner || user.role === ROLES.LIBRARIAN;
+};
+
+const assertResourceReadable = (resource, user) => {
+  if (!isResourceVisibleTo(resource, user)) {
     throw new ApiError(404, "Resource not found");
   }
 };
@@ -156,6 +160,11 @@ export const deleteResource = async (id, user) => {
       FILE_LIMITS.resource.cloudinaryResourceType,
     );
   }
+
+  // Same cascade reasoning deleteBook applies to Favorite/
+  // RecentlyViewed (Phase 2 M5) — otherwise every saved list holding
+  // this resource is left with a dangling SavedListItem forever.
+  await SavedListItem.deleteMany({ resource: id });
 
   await resource.deleteOne();
 };

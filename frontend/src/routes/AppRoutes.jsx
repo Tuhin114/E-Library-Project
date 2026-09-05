@@ -55,6 +55,8 @@ import Resources from "../pages/resources/Resources";
 import ResourceDetails from "../pages/resources/ResourceDetails";
 import UploadResource from "../pages/resources/UploadResource";
 import EditResource from "../pages/resources/EditResource";
+import SavedLists from "../pages/library/SavedLists";
+import SavedListDetail from "../pages/library/SavedListDetail";
 
 import { PrivateRoute } from "./PrivateRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -168,6 +170,10 @@ export default function AppRoutes() {
           <Route path="/resources/new" element={<UploadResource />} />
           <Route path="/resources/:id" element={<ResourceDetails />} />
           <Route path="/resources/:id/edit" element={<EditResource />} />
+
+          {/* Saved Lists (Phase 10 M3) — any authenticated role. */}
+          <Route path="/saved-lists" element={<SavedLists />} />
+          <Route path="/saved-lists/:id" element={<SavedListDetail />} />
 
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/recently-viewed" element={<RecentlyViewed />} />

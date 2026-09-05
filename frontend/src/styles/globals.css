@@ -1,16 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  /* ============================================================
-     LIGHT THEME (default)
-     Same accent palette as dark mode (sage / pink / yellow-green)
-     but on a warm paper background, so both themes read as the
-     same product rather than two different apps.
-     ============================================================ */
   :root {
     --background: 60 30% 98%;
     --foreground: 0 0% 10%;
@@ -37,7 +31,9 @@
     --accent: 131 30% 58%;
     --accent-foreground: 0 0% 10%;
 
-    --destructive: 4 72% 42%;
+    /* Destructive — muted berry/rose, visually aligned with the
+   existing pink secondary without becoming another accent. */
+    --destructive: 346 55% 42%;
     --destructive-foreground: 40 20% 98%;
 
     --success: 142 45% 32%;
@@ -56,11 +52,6 @@
     --radius: 1rem;
   }
 
-  /* ============================================================
-     DARK THEME (toggled via .dark on <html>)
-     This is the "authentic" bookstore look: near-black base with
-     bright yellow-green / pink / sage accents.
-     ============================================================ */
   .dark {
     --background: 0 0% 10%;
     --foreground: 60 20% 96%;
@@ -83,8 +74,8 @@
     --accent: 131 31% 69%;
     --accent-foreground: 0 0% 10%;
 
-    --destructive: 4 72% 51%;
-    --destructive-foreground: 40 20% 97%;
+    --destructive: 346 58% 62%;
+    --destructive-foreground: 0 0% 10%;
 
     --success: 131 31% 55%;
     --success-foreground: 0 0% 10%;
@@ -109,7 +100,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: 'cv11', 'ss01';
+    font-feature-settings: "cv11", "ss01";
   }
 
   html,

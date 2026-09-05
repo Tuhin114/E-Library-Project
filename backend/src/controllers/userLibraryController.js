@@ -1,4 +1,5 @@
 import * as userLibraryService from "../services/userLibraryService.js";
+import * as savedListService from "../services/savedListService.js";
 import * as readingService from "../services/readingService.js";
 import * as recommendationService from "../services/recommendationService.js";
 import * as activityService from "../services/activityService.js";
@@ -101,4 +102,70 @@ export const getMyWaitlist = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, "Your waitlist entries fetched successfully", entries));
+});
+
+// Phase 10 M3 — same delegation pattern, this time for the student's
+// own Saved Lists (titled collections of Resources). Unlike the
+// single-item Favorite endpoints above, this is genuine CRUD, so it
+// gets its own dedicated service file rather than living inline here.
+export const getSavedLists = asyncHandler(async (req, res) => {
+  const lists = await savedListService.listSavedLists(req.user);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Saved lists fetched successfully", lists));
+});
+
+export const createSavedList = asyncHandler(async (req, res) => {
+  const list = await savedListService.createSavedList(req.user, req.body);
+  res
+    .status(201)
+    .json(new ApiResponse(201, "Saved list created successfully", list));
+});
+
+export const getSavedListById = asyncHandler(async (req, res) => {
+  const list = await savedListService.getSavedListById(
+    req.params.listId,
+    req.user,
+  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Saved list fetched successfully", list));
+});
+
+export const updateSavedList = asyncHandler(async (req, res) => {
+  const list = await savedListService.updateSavedList(
+    req.params.listId,
+    req.user,
+    req.body,
+  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Saved list updated successfully", list));
+});
+
+export const deleteSavedList = asyncHandler(async (req, res) => {
+  await savedListService.deleteSavedList(req.params.listId, req.user);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Saved list deleted successfully", null));
+});
+
+export const addItemToSavedList = asyncHandler(async (req, res) => {
+  await savedListService.addItemToList(
+    req.params.listId,
+    req.params.resourceId,
+    req.user,
+  );
+  res.status(201).json(new ApiResponse(201, "Resource added to list", null));
+});
+
+export const removeItemFromSavedList = asyncHandler(async (req, res) => {
+  await savedListService.removeItemFromList(
+    req.params.listId,
+    req.params.resourceId,
+    req.user,
+  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Resource removed from list", null));
 });

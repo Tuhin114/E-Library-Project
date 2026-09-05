@@ -20,6 +20,7 @@ import {
   Clock,
   Search,
   FileText,
+  ListPlus,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../constants/roles";
@@ -99,6 +100,14 @@ const SidebarNav = ({ onNavigate }) => {
         >
           <Heart className="h-4 w-4" />
           Favorites
+        </NavLink>
+        <NavLink
+          to="/saved-lists"
+          className={navLinkClasses}
+          onClick={handleClick}
+        >
+          <ListPlus className="h-4 w-4" />
+          Saved Lists
         </NavLink>
         <NavLink
           to="/recently-viewed"
