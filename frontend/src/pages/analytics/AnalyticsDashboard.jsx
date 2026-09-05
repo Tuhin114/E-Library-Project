@@ -8,6 +8,7 @@ import ModerationAnalyticsSection from "@/components/analytics/sections/Moderati
 import CirculationAnalyticsSection from "@/components/analytics/sections/CirculationAnalyticsSection";
 import FinancialAnalyticsSection from "@/components/analytics/sections/FinancialAnalyticsSection";
 import AutomationAnalyticsSection from "@/components/analytics/sections/AutomationAnalyticsSection";
+import ResourceAnalyticsSection from "@/components/analytics/sections/ResourceAnalyticsSection";
 
 const PRIMARY_TABS = [
   { value: "catalog", label: "Catalog" },
@@ -16,6 +17,7 @@ const PRIMARY_TABS = [
   { value: "circulation", label: "Circulation" },
   { value: "financial", label: "Financial" },
   { value: "automation", label: "Automation" },
+  { value: "resources", label: "Resources" },
 ];
 
 const CATALOG_VIEWS = [
@@ -36,8 +38,8 @@ const AnalyticsDashboard = () => {
         title="Analytics"
         description={
           totalPublished != null
-            ? `Catalog, engagement, and moderation activity across ${totalPublished} published books.`
-            : "Catalog, engagement, and moderation activity in one place."
+            ? `Catalog, engagement, moderation, and resource activity across ${totalPublished} published books.`
+            : "Catalog, engagement, moderation, and resource activity in one place."
         }
       />
 
@@ -134,6 +136,14 @@ const AnalyticsDashboard = () => {
 
         <TabsContent value="automation">
           <AutomationAnalyticsSection
+            renderRangeControl={(rangeControl) => (
+              <div className="mb-4 flex justify-end">{rangeControl}</div>
+            )}
+          />
+        </TabsContent>
+
+        <TabsContent value="resources">
+          <ResourceAnalyticsSection
             renderRangeControl={(rangeControl) => (
               <div className="mb-4 flex justify-end">{rangeControl}</div>
             )}

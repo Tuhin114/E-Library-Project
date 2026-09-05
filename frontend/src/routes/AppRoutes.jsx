@@ -40,6 +40,7 @@ import ModerationAnalytics from "../pages/analytics/ModerationAnalytics";
 import Circulation from "../pages/analytics/Circulation";
 import Financial from "../pages/analytics/Financial";
 import Automation from "../pages/analytics/Automation";
+import ResourceAnalytics from "../pages/analytics/Resources";
 import AnalyticsDashboard from "../pages/analytics/AnalyticsDashboard";
 import MyRequests from "../pages/requests/MyRequests";
 import ManageRequests from "../pages/manage/ManageRequests";
@@ -211,6 +212,7 @@ export default function AppRoutes() {
             <Route path="/analytics/circulation" element={<Circulation />} />
             <Route path="/analytics/financial" element={<Financial />} />
             <Route path="/analytics/automation" element={<Automation />} />
+            <Route path="/analytics/resources" element={<ResourceAnalytics />} />
             <Route path="/manage/requests" element={<ManageRequests />} />
             <Route path="/manage/requests/lookup" element={<RequestLookup />} />
             <Route path="/manage/loans" element={<ManageLoans />} />

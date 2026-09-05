@@ -20,6 +20,8 @@ const initialState = {
   financialStatus: "idle",
   automation: null,
   automationStatus: "idle",
+  resource: null,
+  resourceStatus: "idle",
 };
 
 export const fetchCatalogAnalytics = createAsyncThunk(
@@ -82,6 +84,17 @@ export const fetchAutomationAnalytics = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       return await analyticsService.getAutomationAnalytics(params);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+);
+
+export const fetchResourceAnalytics = createAsyncThunk(
+  "analytics/fetchResourceAnalytics",
+  async (params, { rejectWithValue }) => {
+    try {
+      return await analyticsService.getResourceAnalytics(params);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -159,6 +172,17 @@ const analyticsSlice = createSlice({
       .addCase(fetchAutomationAnalytics.rejected, (state, action) => {
         state.automationStatus = "failed";
         toast.error(action.payload || "Failed to load automation analytics");
+      })
+      .addCase(fetchResourceAnalytics.pending, (state) => {
+        state.resourceStatus = "loading";
+      })
+      .addCase(fetchResourceAnalytics.fulfilled, (state, action) => {
+        state.resourceStatus = "succeeded";
+        state.resource = action.payload;
+      })
+      .addCase(fetchResourceAnalytics.rejected, (state, action) => {
+        state.resourceStatus = "failed";
+        toast.error(action.payload || "Failed to load resource analytics");
       });
   },
 });

@@ -20,6 +20,9 @@ export const fetchFinancialAnalytics = (params = {}) =>
 export const fetchAutomationAnalytics = (params = {}) =>
   axiosInstance.get(`${BASE_URL}/automation`, { params });
 
+export const fetchResourceAnalytics = (params = {}) =>
+  axiosInstance.get(`${BASE_URL}/resources`, { params });
+
 export const exportCatalogAnalytics = (dataset, params = {}) =>
   axiosInstance.get(`${BASE_URL}/catalog/export`, {
     params: { dataset, ...params },
@@ -52,6 +55,12 @@ export const exportFinancialAnalytics = (dataset, params = {}) =>
 
 export const exportAutomationAnalytics = (dataset, params = {}) =>
   axiosInstance.get(`${BASE_URL}/automation/export`, {
+    params: { dataset, ...params },
+    responseType: "blob",
+  });
+
+export const exportResourceAnalytics = (dataset, params = {}) =>
+  axiosInstance.get(`${BASE_URL}/resources/export`, {
     params: { dataset, ...params },
     responseType: "blob",
   });

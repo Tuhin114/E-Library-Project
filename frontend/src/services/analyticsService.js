@@ -67,6 +67,17 @@ export const getAutomationAnalytics = async (params = {}) => {
   }
 };
 
+export const getResourceAnalytics = async (params = {}) => {
+  try {
+    const { data } = await analyticsApi.fetchResourceAnalytics(params);
+    return data.data;
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not load resource analytics."),
+    );
+  }
+};
+
 export const exportCatalogAnalytics = async (dataset, params = {}) => {
   try {
     const response = await analyticsApi.exportCatalogAnalytics(dataset, params);
@@ -198,6 +209,29 @@ export const exportAutomationAnalytics = async (dataset, params = {}) => {
   } catch (error) {
     throw new Error(
       getErrorMessage(error, "Could not export automation analytics."),
+    );
+  }
+};
+
+export const exportResourceAnalytics = async (dataset, params = {}) => {
+  try {
+    const response = await analyticsApi.exportResourceAnalytics(
+      dataset,
+      params,
+    );
+
+    const contentDisposition = response.headers["content-disposition"];
+    const filename =
+      contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ||
+      `resource-${dataset}.csv`;
+
+    return {
+      blob: response.data,
+      filename,
+    };
+  } catch (error) {
+    throw new Error(
+      getErrorMessage(error, "Could not export resource analytics."),
     );
   }
 };

@@ -4,6 +4,7 @@ import * as moderationAnalyticsService from "../services/moderationAnalyticsServ
 import * as circulationAnalyticsService from "../services/circulationAnalyticsService.js";
 import * as financialAnalyticsService from "../services/financialAnalyticsService.js";
 import * as automationAnalyticsService from "../services/automationAnalyticsService.js";
+import * as resourceAnalyticsService from "../services/resourceAnalyticsService.js";
 import * as analyticsExportService from "../services/analyticsExportService.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -50,6 +51,13 @@ export const getAutomationAnalytics = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Automation analytics fetched successfully", analytics));
 });
 
+export const getResourceAnalytics = asyncHandler(async (req, res) => {
+  const analytics = await resourceAnalyticsService.getResourceAnalytics(req.query);
+  res
+    .status(200)
+    .json(new ApiResponse(200, "Resource analytics fetched successfully", analytics));
+});
+
 // CSV export handlers send raw text, not the ApiResponse{success,message,data}
 // envelope every other route in this app uses — a CSV file has no room
 // for a wrapper, and Content-Disposition is what actually triggers the
@@ -94,5 +102,11 @@ export const exportFinancialAnalytics = asyncHandler(async (req, res) => {
 export const exportAutomationAnalytics = asyncHandler(async (req, res) => {
   const { dataset, ...query } = req.query;
   const result = await analyticsExportService.buildAutomationExport(dataset, query);
+  sendCsv(res, result);
+});
+
+export const exportResourceAnalytics = asyncHandler(async (req, res) => {
+  const { dataset, ...query } = req.query;
+  const result = await analyticsExportService.buildResourceExport(dataset, query);
   sendCsv(res, result);
 });

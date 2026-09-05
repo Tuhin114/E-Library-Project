@@ -4,6 +4,7 @@ import * as moderationAnalyticsService from "./moderationAnalyticsService.js";
 import * as circulationAnalyticsService from "./circulationAnalyticsService.js";
 import * as financialAnalyticsService from "./financialAnalyticsService.js";
 import * as automationAnalyticsService from "./automationAnalyticsService.js";
+import * as resourceAnalyticsService from "./resourceAnalyticsService.js";
 import { toCsv } from "../utils/toCsv.js";
 import { ApiError } from "../utils/ApiError.js";
 
@@ -261,6 +262,79 @@ const AUTOMATION_DATASETS = {
   notificationReadRateByCategory: { columns: CATEGORY_RATE_COLUMNS, mapRow: (row) => row },
 };
 
+// Phase 10 M5 — Resource Analytics. visibilitySplit/resourceTypeDistribution/
+// uploadsByRole/subjectDistribution are all { label, count } pairs like
+// several datasets above, but "Status" as a header would be wrong for
+// all four — each gets its own header text, same reasoning
+// CATEGORY_COLUMNS/FREQUENCY_COLUMNS/TYPE_COLUMNS already split off
+// from STATUS_COLUMNS for their own categories.
+const VISIBILITY_COLUMNS = [
+  { key: "label", label: "Visibility" },
+  { key: "count", label: "Resource Count" },
+];
+
+const RESOURCE_TYPE_COLUMNS = [
+  { key: "label", label: "Resource Type" },
+  { key: "count", label: "Resource Count" },
+];
+
+const UPLOADER_ROLE_COLUMNS = [
+  { key: "label", label: "Uploader Role" },
+  { key: "count", label: "Resource Count" },
+];
+
+const SUBJECT_COLUMNS = [
+  { key: "label", label: "Subject" },
+  { key: "count", label: "Resource Count" },
+];
+
+// mostSavedResources' rows are Resource-shaped (title/resourceType/
+// uploadedBy), not Book-shaped, so BOOK_METRIC_COLUMNS/mapBookRow don't
+// fit — its own column set and mapper instead.
+const RESOURCE_METRIC_COLUMNS = [
+  { key: "title", label: "Title" },
+  { key: "resourceType", label: "Type" },
+  { key: "uploadedByName", label: "Uploaded By" },
+  { key: "metricLabel", label: "Metric" },
+  { key: "metricValue", label: "Value" },
+];
+
+const mapResourceMetricRow = (resource) => ({
+  title: resource.title,
+  resourceType: resource.resourceType,
+  uploadedByName: resource.uploadedBy?.name || "",
+  metricLabel: resource.metricLabel,
+  metricValue: resource.metricValue,
+});
+
+// topUploaders' shape (user + a single uploadCount) doesn't match
+// CONTRIBUTOR_COLUMNS' per-type breakdown or BORROWER_COLUMNS' rate
+// column — its own small column set instead.
+const UPLOADER_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "role", label: "Role" },
+  { key: "uploadCount", label: "Upload Count" },
+];
+
+const mapUploaderRow = (entry) => ({
+  name: entry.user.name,
+  role: entry.user.role,
+  uploadCount: entry.uploadCount,
+});
+
+// savedListAdoption isn't listed — a single object, not an array, same
+// reasoning engagement's onTimeReturnRate/financial's collectionRate
+// aren't exportable either.
+const RESOURCE_DATASETS = {
+  uploadsOverTime: { columns: TIME_SERIES_COLUMNS, mapRow: (row) => row },
+  visibilitySplit: { columns: VISIBILITY_COLUMNS, mapRow: (row) => row },
+  resourceTypeDistribution: { columns: RESOURCE_TYPE_COLUMNS, mapRow: (row) => row },
+  uploadsByRole: { columns: UPLOADER_ROLE_COLUMNS, mapRow: (row) => row },
+  subjectDistribution: { columns: SUBJECT_COLUMNS, mapRow: (row) => row },
+  mostSavedResources: { columns: RESOURCE_METRIC_COLUMNS, mapRow: mapResourceMetricRow },
+  topUploaders: { columns: UPLOADER_COLUMNS, mapRow: mapUploaderRow },
+};
+
 const buildExport = async ({ getAnalytics, datasetMap, dataset, query, filenamePrefix }) => {
   const config = datasetMap[dataset];
   if (!config) {
@@ -335,9 +409,19 @@ export const buildAutomationExport = (dataset, query) =>
     filenamePrefix: "automation-analytics",
   });
 
+export const buildResourceExport = (dataset, query) =>
+  buildExport({
+    getAnalytics: resourceAnalyticsService.getResourceAnalytics,
+    datasetMap: RESOURCE_DATASETS,
+    dataset,
+    query,
+    filenamePrefix: "resource-analytics",
+  });
+
 export const CATALOG_EXPORT_DATASETS = Object.keys(CATALOG_DATASETS);
 export const ENGAGEMENT_EXPORT_DATASETS = Object.keys(ENGAGEMENT_DATASETS);
 export const MODERATION_EXPORT_DATASETS = Object.keys(MODERATION_DATASETS);
 export const CIRCULATION_EXPORT_DATASETS = Object.keys(CIRCULATION_DATASETS);
 export const FINANCIAL_EXPORT_DATASETS = Object.keys(FINANCIAL_DATASETS);
 export const AUTOMATION_EXPORT_DATASETS = Object.keys(AUTOMATION_DATASETS);
+export const RESOURCE_EXPORT_DATASETS = Object.keys(RESOURCE_DATASETS);
