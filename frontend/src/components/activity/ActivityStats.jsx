@@ -1,4 +1,4 @@
-import { Heart, BookMarked, CheckCircle2, Star } from "lucide-react";
+import { Heart, BookMarked, CheckCircle2, Star, FileText, ListPlus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -7,6 +7,8 @@ const STAT_ITEMS = [
   { key: "inProgressCount", label: "In Progress", icon: BookMarked },
   { key: "completedCount", label: "Completed", icon: CheckCircle2 },
   { key: "reviewsCount", label: "Reviews Written", icon: Star },
+  { key: "uploadsCount", label: "My Uploads", icon: FileText },
+  { key: "savedListsCount", label: "Saved Lists", icon: ListPlus },
 ];
 
 /**
@@ -18,7 +20,7 @@ const STAT_ITEMS = [
 const ActivityStats = ({ stats, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {STAT_ITEMS.map((item) => (
           <Skeleton key={item.key} className="h-20 w-full rounded-2xl" />
         ))}
@@ -27,7 +29,7 @@ const ActivityStats = ({ stats, isLoading }) => {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {STAT_ITEMS.map(({ key, label, icon: Icon }) => (
         <Card key={key}>
           <CardContent className="flex items-center gap-3 p-4">
