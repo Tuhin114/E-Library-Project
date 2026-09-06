@@ -1,18 +1,11 @@
-import { startLoanDueReminderJob } from "./loanDueReminderJob.js";
-import { startWaitlistExpiryJob } from "./waitlistExpiryJob.js";
+import { registerRepeatableJobs } from "./registerRepeatableJobs.js";
 
 /**
- * Starts every scheduled job. Called once from server.js, after the
- * DB connection and Socket.io are both ready (jobs write Notifications
- * and push over sockets, so both dependencies must already be up).
- *
- * Documented limitation, stated up front: these jobs run inside this
- * single Node process via node-cron. That's fine at this project's
- * scale, but a real multi-instance deployment would run this same job
- * on every instance and double-send reminders — a proper job queue
- * (BullMQ/Redis) is the real fix, not in scope here.
+ * Called once from server.js after DB + Socket.io are ready. This no
+ * longer runs the sweeps itself — it just tells Redis/BullMQ the
+ * schedule. The actual sweeps run in the separate worker process
+ * (src/jobs/worker.js), started as its own Render service.
  */
-export const startJobs = () => {
-  startLoanDueReminderJob();
-  startWaitlistExpiryJob();
+export const startJobs = async () => {
+  await registerRepeatableJobs();
 };

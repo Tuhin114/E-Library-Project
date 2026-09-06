@@ -1,8 +1,10 @@
-import cron from "node-cron";
 import Loan from "../models/Loan.js";
 import Notification from "../models/Notification.js";
 import { LOAN_STATUS } from "../constants/loanStatus.js";
-import { NOTIFICATION_CATEGORIES, NOTIFICATION_TYPES } from "../constants/notificationTypes.js";
+import {
+  NOTIFICATION_CATEGORIES,
+  NOTIFICATION_TYPES,
+} from "../constants/notificationTypes.js";
 import * as notificationService from "../services/notificationService.js";
 
 // How many days before dueDate a reminder fires. A loan due "in 2
@@ -21,7 +23,9 @@ const DUE_SOON_WINDOW_DAYS = 2;
  */
 export const runLoanDueReminderSweep = async () => {
   const now = new Date();
-  const windowEnd = new Date(now.getTime() + DUE_SOON_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const windowEnd = new Date(
+    now.getTime() + DUE_SOON_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+  );
 
   const dueSoonLoans = await Loan.find({
     status: LOAN_STATUS.ACTIVE,
@@ -39,7 +43,9 @@ export const runLoanDueReminderSweep = async () => {
   }).distinct("relatedEntity.id");
   const alreadyNotified = new Set(alreadyNotifiedLoanIds.map(String));
 
-  const pending = dueSoonLoans.filter((loan) => !alreadyNotified.has(loan._id.toString()));
+  const pending = dueSoonLoans.filter(
+    (loan) => !alreadyNotified.has(loan._id.toString()),
+  );
 
   await Promise.all(
     pending.map((loan) =>
@@ -56,18 +62,4 @@ export const runLoanDueReminderSweep = async () => {
   );
 
   return { notified: pending.length };
-};
-
-/**
- * Schedules the sweep to run once a day at 07:00 server time. Exported
- * separately from the sweep function itself so a future test/manual
- * trigger can call runLoanDueReminderSweep() directly without needing
- * a real cron tick.
- */
-export const startLoanDueReminderJob = () => {
-  cron.schedule("0 7 * * *", () => {
-    runLoanDueReminderSweep().catch((error) => {
-      console.error("[loanDueReminderJob] Sweep failed:", error.message);
-    });
-  });
 };

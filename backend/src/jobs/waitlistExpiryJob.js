@@ -1,9 +1,11 @@
-import cron from "node-cron";
 import Waitlist from "../models/Waitlist.js";
 import Book from "../models/Book.js";
 import { WAITLIST_STATUS } from "../constants/waitlistStatus.js";
 import { COPY_STATUS } from "../constants/copyStatus.js";
-import { NOTIFICATION_CATEGORIES, NOTIFICATION_TYPES } from "../constants/notificationTypes.js";
+import {
+  NOTIFICATION_CATEGORIES,
+  NOTIFICATION_TYPES,
+} from "../constants/notificationTypes.js";
 import * as bookCopyService from "../services/bookCopyService.js";
 import * as notificationService from "../services/notificationService.js";
 
@@ -34,7 +36,9 @@ export const runWaitlistExpirySweep = async () => {
     // waiter automatically, via bookCopyService.updateCopy()'s
     // promotion hook — this loop doesn't need its own cascade logic.
     if (entry.reservedCopy) {
-      await bookCopyService.updateCopy(entry.reservedCopy, { status: COPY_STATUS.AVAILABLE });
+      await bookCopyService.updateCopy(entry.reservedCopy, {
+        status: COPY_STATUS.AVAILABLE,
+      });
     }
 
     const book = await Book.findById(entry.book).select("title").lean();
@@ -50,12 +54,4 @@ export const runWaitlistExpirySweep = async () => {
   }
 
   return { expired: expired.length };
-};
-
-export const startWaitlistExpiryJob = () => {
-  cron.schedule(SWEEP_INTERVAL_CRON, () => {
-    runWaitlistExpirySweep().catch((error) => {
-      console.error("[waitlistExpiryJob] Sweep failed:", error.message);
-    });
-  });
 };

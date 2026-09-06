@@ -1,9 +1,9 @@
-import http from 'http';
-import app from './app.js';
-import { env } from './config/env.js';
-import { connectDatabase } from './database/connection.js';
-import { initSocket } from './config/socket.js';
-import { startJobs } from './jobs/index.js';
+import http from "http";
+import app from "./app.js";
+import { env } from "./config/env.js";
+import { connectDatabase } from "./database/connection.js";
+import { initSocket } from "./config/socket.js";
+import { startJobs } from "./jobs/index.js";
 
 /**
  * Application entry point.
@@ -28,10 +28,10 @@ const startServer = async () => {
     console.log(`[server] Running in ${env.nodeEnv} mode on port ${env.port}`);
   });
 
-  process.on('unhandledRejection', (err) => {
+  process.on("unhandledRejection", (err) => {
     console.error(`[server] Unhandled rejection: ${err.message}`);
     server.close(() => process.exit(1));
   });
 };
 
-startServer();
+await startServer();
